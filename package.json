@@ -1,0 +1,30 @@
+{
+  "name": "react-monorepo-template",
+  "version": "0.0.0",
+  "type": "module",
+  "scripts": {
+    "lint": "eslint . --ext ts,tsx --report-unused-disable-directives --max-warnings 0",
+    "dev": "concurrently --kill-others \"pnpm --filter api run dev\" \"pnpm --filter ui run dev\"",
+    "build": "pnpm -r run build"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "@typescript-eslint/eslint-plugin": "7.6.0",
+    "@typescript-eslint/parser": "7.6.0",
+    "concurrently": "8.2.2",
+    "eslint": "8.57.0",
+    "eslint-plugin-react": "7.34.1",
+    "eslint-plugin-react-hooks": "4.6.0",
+    "eslint-plugin-react-refresh": "0.4.6",
+    "serverless": "3.38.0",
+    "serverless-plugin-common-excludes": "4.0.0",
+    "serverless-plugin-include-dependencies": "6.0.0",
+    "serverless-s3-sync": "3.3.0"
+  },
+  "dependencies": {
+    "dotenv": "16.4.5",
+    "zod": "3.22.4"
+  }
+}

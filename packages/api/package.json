@@ -1,0 +1,31 @@
+{
+  "name": "api",
+  "version": "0.0.0",
+  "type": "module",
+  "main": "dist/app.js",
+  "scripts": {
+    "build": "rimraf dist && tspc",
+    "dev": "tsx watch src/app.ts",
+    "start": "node dist/app.js"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "@types/cors": "2.8.17",
+    "@types/express": "4.17.21",
+    "@types/morgan": "1.9.9",
+    "rimraf": "5.0.5",
+    "ts-patch": "3.1.2",
+    "tsx": "4.11.0",
+    "typescript": "5.4.4",
+    "typescript-transform-paths": "3.4.7"
+  },
+  "dependencies": {
+    "cors": "2.8.5",
+    "express": "4.19.2",
+    "helmet": "7.1.0",
+    "morgan": "1.10.0",
+    "serverless-http": "3.2.0"
+  }
+}

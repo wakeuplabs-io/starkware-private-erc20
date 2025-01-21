@@ -1,0 +1,42 @@
+# Logs
+logs
+*.log
+npm-debug.log*
+
+node_modules
+dist
+dist-ssr
+*.local
+
+# Editor directories and files
+.vscode
+!.vscode/extensions.json
+!.vscode/settings.json
+
+.env*
+!.env.sample
+
+# web3
+packages/web3/.dist
+packages/web3/node_modules
+packages/web3/.env
+packages/web3/cache
+packages/web3/artifacts
+
+# UI
+packages/ui/.dist
+packages/ui/node_modules
+packages/ui/.env
+packages/ui/cache
+packages/ui/src/routeTree.gen.ts
+
+
+# TypeChain files
+/typechain
+/typechain-types
+
+# solidity-coverage files
+/coverage
+/coverage.json
+
+.serverless

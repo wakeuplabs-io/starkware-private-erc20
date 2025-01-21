@@ -1,0 +1,14 @@
+service: react-monorepo-template-api
+provider:
+  name: aws
+  region: sa-east-1
+  runtime: nodejs18.x
+plugins:
+  - serverless-plugin-common-excludes
+  - serverless-plugin-include-dependencies
+functions:
+  app:
+    handler: packages/api/dist/app.handler
+    events:
+      - http: ANY /
+      - http: ANY /{proxy+}

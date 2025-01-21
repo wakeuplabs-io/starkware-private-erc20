@@ -1,0 +1,57 @@
+name: Deploy
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  Deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 9
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: "pnpm"
+      
+      - name: Install dependencies
+        run: pnpm install
+
+      - name: Build all
+        run: pnpm build
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: sa-east-1
+
+      - name: SAM Build
+        run: sam build
+
+      - name: SAM Deploy
+        run: |
+          sam deploy --stack-name ${{env.STACK_NAME}} --parameter-overrides StackName='${{ env.STACK_NAME }}' DomainName='${{env.UI_DOMAIN}}'
+
+      - name: Deploy UI to s3
+        working-directory: ./packages/ui
+        run: |
+          aws s3 sync dist s3://${{ env.STACK_NAME }}.${{env.UI_DOMAIN}}/
+
+      - name: Invalidate UI Cloudfront Distribution
+        run: |
+          DISTRIBUTION_ID=$(aws cloudformation describe-stacks --stack-name ${{ env.STACK_NAME }} --query "Stacks[0].Outputs[?OutputKey=='CloudFrontDistributionId'].OutputValue" --output text)
+          aws cloudfront create-invalidation --distribution-id ${{env.DISTRIBUTION_ID}} --paths "/*"
+
+      - name: Deploy Api
+        uses: serverless/github-action@v3.2
+        with:
+          args: deploy --stage develop -c serverless-api.yml
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}

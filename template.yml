@@ -1,0 +1,24 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+Description: >
+  React Monorepo Template
+
+Parameters:
+  StackName:
+    Type: String
+  DomainName:
+    Type: String
+
+Resources:
+  UI:
+    Type: AWS::CloudFormation::Stack
+    Properties:
+      TemplateURL: packages/ui/template.yml
+      Parameters:
+        StackName: !Ref StackName
+        DomainName: !Ref DomainName
+
+Outputs:
+  CloudFrontDistributionId:
+    Description: "CloudFront Distribution ID from the UI stack"
+    Value: !GetAtt UI.Outputs.CloudFrontDistributionId
