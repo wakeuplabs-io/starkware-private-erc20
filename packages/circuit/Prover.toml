@@ -1,0 +1,5 @@
+receiver_balance = ""
+receiver_new_balance = ""
+sender_balance = ""
+sender_new_balance = ""
+transfer_amount = ""

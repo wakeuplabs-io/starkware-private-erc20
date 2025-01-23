@@ -1,0 +1,21 @@
+[[tests]]
+name = "test_transfer_valid"
+public_inputs = []
+private_inputs = [
+    100, # sender_balance
+    50,  # receiver_balance
+    30,  # transfer_amount
+    70,  # sender_new_balance
+    80   # receiver_new_balance
+]
+
+[[tests]]
+name = "test_insufficient_balance"
+public_inputs = []
+private_inputs = [
+    20,  # sender_balance
+    50,  # receiver_balance
+    30,  # transfer_amount
+    -10, # sender_new_balance
+    80   # receiver_new_balance
+]
