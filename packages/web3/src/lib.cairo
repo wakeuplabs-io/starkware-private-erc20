@@ -84,18 +84,21 @@ mod ERC20 {
 
     // @dev get the symbol of the token
     // @return symbol of the token
+    #[external(v0)]
     fn get_symbol(self: @ContractState) -> felt252 {
         self.symbol.read()
     }
 
     // @dev get the decimals of the token
     // @return decimal of the token
+    #[external(v0)]
     fn get_decimals(ref self: ContractState) -> u8 {
         self.decimals.read()
     }
 
     // @dev get the total supply of the token
     // @return total supply of the token
+    #[external(v0)]
     fn get_total_supply(ref self: ContractState) -> u256 {
         self.total_supply.read()
     }
@@ -103,6 +106,7 @@ mod ERC20 {
     // @dev get the token balance of an address
     // @param account Account whose balance is to be queried
     // @return the balance of the account
+    #[external(v0)]
     fn balance_of(self: @ContractState, account: ContractAddress) -> u256 {
         self.balances.entry(account).read()
     }
