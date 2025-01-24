@@ -1,23 +1,22 @@
-import { useWallet } from '@/shared/context/wallet-context'
-import { createFileRoute } from '@tanstack/react-router'
+import Approval from "@/components/approve/approval";
+import Transfer from "@/components/transfer/transfer";
+import Balance from "@/components/balance/balance";
+import "./dashboard.css";
+import { createFileRoute } from "@tanstack/react-router";
 
-export const Route = createFileRoute('/dashboard/')({
+
+export const Route = createFileRoute("/dashboard/")({
   component: Dashboard,
-})
+});
 
-function Dashboard() {
-  const { account } = useWallet()
 
+function Dashboard () {
   return (
-    <div>
-      <h1>Dashboard</h1>
-      {account ? (
-        <p>Connected Account: {account.address}</p>
-      ) : (
-        <p>Please connect your wallet to access the dashboard.</p>
-      )}
+    <div className="dashboard-container">
+      <Balance />
+      <Transfer/>
     </div>
-  )
-}
+  );
+};
 
-export default Dashboard
+export default Dashboard;

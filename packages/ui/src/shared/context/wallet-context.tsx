@@ -57,32 +57,6 @@ export const WalletProvider = ({ children }: { children: React.ReactNode }) => {
       setAccount(null);
     }
   };
-
-  useEffect(() => {
-    const checkConnection = async () => {
-      try {
-        const connection = await connect({
-          modalMode: "alwaysAsk",
-          argentMobileOptions: {
-              dappName: "StarkPayments",
-              url: window.location.hostname,
-          },
-        });
-        if (connection && connection.wallet) {
-          const provider = new Provider();
-          const accountConnector = await connection.connector?.account(provider);
-          setAccount(accountConnector);
-          setIsConnected(true);
-          setWallet(connection.wallet);
-        }
-      } catch (error) {
-        console.error("No wallet connected:", error);
-      }
-    };
-
-    checkConnection();
-  }, []);
-
   return (
     <WalletContext.Provider
       value={{

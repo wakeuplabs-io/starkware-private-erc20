@@ -1,12 +1,12 @@
 import { RouterProvider } from "@tanstack/react-router";
 import { router } from "@/shared/config/tanstackRouter";
-import { WalletProvider } from "./shared/context/wallet-context";
+import StarknetProvider from "./providers/starknet-provider";
 
 function App() {
   return (
-    <WalletProvider>
+    <StarknetProvider>
       <RouterProvider router={router} />
-    </WalletProvider>
+    </StarknetProvider>
   );
 }
 
