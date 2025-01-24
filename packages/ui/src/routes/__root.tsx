@@ -25,7 +25,7 @@ export const Route = createRootRoute({
         </Link>
       </div>
       <hr />
-      <main className="flex flex-1">
+      <main>
         <Outlet />
       </main>
       <TanStackRouterDevtools />
