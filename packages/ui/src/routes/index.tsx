@@ -1,3 +1,4 @@
+import ConnectButton from "@/components/connect-button";
 import { createFileRoute } from "@tanstack/react-router";
 
 export const Route = createFileRoute("/")({
@@ -6,8 +7,9 @@ export const Route = createFileRoute("/")({
 
 function Index() {
   return (
-    <div className="flex flex-1 items-center justify-center">
-      <h3>Home Page</h3>
+    <div>
+      <h1>Welcome to Starkpayment</h1>
+      <ConnectButton />
     </div>
   );
-}
+};
