@@ -1,51 +1,78 @@
-# React Monorepo Template
+# Private ERC20
 
-## Node and NPM version
+## Overview
 
-TL;DR
+Design is inspired in [tornado core](https://github.com/tornadocash/tornado-core/tree/master) with some differences to fit the requirements:
+- Partial spending of notes
+- Built as a token itself with transfers instead of deposits and withdrawals
 
-- Node version: 18.18.2
-- npm version: 9.8.1
+## Methods
 
-For now, **API breaks with Node > 18.18**. Node 18.18.2 is required.
+### transfer
 
-Also, Node 18.18.2 comes with npm 9.8.1, so the project should work properly with it. In any case, npm workspaces were added in npm 7.0.0, so you should have at least that version (9.8.1 strongly recommended).
+- Receiver generates commitment and send to sender
+- Sender generates proof of balances for transfer and calls the transfer function. Balance for nullifierHash or commitment will be reduced and incremented in receiver commitment.
+- At this point nor commitment used by sender to pay or amount of it, nor the receiver has revealed any of his identity, and the funds are ready to be used by the receiver.
 
-## Create user for deployment (AWS)
+Some notes:
+- Commitments can be partially nullified.
+- Circuits proof the inclusion of the commitment in the merkle tree, knowledge over the nullifier and therefore ownership over this commitment and that the balance is enough to make the payment.
 
-1. Go to IAM service
-2. Click Users --> `Create User`
+```
+function transfer(
+   Proof memory _proof,
+   bytes32 _root,
+   bytes32 _nullifierHash, // ideally an array to use multiple in a same payment
+   address _receiver_commitment,
+   uint256 amount,
+) external nonReentrant {
+   require(isKnownRoot(_root) == true, "Cannot find your merkle root");
 
-   ![image info](readme-assets/create-user.png)
+   uint256 nullified = nullifierBalances[_nullifierHash]
+   require(
+      verifier.verifyTx(
+         _proof,
+         [uint256(_root), uint256(_nullifierHash), nullified, amount]
+      ),
+      "Invalid transfer proof"
+   );
 
-3. Fill the user name and click on `Next`
-4. Click `Attach policies directly`, click on `AdministratorAccess` and click on `Next`
-5. Click on `Create user`
-6. View the created user.
-7. Click on the tab `Security credentials` and click on `Create access key`
-8. Click on the option `Command Line Interface (CLI)` and click on `Next`
-9. Click on the button `Create access key`
-10. Copy the keys `Access key` and `Secret access key`
+   nullifierBalances[_nullifierHash] = nullified - amount;
 
-## Configure serverless locally (OPTIONAL)
+   // create new commitment for receiver 
+   uint256 insertedIndex = _insert(_commitment);
+   commitments[_commitment] = true;
 
-Execute the following command in your terminal:
-
-```shell
-npx serverless config credentials --provider aws --key <your aws access key> --secret <your aws secret access key>
+   //  emit events
+}
 ```
 
-## Useful information if you fork this monorepo
+### approve
 
-### Package lock is git ignored
-Intended in order to avoid merge conflicts on this repo
+Proof I own commitments, if positive update allowances mapping
 
-**Don't forget to remove it from git ignore!**
-Package versions should always be defined specifically (without the simbol ^)
-This ensures that even if the lock is deleted, same versions would be reinstalled.
+```
+allowances:
+ [_nullifierHash]: spender, amount
 
-Having the lock inside your repo is useful for CI package caching and to avoid version diff on fresh install. 
+function approve(
+   Proof memory _proof,
+   bytes32 _root,
+   bytes32 _nullifierHash, // ideally array
+   uint256 amount,
+   address spender
+)
+```
 
-### Github workflow is deactivated
-We don't want to trigger the workflow here, but you probably want to.
-You should rename the .github/workflows-off folder to **.github/workflow**
+### transferFrom
+
+```
+function transferFrom(
+   bytes32 _nullifierHash, // ideally array
+   address to,
+)
+```
+
+### balance
+
+Client side check all commitments I own and subtract partial spending from them.
