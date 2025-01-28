@@ -18,6 +18,13 @@ Some notes:
 - Commitments can be partially nullified.
 - Circuits proof the inclusion of the commitment in the merkle tree, knowledge over the nullifier and therefore ownership over this commitment and that the balance is enough to make the payment.
 
+# notas
+
+Pros
+
+Cons
+- no podes consultar balance
+
 ```
 function transfer(
    Proof memory _proof,
@@ -46,6 +53,37 @@ function transfer(
    //  emit events
 }
 ```
+
+# encriptadito
+
+Pros
+- Puede leer claro
+
+Cons
+- Balance no claro
+
+```
+transfers[address] = [amount_enc(+100)]
+
+function transfer(
+   Proof memory _proof,
+   address receiver, 
+   uint256 [amount_enc_receiver, amount_enc_sender, amount_enc_gov], // encrypted with receiver public key
+) external nonReentrant {
+   require(
+      verifier.verifyTx(
+         _proof,
+         [transfers[sender]] // privado (key de encriptacion), amount
+      ),
+      "Invalid transfer proof"
+   );
+   
+   transfers[receiver] = transfers[receiver].push({ amount_enc_receiver, amount_enc_gov })
+   transfers[sender] = transfers[receiver].push(amount_enc_sender)
+}
+```
+
+
 
 ### approve
 
