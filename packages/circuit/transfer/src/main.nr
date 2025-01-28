@@ -1,3 +1,8 @@
+mod merkle_tree;
+mod hash_checks;
+use crate::merkle_tree::merkle_inclusion;
+use crate::hash_checks::{nullifier_check, sender_commitment_check};
+
 use std::hash::poseidon;
 global DEPTH: u32 = 2;
 
@@ -11,45 +16,6 @@ impl Fieldable for u32 {
     }
 }
 
-fn merkle_inclusion(
-    root: Field,
-    commitment: Field,
-    path: [Field; DEPTH],
-    direction_selector: [bool; DEPTH]
-) {
-    let mut digest = commitment;
-
-    for i in 0..DEPTH {
-        let (left, right) = if direction_selector[i] {
-            (path[i], digest)
-            
-        } else {
-            (digest, path[i])
-        };
-        digest = poseidon::bn254::hash_2([left, right]);
-    }
-
-    assert(digest == root);
-}
-
-
-pub fn nullifier_check(
-    nullifier_hash: Field,
-    nullifier: Field
-) {
-    let calculated_hash = poseidon::bn254::hash_1([nullifier]);
-    assert(calculated_hash == nullifier_hash);
-}
-
-fn sender_commitment_check(
-    sender_commitment: Field,
-    nullifier: Field,
-    secret: Field,
-    balance: u32
-) {
-    let calculated_commitment = poseidon::bn254::hash_3([nullifier, secret, balance.to_field()]);
-    assert(calculated_commitment == sender_commitment);
-}
 
 pub fn main(
     secret: Field,
@@ -85,42 +51,6 @@ pub fn main(
     //     assert(calculated_new_change == new_commitment_change);
     // }
 }
-
-
-
-#[test]
-fn test_merkle_inclusion() {
-    let commitment: Field = poseidon::bn254::hash_1([123456]);
-    let leafs: [Field; 4] = [
-        commitment,
-        poseidon::bn254::hash_1([2]),
-        poseidon::bn254::hash_1([3]),
-        poseidon::bn254::hash_1([4]),
-    ];
-
-
-    let second_level_1 = poseidon::bn254::hash_2([leafs[0], leafs[1]]);
-    let second_level_2 = poseidon::bn254::hash_2([leafs[2], leafs[3]]);
-    let root = poseidon::bn254::hash_2([second_level_1, second_level_2]);
-    let path: [Field; DEPTH] = [
-        leafs[1], second_level_2,
-    ];
-    let direction_selector: [bool; DEPTH] = [
-        false, false
-    ];
-
-    merkle_inclusion(root, commitment, path, direction_selector);
-}
-
-
-#[test]
-fn test_nullifier_check() {
-    let nullifier = 123456;
-    let calculated_hash = poseidon::bn254::hash_1([nullifier]);
-    
-    nullifier_check(calculated_hash, nullifier);
-}
-
 
 #[test]
 fn test_scenario_ok() {
