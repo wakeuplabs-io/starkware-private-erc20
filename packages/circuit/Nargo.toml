@@ -1,7 +1,3 @@
-[package]
-name = "circuit"
-type = "bin"
-authors = [""]
-compiler_version = ">=0.22.0"
-
-[dependencies]
+[workspace]
+members = ["balance", "transfer"]
+default-member = "transfer"
