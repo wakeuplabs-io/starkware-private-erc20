@@ -11,7 +11,8 @@ fn deploy_contract() -> (IErc20Dispatcher, ContractAddress) {
     let contract = declare("Erc20").unwrap().contract_class();
 
     let token_name: felt252 = 'Token Name';
-    let constructor_calldata: Array<felt252> = array![token_name];
+    let token_symbol: felt252 = 'SYM';
+    let constructor_calldata: Array<felt252> = array![token_name, token_symbol];
 
     let (contract_address, _) = contract.deploy(@constructor_calldata).unwrap();
     let dispatcher = IErc20Dispatcher { contract_address };
@@ -26,3 +27,13 @@ fn test_name() {
     let retrieved_name = dispatcher.name();
     assert(retrieved_name == 'Token Name', 'Invalid name');
 }
+
+
+#[test]
+fn test_symbol() {
+    let (dispatcher, _) = deploy_contract();
+
+    let retrieved_symbol = dispatcher.symbol();
+    assert(retrieved_symbol == 'SYM', 'Invalid simbol');
+}
+

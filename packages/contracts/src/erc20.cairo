@@ -2,6 +2,8 @@
 #[starknet::interface]
 pub trait IErc20<TContractState> {
     fn name(self: @TContractState) -> felt252;
+
+    fn symbol(self: @TContractState) -> felt252;
 }
 
 #[starknet::contract]
@@ -11,11 +13,13 @@ mod Erc20 {
     #[storage]
     struct Storage {
         name: felt252,
+        symbol: felt252
     }
 
     #[constructor]
-    fn constructor(ref self: ContractState, name: felt252) {
+    fn constructor(ref self: ContractState, name: felt252, symbol: felt252) {
         self.name.write(name);
+        self.symbol.write(symbol);
     }
 
     #[abi(embed_v0)]
@@ -23,6 +27,10 @@ mod Erc20 {
 
         fn name(self: @ContractState) -> felt252 {
             self.name.read()
+        }
+
+        fn symbol(self: @ContractState) -> felt252 {
+            self.symbol.read()
         }
     }
 }
