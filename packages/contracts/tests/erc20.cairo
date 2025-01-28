@@ -12,7 +12,8 @@ fn deploy_contract() -> (IErc20Dispatcher, ContractAddress) {
 
     let token_name: felt252 = 'Token Name';
     let token_symbol: felt252 = 'SYM';
-    let constructor_calldata: Array<felt252> = array![token_name, token_symbol];
+    let token_decimals: u8 = 8;
+    let constructor_calldata: Array<felt252> = array![token_name, token_symbol, token_decimals.into()];
 
     let (contract_address, _) = contract.deploy(@constructor_calldata).unwrap();
     let dispatcher = IErc20Dispatcher { contract_address };
@@ -21,19 +22,16 @@ fn deploy_contract() -> (IErc20Dispatcher, ContractAddress) {
 }
 
 #[test]
-fn test_name() {
+fn test_constructor() {
     let (dispatcher, _) = deploy_contract();
 
     let retrieved_name = dispatcher.name();
     assert(retrieved_name == 'Token Name', 'Invalid name');
-}
-
-
-#[test]
-fn test_symbol() {
-    let (dispatcher, _) = deploy_contract();
 
     let retrieved_symbol = dispatcher.symbol();
-    assert(retrieved_symbol == 'SYM', 'Invalid simbol');
+    assert(retrieved_symbol == 'SYM', 'Invalid symbol');
+
+    let retrieved_decimals = dispatcher.decimals();
+    assert(retrieved_decimals == 8, 'Invalid decimals');
 }
 
