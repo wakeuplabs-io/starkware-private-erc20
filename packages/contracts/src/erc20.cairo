@@ -8,14 +8,21 @@ pub trait IErc20<TContractState> {
 
     fn decimals(self: @TContractState) -> u8;
 
-    fn balance_of(self: @TContractState, account: ContractAddress) -> felt252;
+    fn total_supply(self: @TContractState) -> felt252;
 
+    fn balance_of(self: @TContractState, account: ContractAddress) -> felt252;
+    
     fn transfer(ref self: TContractState, recipient: ContractAddress, amount: felt252);
+
+    // transferFrom
+    // approve
+    // allowance
 }
 
 #[starknet::contract]
 pub mod Erc20 {
-    use core::num::traits::Zero;
+    use super::IErc20;
+use core::num::traits::Zero;
     use starknet::get_caller_address;
     use starknet::ContractAddress;
     use core::starknet::storage::{
@@ -28,6 +35,7 @@ pub mod Erc20 {
         symbol: felt252,
         decimals: u8,
         balances: Map<ContractAddress, felt252>,
+        total_supply: felt252,
     }
 
     #[event]
@@ -55,9 +63,13 @@ pub mod Erc20 {
         self.name.write(name);
         self.symbol.write(symbol);
         self.decimals.write(decimals);
-
+        
+        assert!(initial_supply != 0, "ERC20: Initial supply is 0");
+        self.total_supply.write(initial_supply);
+        
         assert!(!recipient.is_zero(), "ERC20: mint to the 0 address");
         self.balances.entry(recipient).write(initial_supply);
+
     }
 
     #[abi(embed_v0)]
@@ -76,6 +88,10 @@ pub mod Erc20 {
 
         fn balance_of(self: @ContractState, account: ContractAddress) -> felt252 {
             self.balances.entry(account).read()
+        }
+
+        fn total_supply(self: @ContractState) -> felt252 {
+            self.total_supply.read()
         }
 
         fn transfer(ref self: ContractState, recipient: ContractAddress, amount: felt252) {
