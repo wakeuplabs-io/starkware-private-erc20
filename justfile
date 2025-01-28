@@ -1,7 +1,7 @@
 
 # contracts
 
-contracts-tests:
+contracts-test:
     (cd packages/contracts && snforge test)
 
 contracts-fmt:

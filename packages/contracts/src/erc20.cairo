@@ -9,10 +9,12 @@ pub trait IErc20<TContractState> {
     fn decimals(self: @TContractState) -> u8;
 
     fn balance_of(self: @TContractState, account: ContractAddress) -> felt252;
+
+    fn transfer(ref self: TContractState, recipient: ContractAddress, amount: felt252);
 }
 
 #[starknet::contract]
-mod Erc20 {
+pub mod Erc20 {
     use core::num::traits::Zero;
     use starknet::get_caller_address;
     use starknet::ContractAddress;
@@ -28,6 +30,19 @@ mod Erc20 {
         balances: Map<ContractAddress, felt252>,
     }
 
+    #[event]
+    #[derive(Drop, starknet::Event)]
+    pub enum Event {
+        Transfer: Transfer,
+    }
+
+    #[derive(Drop, starknet::Event)]
+    pub struct Transfer {
+        pub from: ContractAddress,
+        pub to: ContractAddress,
+        pub value: felt252,
+    }
+
     #[constructor]
     fn constructor(
         ref self: ContractState,
@@ -41,7 +56,7 @@ mod Erc20 {
         self.symbol.write(symbol);
         self.decimals.write(decimals);
 
-        assert!(recipient.is_zero() == false, "ERC20: mint to the 0 address");
+        assert!(!recipient.is_zero(), "ERC20: mint to the 0 address");
         self.balances.entry(recipient).write(initial_supply);
     }
 
@@ -61,6 +76,16 @@ mod Erc20 {
 
         fn balance_of(self: @ContractState, account: ContractAddress) -> felt252 {
             self.balances.entry(account).read()
+        }
+
+        fn transfer(ref self: ContractState, recipient: ContractAddress, amount: felt252) {
+            let sender = get_caller_address();
+
+            assert(!sender.is_zero(), 'ERC20: transfer from 0');
+            assert(!recipient.is_zero(), 'ERC20: transfer to 0');
+            self.balances.entry(sender).write(self.balances.entry(sender).read() - amount);
+            self.balances.entry(recipient).write(self.balances.entry(recipient).read() + amount);
+            self.emit(Transfer { from: sender, to: recipient, value: amount });
         }
     }
 }
