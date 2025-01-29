@@ -1,51 +1,48 @@
-# React Monorepo Template
+# Private ERC20
 
-## Node and NPM version
+## Overview
 
-TL;DR
+Design is inspired in privacy pools like [tornado core](https://github.com/tornadocash/tornado-core/tree/master) and [zcash](https://github.com/zcash/orchard)
 
-- Node version: 18.18.2
-- npm version: 9.8.1
+## Methods
 
-For now, **API breaks with Node > 18.18**. Node 18.18.2 is required.
+### transfer
 
-Also, Node 18.18.2 comes with npm 9.8.1, so the project should work properly with it. In any case, npm workspaces were added in npm 7.0.0, so you should have at least that version (9.8.1 strongly recommended).
+- Receiver generates a one time address H(nullifier + secret). It also generates a Rsa keypair and sends both the one time address and the public key of the Rsa keypair.
+- Sender creates commitment with H(receiver_one_time_address, amount) === H(H(nullifier + secret), amount)
+- Sender encrypts amount with Receiver public key such that only him with his private key can decrypt.
+- Sender takes calls contract with `notes` we will use to make the payment. And proof that these notes:
+   - Hold enough balance  pay
+   - New notes are valid
+   - Used notes belong to the tree and match the entered nullifier_hash
+- At this point nor commitment used by sender to pay or amount of it, nor the receiver has revealed any of his identity, and the funds are ready to be used by the receiver.
 
-## Create user for deployment (AWS)
-
-1. Go to IAM service
-2. Click Users --> `Create User`
-
-   ![image info](readme-assets/create-user.png)
-
-3. Fill the user name and click on `Next`
-4. Click `Attach policies directly`, click on `AdministratorAccess` and click on `Next`
-5. Click on `Create user`
-6. View the created user.
-7. Click on the tab `Security credentials` and click on `Create access key`
-8. Click on the option `Command Line Interface (CLI)` and click on `Next`
-9. Click on the button `Create access key`
-10. Copy the keys `Access key` and `Secret access key`
-
-## Configure serverless locally (OPTIONAL)
-
-Execute the following command in your terminal:
-
-```shell
-npx serverless config credentials --provider aws --key <your aws access key> --secret <your aws secret access key>
 ```
+function transfer(
+   proof, // notes have enough balance, belong to tree and new notes are correct
+   root, // to proof notes belong to merkle tree
+   nullifier_hash, // notes used by sender that will be nullified
+   new_notes{ enc_amount, commitment }[2], // [sender, receiver]
+) external nonReentrant {
+   assert(is_known(_root) == true, "Cannot find your merkle root");
+   assert(nullified_notes[nullifier_hash] == false, "Note was already spent");
+   assert(
+      verifier.verifyTx(
+         _proof,
+         [...]
+      ),
+      "Invalid transfer proof"
+   );
 
-## Useful information if you fork this monorepo
+   // spend the notes
+   nullified_notes[nullifier_hash] = true;
 
-### Package lock is git ignored
-Intended in order to avoid merge conflicts on this repo
-
-**Don't forget to remove it from git ignore!**
-Package versions should always be defined specifically (without the simbol ^)
-This ensures that even if the lock is deleted, same versions would be reinstalled.
-
-Having the lock inside your repo is useful for CI package caching and to avoid version diff on fresh install. 
-
-### Github workflow is deactivated
-We don't want to trigger the workflow here, but you probably want to.
-You should rename the .github/workflows-off folder to **.github/workflow**
+   // create new notes for receiver and sender
+   let index_sender = merkle_tree.insert(new_notes[0]);
+   let index_receiver = merkle_tree.insert(new_notes[1]);
+   
+   //  emit events for each note created
+   emit NewNote(new_notes[0].commitment, new_notes[0].enc_amount, index_sender, timestamp);
+   emit NewNote(new_notes[1].commitment, new_notes[1].enc_amount, index_receiver, timestamp);
+}
+```
