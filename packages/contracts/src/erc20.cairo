@@ -14,15 +14,10 @@ pub trait IErc20<TContractState> {
 
     fn transfer(ref self: TContractState, recipient: ContractAddress, amount: u256);
 
-    fn allowance(
-        self: @TContractState, owner: ContractAddress, spender: ContractAddress,
-    ) -> u256;
+    fn allowance(self: @TContractState, owner: ContractAddress, spender: ContractAddress) -> u256;
 
     fn transfer_from(
-        ref self: TContractState,
-        sender: ContractAddress,
-        recipient: ContractAddress,
-        amount: u256,
+        ref self: TContractState, sender: ContractAddress, recipient: ContractAddress, amount: u256,
     ) -> bool;
 
     fn approve(ref self: TContractState, spender: ContractAddress, amount: u256);
@@ -30,8 +25,7 @@ pub trait IErc20<TContractState> {
 
 #[starknet::contract]
 pub mod Erc20 {
-    use super::IErc20;
-    use core::num::traits::Zero;
+    use core::num::traits::{Bounded, Zero};
     use starknet::get_caller_address;
     use starknet::ContractAddress;
     use core::starknet::storage::{
@@ -84,7 +78,7 @@ pub mod Erc20 {
         pub const INVALID_PERMIT_SIGNATURE: felt252 = 'ERC20: invalid permit signature';
     }
 
-    // constructor 
+    // constructor
 
     #[constructor]
     fn constructor(
@@ -92,24 +86,19 @@ pub mod Erc20 {
         name: felt252,
         symbol: felt252,
         decimals: u8,
-        recipient: ContractAddress
+        recipient: ContractAddress,
     ) {
         self.name.write(name);
         self.symbol.write(symbol);
         self.decimals.write(decimals);
 
-        // TODO: make total_supply supply dynamic. Openzepeling uses mint function. Issue is in converting felt252 array to u256
+        // TODO: make total_supply supply dynamic. Openzepeling uses mint function. Issue is in
+        // converting felt252 array to u256
         self.balances.entry(recipient).write(100_000_000);
         self.total_supply.write(100_000_000);
-
-        // assert!(initial_supply != 0, "ERC20: Initial supply is 0");
-        // self.total_supply.write(initial_supply);
-
-        // assert!(!recipient.is_zero(), "ERC20: mint to the 0 address");
-        // self.balances.entry(recipient).write(initial_supply);
     }
 
-    // implementation
+    // interface implementation
 
     #[abi(embed_v0)]
     impl Erc20Impl of super::IErc20<ContractState> {
@@ -135,12 +124,7 @@ pub mod Erc20 {
 
         fn transfer(ref self: ContractState, recipient: ContractAddress, amount: u256) {
             let sender = get_caller_address();
-
-            assert(!sender.is_zero(), Errors::TRANSFER_FROM_ZERO);
-            assert(!recipient.is_zero(), Errors::TRANSFER_TO_ZERO);
-            self.balances.entry(sender).write(self.balances.entry(sender).read() - amount);
-            self.balances.entry(recipient).write(self.balances.entry(recipient).read() + amount);
-            self.emit(Transfer { from: sender, to: recipient, value: amount });
+            self._transfer(sender, recipient, amount);
         }
 
         fn allowance(
@@ -154,30 +138,57 @@ pub mod Erc20 {
             sender: ContractAddress,
             recipient: ContractAddress,
             amount: u256,
-        )-> bool {
+        ) -> bool {
             let caller = get_caller_address();
-
-            // verify enough allowance
-            let current_allowance = self.allowances.entry(sender).entry(caller).read();
-            assert(current_allowance >= amount, Errors::INSUFFICIENT_ALLOWANCE);
-            self.allowances.entry(sender).entry(caller).write(current_allowance - amount);
-
-            // transfer
-            assert(!sender.is_zero(), Errors::TRANSFER_FROM_ZERO);
-            assert(!recipient.is_zero(), Errors::TRANSFER_TO_ZERO);
-            self.balances.entry(sender).write(self.balances.entry(sender).read() - amount);
-            self.balances.entry(recipient).write(self.balances.entry(recipient).read() + amount);
-            self.emit(Transfer { from: sender, to: recipient, value: amount });
+            self._spend_allowance(sender, caller, amount);
+            self._transfer(sender, recipient, amount);
 
             true
         }
 
         fn approve(ref self: ContractState, spender: ContractAddress, amount: u256) {
             let caller = get_caller_address();
-            assert(!spender.is_zero(), Errors::APPROVE_FROM_ZERO);
+            self._approve(caller, spender, amount);
+        }
+    }
 
-            self.allowances.entry(caller).entry(spender).write(amount);
-            self.emit(Approval { owner: caller, spender, value: amount });
+    // internal implementation
+
+    #[generate_trait]
+    impl StorageImpl of StorageTrait {
+        fn _transfer(
+            ref self: ContractState,
+            sender: ContractAddress,
+            recipient: ContractAddress,
+            amount: u256,
+        ) {
+            assert(!sender.is_zero(), Errors::TRANSFER_FROM_ZERO);
+            assert(!recipient.is_zero(), Errors::TRANSFER_TO_ZERO);
+
+            self.balances.entry(sender).write(self.balances.entry(sender).read() - amount);
+            self.balances.entry(recipient).write(self.balances.entry(recipient).read() + amount);
+
+            self.emit(Transfer { from: sender, to: recipient, value: amount });
+        }
+
+        fn _approve(
+            ref self: ContractState, owner: ContractAddress, spender: ContractAddress, amount: u256,
+        ) {
+            assert(!owner.is_zero(), Errors::APPROVE_FROM_ZERO);
+            assert(!spender.is_zero(), Errors::APPROVE_TO_ZERO);
+            self.allowances.entry(owner).entry(spender).write(amount);
+            self.emit(Approval { owner, spender, value: amount });
+        }
+
+
+        fn _spend_allowance(
+            ref self: ContractState, owner: ContractAddress, spender: ContractAddress, amount: u256,
+        ) {
+            let current_allowance = self.allowances.entry(owner).entry(spender).read();
+            if current_allowance != Bounded::MAX {
+                assert(current_allowance >= amount, Errors::INSUFFICIENT_ALLOWANCE);
+                self._approve(owner, spender, current_allowance - amount);
+            }
         }
     }
 }
