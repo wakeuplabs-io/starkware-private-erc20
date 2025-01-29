@@ -4,21 +4,21 @@ use snforge_std::{
     start_cheat_caller_address, spy_events, EventSpyAssertionsTrait, declare, ContractClassTrait,
     DeclareResultTrait,
 };
-use contracts::IErc20SafeDispatcher;
-use contracts::IErc20SafeDispatcherTrait;
 use contracts::IErc20Dispatcher;
 use contracts::IErc20DispatcherTrait;
 use contracts::erc20::Erc20;
 
+const TOTAL_SUPPLY: u256 = 100_000_000;
+const TOKEN_NAME: felt252 = 'Token Name';
+const TOKEN_SYMBOL: felt252 = 'SYM';
+const TOKEN_DECIMALS: u8 = 6;
+
 fn deploy_contract() -> (IErc20Dispatcher, ContractAddress) {
     let contract = declare("Erc20").unwrap().contract_class();
 
-    let token_name: felt252 = 'Token Name';
-    let token_symbol: felt252 = 'SYM';
-    let token_decimals: u8 = 6;
     let owner: ContractAddress = contract_address_const::<'owner'>();
     let constructor_calldata: Array<felt252> = array![
-        token_name, token_symbol, token_decimals.into(), owner.into(),
+        TOKEN_NAME, TOKEN_SYMBOL, TOKEN_DECIMALS.into(), owner.into(),
     ];
 
     let (contract_address, _) = contract.deploy(@constructor_calldata).unwrap();
@@ -32,22 +32,24 @@ fn test_constructor() {
     let (dispatcher, _) = deploy_contract();
 
     let retrieved_name = dispatcher.name();
-    assert(retrieved_name == 'Token Name', 'Invalid name');
+    assert(retrieved_name == TOKEN_NAME, 'Invalid name');
 
     let retrieved_symbol = dispatcher.symbol();
-    assert(retrieved_symbol == 'SYM', 'Invalid symbol');
+    assert(retrieved_symbol == TOKEN_SYMBOL, 'Invalid symbol');
 
     let retrieved_decimals = dispatcher.decimals();
-    assert(retrieved_decimals == 6, 'Invalid decimals');
+    assert(retrieved_decimals == TOKEN_DECIMALS, 'Invalid decimals');
 
     let total_supply = dispatcher.total_supply();
-    assert(total_supply == 100_000_000, 'Invalid total supply');
+    assert(total_supply == TOTAL_SUPPLY, 'Invalid total supply');
 
     let owner: ContractAddress = contract_address_const::<'owner'>();
     let balance_of_owner = dispatcher.balance_of(owner);
-    assert(balance_of_owner == 100_000_000, 'Invalid initial balance')
+    assert(balance_of_owner == TOTAL_SUPPLY, 'Invalid initial balance')
 }
 
+
+// transfer tests
 
 #[test]
 fn test_transfer() {
@@ -72,6 +74,33 @@ fn test_transfer() {
         'Incorrect recipient balance',
     );
 }
+
+
+#[test]
+#[should_panic(expected: 'ERC20: transfer to 0')]
+fn test_transfer_to_zero() {
+    let (dispatcher, token_address) = deploy_contract();
+
+    let sender: ContractAddress = contract_address_const::<'owner'>();
+    let recipient: ContractAddress =  contract_address_const::<0>();
+    let amount = 100;
+
+    start_cheat_caller_address(token_address, sender);
+    dispatcher.transfer(recipient, amount);
+}
+
+#[test]
+#[should_panic(expected: 'ERC20: insufficient balance')]
+fn test_transfer_insufficient_balance() {
+    let (dispatcher, token_address) = deploy_contract();
+
+    let owner: ContractAddress = contract_address_const::<'owner'>();
+    let recipient: ContractAddress = contract_address_const::<'recipient'>();
+
+    start_cheat_caller_address(token_address, owner);
+    dispatcher.transfer(recipient, TOTAL_SUPPLY * 2);
+}
+
 
 
 #[test]
@@ -100,6 +129,7 @@ fn test_transfer_event() {
         );
 }
 
+// approve tests
 
 #[test]
 fn test_approve() {
@@ -132,6 +162,21 @@ fn test_approve() {
 
 
 #[test]
+#[should_panic(expected: 'ERC20: approve to 0')]
+fn test_approve_to_zero() {
+    let (dispatcher, token_address) = deploy_contract();
+
+    let sender: ContractAddress = contract_address_const::<'owner'>();
+    let spender: ContractAddress =  contract_address_const::<0>();
+    let amount = 100;
+
+    start_cheat_caller_address(token_address, sender);
+    dispatcher.approve(spender, amount);
+}
+
+// transfer from tests
+
+#[test]
 fn test_transfer_from() {
     let (dispatcher, token_address) = deploy_contract();
 
@@ -159,3 +204,37 @@ fn test_transfer_from() {
     );
 }
 
+
+#[test]
+#[should_panic(expected: 'ERC20: insufficient allowance')]
+fn test_transfer_from_insufficient_allowance() {
+    let (dispatcher, token_address) = deploy_contract();
+
+    let owner: ContractAddress = contract_address_const::<'owner'>();
+    let spender: ContractAddress = contract_address_const::<'spender'>();
+    let recipient: ContractAddress = contract_address_const::<'recipient'>();
+    let amount = 100;
+
+    start_cheat_caller_address(token_address, owner);
+    dispatcher.approve(spender, amount - 10);
+
+    start_cheat_caller_address(token_address, spender);
+    dispatcher.transfer_from(owner, recipient, amount);
+}
+
+
+#[test]
+#[should_panic(expected: 'ERC20: insufficient balance')]
+fn test_transfer_from_insufficient_balance() {
+    let (dispatcher, token_address) = deploy_contract();
+
+    let owner: ContractAddress = contract_address_const::<'owner'>();
+    let spender: ContractAddress = contract_address_const::<'spender'>();
+    let recipient: ContractAddress = contract_address_const::<'recipient'>();
+
+    start_cheat_caller_address(token_address, owner);
+    dispatcher.approve(spender, TOTAL_SUPPLY * 4);
+
+    start_cheat_caller_address(token_address, spender);
+    dispatcher.transfer_from(owner, recipient, TOTAL_SUPPLY * 2);
+}

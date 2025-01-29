@@ -70,12 +70,8 @@ pub mod Erc20 {
         pub const APPROVE_TO_ZERO: felt252 = 'ERC20: approve to 0';
         pub const TRANSFER_FROM_ZERO: felt252 = 'ERC20: transfer from 0';
         pub const TRANSFER_TO_ZERO: felt252 = 'ERC20: transfer to 0';
-        pub const BURN_FROM_ZERO: felt252 = 'ERC20: burn from 0';
-        pub const MINT_TO_ZERO: felt252 = 'ERC20: mint to 0';
         pub const INSUFFICIENT_BALANCE: felt252 = 'ERC20: insufficient balance';
         pub const INSUFFICIENT_ALLOWANCE: felt252 = 'ERC20: insufficient allowance';
-        pub const EXPIRED_PERMIT_SIGNATURE: felt252 = 'ERC20: expired permit signature';
-        pub const INVALID_PERMIT_SIGNATURE: felt252 = 'ERC20: invalid permit signature';
     }
 
     // constructor
@@ -164,6 +160,9 @@ pub mod Erc20 {
         ) {
             assert(!sender.is_zero(), Errors::TRANSFER_FROM_ZERO);
             assert(!recipient.is_zero(), Errors::TRANSFER_TO_ZERO);
+
+            let from_balance = self.balances.entry(sender).read();
+            assert(from_balance >= amount, Errors::INSUFFICIENT_BALANCE);
 
             self.balances.entry(sender).write(self.balances.entry(sender).read() - amount);
             self.balances.entry(recipient).write(self.balances.entry(recipient).read() + amount);
