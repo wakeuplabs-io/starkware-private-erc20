@@ -3,24 +3,16 @@ use starknet::ContractAddress;
 #[starknet::interface]
 pub trait IErc20<TContractState> {
     fn name(self: @TContractState) -> felt252;
-
     fn symbol(self: @TContractState) -> felt252;
-
     fn decimals(self: @TContractState) -> u8;
-
     fn total_supply(self: @TContractState) -> u256;
-
     fn balance_of(self: @TContractState, account: ContractAddress) -> u256;
-
-    fn transfer(ref self: TContractState, recipient: ContractAddress, amount: u256);
-
+    fn transfer(ref self: TContractState, recipient: ContractAddress, amount: u256) -> bool;
     fn allowance(self: @TContractState, owner: ContractAddress, spender: ContractAddress) -> u256;
-
     fn transfer_from(
         ref self: TContractState, sender: ContractAddress, recipient: ContractAddress, amount: u256,
     ) -> bool;
-
-    fn approve(ref self: TContractState, spender: ContractAddress, amount: u256);
+    fn approve(ref self: TContractState, spender: ContractAddress, amount: u256) -> bool;
 }
 
 #[starknet::contract]
@@ -118,9 +110,11 @@ pub mod Erc20 {
             self.total_supply.read()
         }
 
-        fn transfer(ref self: ContractState, recipient: ContractAddress, amount: u256) {
+        fn transfer(ref self: ContractState, recipient: ContractAddress, amount: u256) -> bool {
             let sender = get_caller_address();
             self._transfer(sender, recipient, amount);
+
+            true
         }
 
         fn allowance(
@@ -142,9 +136,11 @@ pub mod Erc20 {
             true
         }
 
-        fn approve(ref self: ContractState, spender: ContractAddress, amount: u256) {
+        fn approve(ref self: ContractState, spender: ContractAddress, amount: u256) -> bool {
             let caller = get_caller_address();
             self._approve(caller, spender, amount);
+
+            true
         }
     }
 

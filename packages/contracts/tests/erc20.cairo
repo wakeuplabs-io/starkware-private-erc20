@@ -82,7 +82,7 @@ fn test_transfer_to_zero() {
     let (dispatcher, token_address) = deploy_contract();
 
     let sender: ContractAddress = contract_address_const::<'owner'>();
-    let recipient: ContractAddress =  contract_address_const::<0>();
+    let recipient: ContractAddress = contract_address_const::<0>();
     let amount = 100;
 
     start_cheat_caller_address(token_address, sender);
@@ -100,7 +100,6 @@ fn test_transfer_insufficient_balance() {
     start_cheat_caller_address(token_address, owner);
     dispatcher.transfer(recipient, TOTAL_SUPPLY * 2);
 }
-
 
 
 #[test]
@@ -167,7 +166,7 @@ fn test_approve_to_zero() {
     let (dispatcher, token_address) = deploy_contract();
 
     let sender: ContractAddress = contract_address_const::<'owner'>();
-    let spender: ContractAddress =  contract_address_const::<0>();
+    let spender: ContractAddress = contract_address_const::<0>();
     let amount = 100;
 
     start_cheat_caller_address(token_address, sender);
