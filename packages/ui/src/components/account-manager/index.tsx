@@ -1,25 +1,36 @@
 import { useState, useEffect } from "react";
 import "./account-manager.css";
 import SHA256 from "crypto-js/sha256";
+import nacl from "tweetnacl";
+import naclUtil from "tweetnacl-util";
+import { ReceiverAccount } from "@/interfaces";
 
 const AccountManager = () => {
   const [secretAccount, setSecretAccount] = useState<string | null>(null);
-  const [receiverAccounts, setReceiverAccounts] = useState<string[]>([]);
-  const [newReceiver, setNewReceiver] = useState<string | null>(null);
+  const [receiverAccounts, setReceiverAccounts] = useState<ReceiverAccount[]>([]);
+  const [newReceiver, setNewReceiver] = useState<ReceiverAccount>();
+
+  const [ publicKey , setPublicKey ] = useState<string | null>(null);
+  const [ secretKey , setSecretKey ] = useState<string | null>(null);
 
   useEffect(() => {
     const savedSecret = localStorage.getItem("SecretAccount");
     const savedReceivers = JSON.parse(localStorage.getItem("ReceiverAccounts") || "[]");
+    const savedPublicKey = localStorage.getItem("PublicKey");
+    const savedSecretKey = localStorage.getItem("SecretKey");
 
     if (savedSecret) setSecretAccount(savedSecret);
     setReceiverAccounts(savedReceivers);
+    if (savedPublicKey) setPublicKey(savedPublicKey);
+    if (savedSecretKey) setSecretKey(savedSecretKey);
   }, []);
 
   const handleInitialize = () => {
     const secret = generateSecretAccount();
     setSecretAccount(secret);
     localStorage.setItem("SecretAccount", secret);
-    alert("SecretAccount initialized!");
+
+    generateKeyPair();
   };
 
   const handleGenerateReceiver = () => {
@@ -32,6 +43,14 @@ const AccountManager = () => {
       return updatedReceivers;
     });
     setNewReceiver(newReceiverAddress);
+  };
+
+  const generateKeyPair = () => {
+    const keyPair = nacl.box.keyPair();
+    setPublicKey(naclUtil.encodeBase64(keyPair.publicKey));
+    setSecretKey(naclUtil.encodeBase64(keyPair.secretKey));
+    localStorage.setItem("PublicKey", naclUtil.encodeBase64(keyPair.publicKey));
+    localStorage.setItem("SecretKey", naclUtil.encodeBase64(keyPair.publicKey));
   };
 
   return (
@@ -58,15 +77,20 @@ const AccountManager = () => {
 
       {newReceiver && (
         <div className="account-manager-receiver">
-          <p><strong>New Receiver Address:</strong> {newReceiver}</p>
+          <p><strong>New Receiver Address:</strong> {newReceiver.address}</p>
         </div>
       )}
 
       <div className="account-manager-receivers-list">
         <h3>All Receiver Addresses:</h3>
-        {receiverAccounts.map((address, index) => (
-          <p key={index}>{address}</p>
+        {receiverAccounts.map((receiverAccount, index) => (
+          <p key={index}>{receiverAccount.address}</p>
         ))}
+      </div>
+      <div className="account-manager-keys">
+        <h3>Keys:</h3>
+        {publicKey && <p><strong>Public Key:</strong> {publicKey}</p>}
+        {secretKey && <p><strong>Secret Key:</strong> {secretKey}</p>}
       </div>
     </div>
   );
@@ -80,7 +104,9 @@ function generateSecretAccount() {
 
 function generateReceiverAddress(secretAccount: string, index: number) {
   const input = `${secretAccount}:${index}`;
-  return SHA256(input).toString();
+  return { address : SHA256(input).toString(), nullifier: index.toString() };
 }
+
+
 
 export default AccountManager;
