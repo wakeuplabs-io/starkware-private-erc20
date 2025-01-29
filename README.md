@@ -2,115 +2,47 @@
 
 ## Overview
 
-Design is inspired in [tornado core](https://github.com/tornadocash/tornado-core/tree/master) with some differences to fit the requirements:
-- Partial spending of notes
-- Built as a token itself with transfers instead of deposits and withdrawals
+Design is inspired in privacy pools like [tornado core](https://github.com/tornadocash/tornado-core/tree/master) and [zcash](https://github.com/zcash/orchard)
 
 ## Methods
 
 ### transfer
 
-- Receiver generates commitment and send to sender
-- Sender generates proof of balances for transfer and calls the transfer function. Balance for nullifierHash or commitment will be reduced and incremented in receiver commitment.
+- Receiver generates a one time address H(nullifier + secret). It also generates a Rsa keypair and sends both the one time address and the public key of the Rsa keypair.
+- Sender creates commitment with H(receiver_one_time_address, amount) === H(H(nullifier + secret), amount)
+- Sender encrypts amount with Receiver public key such that only him with his private key can decrypt.
+- Sender takes calls contract with `notes` we will use to make the payment. And proof that these notes:
+   - Hold enough balance  pay
+   - New notes are valid
+   - Used notes belong to the tree and match the entered nullifier_hash
 - At this point nor commitment used by sender to pay or amount of it, nor the receiver has revealed any of his identity, and the funds are ready to be used by the receiver.
 
-Some notes:
-- Commitments can be partially nullified.
-- Circuits proof the inclusion of the commitment in the merkle tree, knowledge over the nullifier and therefore ownership over this commitment and that the balance is enough to make the payment.
-
-# notas
-
-Pros
-
-Cons
-- no podes consultar balance
-
 ```
 function transfer(
-   Proof memory _proof,
-   bytes32 _root,
-   bytes32 _nullifierHash, // ideally an array to use multiple in a same payment
-   address _receiver_commitment,
-   uint256 amount,
+   proof, // notes have enough balance, belong to tree and new notes are correct
+   root, // to proof notes belong to merkle tree
+   nullifier_hash, // notes used by sender that will be nullified
+   new_notes{ enc_amount, commitment }[2], // [sender, receiver]
 ) external nonReentrant {
-   require(isKnownRoot(_root) == true, "Cannot find your merkle root");
-
-   uint256 nullified = nullifierBalances[_nullifierHash]
-   require(
+   assert(is_known(_root) == true, "Cannot find your merkle root");
+   assert(nullified_notes[nullifier_hash] == false, "Note was already spent");
+   assert(
       verifier.verifyTx(
          _proof,
-         [uint256(_root), uint256(_nullifierHash), nullified, amount]
+         [...]
       ),
       "Invalid transfer proof"
    );
 
-   nullifierBalances[_nullifierHash] = nullified - amount;
+   // spend the notes
+   nullified_notes[nullifier_hash] = true;
 
-   // create new commitment for receiver 
-   uint256 insertedIndex = _insert(_commitment);
-   commitments[_commitment] = true;
-
-   //  emit events
-}
-```
-
-# encriptadito
-
-Pros
-- Puede leer claro
-
-Cons
-- Balance no claro
-
-```
-transfers[address] = [amount_enc(+100)]
-
-function transfer(
-   Proof memory _proof,
-   address receiver, 
-   uint256 [amount_enc_receiver, amount_enc_sender, amount_enc_gov], // encrypted with receiver public key
-) external nonReentrant {
-   require(
-      verifier.verifyTx(
-         _proof,
-         [transfers[sender]] // privado (key de encriptacion), amount
-      ),
-      "Invalid transfer proof"
-   );
+   // create new notes for receiver and sender
+   let index_sender = merkle_tree.insert(new_notes[0]);
+   let index_receiver = merkle_tree.insert(new_notes[1]);
    
-   transfers[receiver] = transfers[receiver].push({ amount_enc_receiver, amount_enc_gov })
-   transfers[sender] = transfers[receiver].push(amount_enc_sender)
+   //  emit events for each note created
+   emit NewNote(new_notes[0].commitment, new_notes[0].enc_amount, index_sender, timestamp);
+   emit NewNote(new_notes[1].commitment, new_notes[1].enc_amount, index_receiver, timestamp);
 }
 ```
-
-
-
-### approve
-
-Proof I own commitments, if positive update allowances mapping
-
-```
-allowances:
- [_nullifierHash]: spender, amount
-
-function approve(
-   Proof memory _proof,
-   bytes32 _root,
-   bytes32 _nullifierHash, // ideally array
-   uint256 amount,
-   address spender
-)
-```
-
-### transferFrom
-
-```
-function transferFrom(
-   bytes32 _nullifierHash, // ideally array
-   address to,
-)
-```
-
-### balance
-
-Client side check all commitments I own and subtract partial spending from them.
