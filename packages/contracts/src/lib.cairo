@@ -6,3 +6,7 @@ pub use merkle_tree::*;
 
 pub mod hashes;
 pub use hashes::*;
+
+
+pub mod constants;
+pub use constants::*;

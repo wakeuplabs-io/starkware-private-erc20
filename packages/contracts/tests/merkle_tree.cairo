@@ -1,16 +1,14 @@
 use starknet::ContractAddress;
-use starknet::{contract_address_const};
-use snforge_std::{
-    start_cheat_caller_address, spy_events, EventSpyAssertionsTrait, declare, ContractClassTrait,
-    DeclareResultTrait,
-};
+use snforge_std::{declare, ContractClassTrait, DeclareResultTrait};
 use contracts::IMerkleTreeWithHistoryDispatcher;
 use contracts::IMerkleTreeWithHistoryDispatcherTrait;
+use contracts::hashes::PoseidonCHasher;
+use contracts::constants;
 
 fn deploy_contract() -> (IMerkleTreeWithHistoryDispatcher, ContractAddress) {
     let contract = declare("MerkleTreeWithHistory").unwrap().contract_class();
 
-    let levels: usize = 6;
+    let levels: usize = 2; // for testing
     let constructor_calldata: Array<felt252> = array![levels.into()];
 
     let (contract_address, _) = contract.deploy(@constructor_calldata).unwrap();
@@ -23,6 +21,67 @@ fn deploy_contract() -> (IMerkleTreeWithHistoryDispatcher, ContractAddress) {
 fn test_constructor() {
     let (dispatcher, _) = deploy_contract();
 
-    let last_root = dispatcher.get_last_root();
-    println!("{:?}", last_root);
+    assert(
+        dispatcher
+            .get_last_root() == PoseidonCHasher::commutative_hash(
+                constants::ZERO_VALUE, constants::ZERO_VALUE,
+            ),
+        'Error',
+    );
+    assert(
+        dispatcher
+            .is_known_root(
+                PoseidonCHasher::commutative_hash(constants::ZERO_VALUE, constants::ZERO_VALUE),
+            ) == true,
+        'Unkown root',
+    );
+}
+
+
+#[test]
+fn test_insert() {
+    let (dispatcher, _) = deploy_contract();
+
+    dispatcher.insert(1);
+    assert(
+        dispatcher.get_last_root() == PoseidonCHasher::commutative_hash(1, constants::ZERO_VALUE),
+        'Error',
+    );
+
+    dispatcher.insert(1);
+    assert(dispatcher.get_last_root() == PoseidonCHasher::commutative_hash(1, 1), 'Error');
+}
+
+#[test]
+#[should_panic(expected: 'MT: No more space')]
+fn test_insert_full() {
+    let (dispatcher, _) = deploy_contract();
+
+    dispatcher.insert(1);
+    dispatcher.insert(1);
+    dispatcher.insert(1);
+    dispatcher.insert(1);
+}
+
+
+#[test]
+fn test_in_known_root() {
+    let (dispatcher, _) = deploy_contract();
+
+    dispatcher.insert(1);
+    assert(
+        dispatcher.is_known_root(PoseidonCHasher::commutative_hash(1, constants::ZERO_VALUE)),
+        'Couldnt find known root',
+    );
+
+    dispatcher.insert(1);
+    assert(
+        dispatcher.is_known_root(PoseidonCHasher::commutative_hash(1, 1)),
+        'Couldnt find known root',
+    );
+
+    assert(
+        dispatcher.is_known_root(PoseidonCHasher::commutative_hash(100, 100)) == false,
+        'Found unknown root',
+    );
 }

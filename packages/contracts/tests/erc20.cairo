@@ -7,8 +7,8 @@ use snforge_std::{
 use contracts::IErc20Dispatcher;
 use contracts::IErc20DispatcherTrait;
 use contracts::erc20::Erc20;
+use contracts::constants::TOTAL_SUPPLY;
 
-const TOTAL_SUPPLY: u256 = 100_000_000;
 const TOKEN_NAME: felt252 = 'Token Name';
 const TOKEN_SYMBOL: felt252 = 'SYM';
 const TOKEN_DECIMALS: u8 = 6;

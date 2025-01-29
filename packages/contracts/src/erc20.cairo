@@ -20,6 +20,7 @@ pub mod Erc20 {
     use core::num::traits::{Bounded, Zero};
     use starknet::get_caller_address;
     use starknet::ContractAddress;
+    use crate::constants::TOTAL_SUPPLY;
     use core::starknet::storage::{
         Map, StoragePathEntry, StoragePointerReadAccess, StoragePointerWriteAccess,
     };
@@ -32,7 +33,6 @@ pub mod Erc20 {
         total_supply: u256,
         balances: Map<ContractAddress, u256>,
         allowances: Map<ContractAddress, Map<ContractAddress, u256>>,
-        // TODO: leafs
     }
 
     // events
@@ -81,10 +81,10 @@ pub mod Erc20 {
         self.symbol.write(symbol);
         self.decimals.write(decimals);
 
-        // TODO: make total_supply supply dynamic. Openzepeling uses mint function. Issue is in
+        // TODO: make total_supply supply dynamic. OpenZeppelin uses mint function. Issue is in
         // converting felt252 array to u256
-        self.balances.entry(recipient).write(100_000_000);
-        self.total_supply.write(100_000_000);
+        self.balances.entry(recipient).write(TOTAL_SUPPLY);
+        self.total_supply.write(TOTAL_SUPPLY);
     }
 
     // interface implementation

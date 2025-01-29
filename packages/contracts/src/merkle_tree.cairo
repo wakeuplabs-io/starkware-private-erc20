@@ -1,52 +1,33 @@
-use starknet::ContractAddress;
+
+// TODO: remove limit on transactions
 
 #[starknet::interface]
 pub trait IMerkleTreeWithHistory<TContractState> {
     fn get_last_root(self: @TContractState) -> felt252;
-    fn in_known_root(self: @TContractState, root: felt252) -> bool;
+    fn is_known_root(self: @TContractState, root: felt252) -> bool;
     fn insert(ref self: TContractState, leaf: felt252) -> usize;
 }
 
 #[starknet::contract]
 pub mod MerkleTreeWithHistory {
-    use starknet::storage::StorageMapWriteAccess;
-    use core::num::traits::{Bounded, Zero};
-    use starknet::ContractAddress;
     use alexandria_math::pow;
-    use crate::hashes::{CommutativeHasher, PedersenCHasher, PoseidonCHasher};
+    use core::num::traits::Zero;
+    use crate::hashes::PoseidonCHasher;
+    use crate::constants::{ROOT_HISTORY_SIZE, ZERO_VALUE};
     use core::starknet::storage::{
         Map, StoragePathEntry, StoragePointerReadAccess, StoragePointerWriteAccess,
     };
-
-    // constants ==================================================================
-
-    pub const ROOT_HISTORY_SIZE: usize = 30;
-    pub const ZERO_VALUE: felt252 = 0;
 
     // storage ====================================================================
 
     #[storage]
     struct Storage {
-        filled_subtrees: Map<usize, felt252>, // Could be array
-        roots: Map<usize, felt252>, // Could be array
+        filled_subtrees: Map<usize, felt252>,
+        roots: Map<usize, felt252>,
         current_root_index: usize,
         next_index: usize,
         levels: usize,
     }
-
-    // events =====================================================================
-
-    // TODO:
-    #[event]
-    #[derive(Drop, starknet::Event)]
-    pub enum Event {
-        Transfer: Transfer,
-    }
-    #[derive(Drop, starknet::Event)]
-    pub struct Transfer {
-        pub from: ContractAddress,
-    }
-
 
     // errors ======================================================================
 
@@ -61,11 +42,11 @@ pub mod MerkleTreeWithHistory {
     #[constructor]
     fn constructor(ref self: ContractState, levels: usize) {
         assert(levels.is_non_zero(), Errors::MT_MIN_LEVELS);
-        assert(levels < 32, Errors::MT_MAX_LEVELS);
+        assert(levels < 32, Errors::MT_MAX_LEVELS); 
 
         self.levels.write(levels);
 
-        // initialize merkle tree
+        // initialize merkle tree with zeros
         for i in 0..levels {
             self.filled_subtrees.entry(i).write(self._zeros(i));
         };
@@ -80,7 +61,7 @@ pub mod MerkleTreeWithHistory {
             self.roots.entry(self.current_root_index.read()).read()
         }
 
-        fn in_known_root(self: @ContractState, root: felt252) -> bool {
+        fn is_known_root(self: @ContractState, root: felt252) -> bool {
             if (root.is_zero()) {
                 return false;
             }
@@ -112,17 +93,18 @@ pub mod MerkleTreeWithHistory {
         fn insert(ref self: ContractState, leaf: felt252) -> usize {
             let next_index = self.next_index.read();
             let levels = self.levels.read();
-            assert(next_index != pow(2, self.levels.read()), Errors::MT_FULL);
+            assert(next_index != pow(2, self.levels.read()) - 1, Errors::MT_FULL);
 
             let mut current_index = next_index;
             let mut current_level_hash = leaf;
             let mut left: felt252 = 0;
             let mut right: felt252 = 0;
 
-            for i in 0..levels {
+            for i in 0..(levels - 1) {
                 if current_index % 2 == 0 {
                     left = current_level_hash;
                     right = self._zeros(i);
+                    self.filled_subtrees.entry(i).write(current_level_hash);
                 } else {
                     left = self.filled_subtrees.entry(i).read();
                     right = current_level_hash;
