@@ -32,6 +32,7 @@ pub mod Erc20 {
         total_supply: u256,
         balances: Map<ContractAddress, u256>,
         allowances: Map<ContractAddress, Map<ContractAddress, u256>>,
+        // TODO: leafs
     }
 
     // events
