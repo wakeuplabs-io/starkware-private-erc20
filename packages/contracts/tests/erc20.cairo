@@ -16,10 +16,9 @@ fn deploy_contract() -> (IErc20Dispatcher, ContractAddress) {
     let token_name: felt252 = 'Token Name';
     let token_symbol: felt252 = 'SYM';
     let token_decimals: u8 = 6;
-    let total_supply: felt252 = 100_000_000;
     let owner: ContractAddress = contract_address_const::<'owner'>();
     let constructor_calldata: Array<felt252> = array![
-        token_name, token_symbol, token_decimals.into(), owner.into(), total_supply.into(),
+        token_name, token_symbol, token_decimals.into(), owner.into(),
     ];
 
     let (contract_address, _) = contract.deploy(@constructor_calldata).unwrap();
@@ -100,3 +99,63 @@ fn test_transfer_event() {
             ],
         );
 }
+
+
+#[test]
+fn test_approve() {
+    let (dispatcher, token_address) = deploy_contract();
+
+    let owner: ContractAddress = contract_address_const::<'owner'>();
+    let spender: ContractAddress = contract_address_const::<'spender'>();
+    let amount = 100;
+
+    let mut spy = spy_events();
+
+    start_cheat_caller_address(token_address, owner);
+    dispatcher.approve(spender, amount);
+
+    spy
+        .assert_emitted(
+            @array![
+                (
+                    token_address,
+                    Erc20::Event::Approval(
+                        Erc20::Approval { owner: owner, spender: spender, value: amount },
+                    ),
+                ),
+            ],
+        );
+
+    let allowance = dispatcher.allowance(owner, spender);
+    assert(allowance == amount, 'Incorrect allowance');
+}
+
+
+#[test]
+fn test_transfer_from() {
+    let (dispatcher, token_address) = deploy_contract();
+
+    let owner: ContractAddress = contract_address_const::<'owner'>();
+    let spender: ContractAddress = contract_address_const::<'spender'>();
+    let recipient: ContractAddress = contract_address_const::<'recipient'>();
+    let amount = 100;
+
+    start_cheat_caller_address(token_address, owner);
+    dispatcher.approve(spender, amount);
+
+    let sender_balance_before = dispatcher.balance_of(owner);
+    let recipient_balance_before = dispatcher.balance_of(recipient);
+
+    start_cheat_caller_address(token_address, spender);
+    dispatcher.transfer_from(owner, recipient, amount);
+
+    let sender_balance_after = dispatcher.balance_of(owner);
+    let recipient_balance_after = dispatcher.balance_of(recipient);
+
+    assert((sender_balance_before - amount) == sender_balance_after, 'Incorrect sender balance');
+    assert(
+        (recipient_balance_before + amount) == recipient_balance_after,
+        'Incorrect recipient balance',
+    );
+}
+
