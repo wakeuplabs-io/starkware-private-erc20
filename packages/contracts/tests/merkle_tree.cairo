@@ -1,9 +1,9 @@
 use starknet::ContractAddress;
 use snforge_std::{declare, ContractClassTrait, DeclareResultTrait};
-use contracts::IMerkleTreeWithHistoryDispatcher;
-use contracts::IMerkleTreeWithHistoryDispatcherTrait;
-use contracts::hashes::PoseidonCHasher;
-use contracts::constants;
+use contracts::merkle_tree::merkle_tree::IMerkleTreeWithHistoryDispatcher;
+use contracts::merkle_tree::merkle_tree::IMerkleTreeWithHistoryDispatcherTrait;
+use contracts::merkle_tree::hashes::PoseidonCHasher;
+use contracts::merkle_tree::constants;
 
 fn deploy_contract() -> (IMerkleTreeWithHistoryDispatcher, ContractAddress) {
     let contract = declare("MerkleTreeWithHistory").unwrap().contract_class();

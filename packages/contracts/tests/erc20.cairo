@@ -4,10 +4,10 @@ use snforge_std::{
     start_cheat_caller_address, spy_events, EventSpyAssertionsTrait, declare, ContractClassTrait,
     DeclareResultTrait,
 };
-use contracts::IErc20Dispatcher;
-use contracts::IErc20DispatcherTrait;
-use contracts::erc20::Erc20;
-use contracts::constants::TOTAL_SUPPLY;
+use contracts::erc20::erc20::IErc20Dispatcher;
+use contracts::erc20::erc20::IErc20DispatcherTrait;
+use contracts::erc20::erc20::Erc20;
+use contracts::erc20::constants::TOTAL_SUPPLY;
 
 const TOKEN_NAME: felt252 = 'Token Name';
 const TOKEN_SYMBOL: felt252 = 'SYM';

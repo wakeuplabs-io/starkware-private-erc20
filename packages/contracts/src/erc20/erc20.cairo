@@ -20,7 +20,7 @@ pub mod Erc20 {
     use core::num::traits::{Bounded, Zero};
     use starknet::get_caller_address;
     use starknet::ContractAddress;
-    use crate::constants::TOTAL_SUPPLY;
+    use crate::erc20::constants::TOTAL_SUPPLY;
     use core::starknet::storage::{
         Map, StoragePathEntry, StoragePointerReadAccess, StoragePointerWriteAccess,
     };

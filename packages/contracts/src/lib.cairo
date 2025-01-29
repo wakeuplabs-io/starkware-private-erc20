@@ -1,12 +1,10 @@
-pub mod erc20;
-pub use erc20::*;
+pub mod erc20 {
+    pub mod erc20;
+    pub mod constants;
+}
 
-pub mod merkle_tree;
-pub use merkle_tree::*;
-
-pub mod hashes;
-pub use hashes::*;
-
-
-pub mod constants;
-pub use constants::*;
+pub mod merkle_tree {
+    pub mod merkle_tree;
+    pub mod hashes;
+    pub mod constants;
+}

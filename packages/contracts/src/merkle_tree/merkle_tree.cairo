@@ -1,4 +1,3 @@
-
 // TODO: remove limit on transactions
 
 #[starknet::interface]
@@ -12,8 +11,8 @@ pub trait IMerkleTreeWithHistory<TContractState> {
 pub mod MerkleTreeWithHistory {
     use alexandria_math::pow;
     use core::num::traits::Zero;
-    use crate::hashes::PoseidonCHasher;
-    use crate::constants::{ROOT_HISTORY_SIZE, ZERO_VALUE};
+    use crate::merkle_tree::hashes::PoseidonCHasher;
+    use crate::merkle_tree::constants::{ROOT_HISTORY_SIZE, ZERO_VALUE};
     use core::starknet::storage::{
         Map, StoragePathEntry, StoragePointerReadAccess, StoragePointerWriteAccess,
     };
@@ -42,7 +41,7 @@ pub mod MerkleTreeWithHistory {
     #[constructor]
     fn constructor(ref self: ContractState, levels: usize) {
         assert(levels.is_non_zero(), Errors::MT_MIN_LEVELS);
-        assert(levels < 32, Errors::MT_MAX_LEVELS); 
+        assert(levels < 32, Errors::MT_MAX_LEVELS);
 
         self.levels.write(levels);
 
