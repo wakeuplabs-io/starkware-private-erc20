@@ -6,13 +6,12 @@ use contracts::merkle_tree::hashes::PoseidonCHasher;
 use contracts::merkle_tree::constants;
 
 fn deploy_contract() -> (IMerkleTreeWithHistoryDispatcher, ContractAddress) {
-    let contract = declare("MerkleTreeWithHistory").unwrap().contract_class();
+    let contract = declare("MockMerkleTreeWithHistory").unwrap().contract_class();
 
-    let levels: usize = 2; // for testing
-    let constructor_calldata: Array<felt252> = array![levels.into()];
-
-    let (contract_address, _) = contract.deploy(@constructor_calldata).unwrap();
+    let (contract_address, _) = contract.deploy(@array![]).unwrap();
     let dispatcher = IMerkleTreeWithHistoryDispatcher { contract_address };
+
+    dispatcher.initialize(2);
 
     (dispatcher, contract_address)
 }
