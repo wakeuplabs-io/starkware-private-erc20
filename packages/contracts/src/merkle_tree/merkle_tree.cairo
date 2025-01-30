@@ -92,7 +92,7 @@ pub mod MerkleTreeWithHistoryComponent {
         fn insert(ref self: ComponentState<TContractState>, leaf: felt252) -> usize {
             let next_index = self.next_index.read();
             let levels = self.levels.read();
-            assert(next_index != pow(2, self.levels.read()) - 1, Errors::MT_FULL);
+            assert(next_index != pow(2, self.levels.read()), Errors::MT_FULL);
 
             let mut current_index = next_index;
             let mut current_level_hash = leaf;
