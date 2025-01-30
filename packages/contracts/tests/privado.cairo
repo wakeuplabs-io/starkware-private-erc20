@@ -80,7 +80,7 @@ fn test_constructor() {
                     Privado::Event::NewNote(
                         Privado::NewNote {
                             commitment: mint_commitment,
-                            amount: mint_commitment_amount,
+                            amount_enc: mint_commitment_amount,
                             index: 1 // next_index
                         },
                     ),
@@ -140,7 +140,9 @@ fn test_transfer() {
                     contract_address,
                     Privado::Event::NewNote(
                         Privado::NewNote {
-                            commitment: sender_out_commitment, amount: sender_out_amount, index: 2,
+                            commitment: sender_out_commitment,
+                            amount_enc: sender_out_amount,
+                            index: 2,
                         },
                     ),
                 ),
@@ -149,7 +151,7 @@ fn test_transfer() {
                     Privado::Event::NewNote(
                         Privado::NewNote {
                             commitment: receiver_out_commitment,
-                            amount: receiver_out_amount,
+                            amount_enc: receiver_out_amount,
                             index: 3,
                         },
                     ),
