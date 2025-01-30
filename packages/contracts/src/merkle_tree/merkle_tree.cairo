@@ -18,7 +18,7 @@ pub mod MerkleTreeWithHistoryComponent {
         Map, StoragePathEntry, StoragePointerReadAccess, StoragePointerWriteAccess,
     };
 
-    
+
     //
     // Storage
     //
@@ -32,7 +32,7 @@ pub mod MerkleTreeWithHistoryComponent {
         levels: usize,
     }
 
-        
+
     //
     // Errors
     //
@@ -43,7 +43,7 @@ pub mod MerkleTreeWithHistoryComponent {
         pub const MT_MIN_LEVELS: felt252 = 'MT: Levels must be > 0';
     }
 
-        
+
     //
     // External
     //
@@ -52,7 +52,6 @@ pub mod MerkleTreeWithHistoryComponent {
     impl MerkleTreeWithHistoryImpl<
         TContractState, +HasComponent<TContractState>,
     > of super::IMerkleTreeWithHistory<ComponentState<TContractState>> {
-        
         /// Initialize the component
         fn initialize(ref self: ComponentState<TContractState>, levels: usize) {
             assert(levels.is_non_zero(), Errors::MT_MIN_LEVELS);
@@ -136,7 +135,7 @@ pub mod MerkleTreeWithHistoryComponent {
         }
     }
 
-        
+
     //
     // Internal
     //
@@ -145,7 +144,6 @@ pub mod MerkleTreeWithHistoryComponent {
     pub impl InternalImpl<
         TContractState, +HasComponent<TContractState>,
     > of InternalTrait<TContractState> {
-
         /// Dynamically compute zeros for level
         fn _zeros(self: @ComponentState<TContractState>, i: usize) -> felt252 {
             if i == 0 {

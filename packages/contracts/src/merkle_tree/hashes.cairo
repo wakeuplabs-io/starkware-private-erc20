@@ -1,5 +1,4 @@
 use core::hash::HashStateTrait;
-use core::pedersen::PedersenTrait;
 use core::poseidon::PoseidonTrait;
 use core::traits::PartialOrd;
 

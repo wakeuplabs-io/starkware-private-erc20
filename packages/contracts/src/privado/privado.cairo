@@ -163,9 +163,9 @@ pub mod Privado {
         /// - `nullifier_hash` is the hash of the nullifier used to build the commitment
         /// - `sender_commitment` is the commitment that will be used to create the change note
         /// - `sender_amount_enc` is the amount of the change note encrypted with the sender public
-        ///    key 
+        ///    key
         /// - `receiver_commitment` in the commitment that will be used to create the receiver
-        ///    note 
+        ///    note
         /// - `receiver_amount_enc` is the amount of the note encrypted with the receiver
         ///    public key
         ///
@@ -230,7 +230,7 @@ pub mod Privado {
         }
     }
 
-        
+
     //
     // Internal
     //
