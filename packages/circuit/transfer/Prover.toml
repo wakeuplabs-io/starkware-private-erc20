@@ -1,0 +1,9 @@
+amount = ""
+balance = ""
+commitment = ""
+direction_selector = ["", "", "", "", "", "", "", "", "", "", "", "", "", "", "", ""]
+nullifier = ""
+nullifier_hash = ""
+path = ["", "", "", "", "", "", "", "", "", "", "", "", "", "", "", ""]
+root = ""
+secret = ""
