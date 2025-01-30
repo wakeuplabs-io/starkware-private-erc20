@@ -1,18 +1,19 @@
 use starknet::ContractAddress;
 use snforge_std::{declare, ContractClassTrait, DeclareResultTrait};
-use contracts::merkle_tree::merkle_tree::IMerkleTreeWithHistoryDispatcher;
-use contracts::merkle_tree::merkle_tree::IMerkleTreeWithHistoryDispatcherTrait;
+use contracts::merkle_tree::IMerkleTreeWithHistoryDispatcher;
+use contracts::merkle_tree::IMerkleTreeWithHistoryDispatcherTrait;
 use contracts::merkle_tree::hashes::PoseidonCHasher;
 use contracts::merkle_tree::constants;
 
+const MERKLE_TREE_SIZE: usize = 2;
+
 fn deploy_contract() -> (IMerkleTreeWithHistoryDispatcher, ContractAddress) {
-    let contract = declare("MerkleTreeWithHistory").unwrap().contract_class();
+    let contract = declare("MockMerkleTreeWithHistory").unwrap().contract_class();
 
-    let levels: usize = 2; // for testing
-    let constructor_calldata: Array<felt252> = array![levels.into()];
-
-    let (contract_address, _) = contract.deploy(@constructor_calldata).unwrap();
+    let (contract_address, _) = contract.deploy(@array![]).unwrap();
     let dispatcher = IMerkleTreeWithHistoryDispatcher { contract_address };
+
+    dispatcher.initialize(MERKLE_TREE_SIZE);
 
     (dispatcher, contract_address)
 }
@@ -57,6 +58,8 @@ fn test_insert() {
 fn test_insert_full() {
     let (dispatcher, _) = deploy_contract();
 
+    // up to 4 elements because MERKLE_TREE_SIZE = 2
+    dispatcher.insert(1);
     dispatcher.insert(1);
     dispatcher.insert(1);
     dispatcher.insert(1);

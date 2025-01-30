@@ -2,13 +2,14 @@
 
 #[starknet::interface]
 pub trait IMerkleTreeWithHistory<TContractState> {
+    fn initialize(ref self: TContractState, levels: usize);
     fn get_last_root(self: @TContractState) -> felt252;
     fn is_known_root(self: @TContractState, root: felt252) -> bool;
     fn insert(ref self: TContractState, leaf: felt252) -> usize;
 }
 
-#[starknet::contract]
-pub mod MerkleTreeWithHistory {
+#[starknet::component]
+pub mod MerkleTreeWithHistoryComponent {
     use alexandria_math::pow;
     use core::num::traits::Zero;
     use crate::merkle_tree::hashes::PoseidonCHasher;
@@ -17,10 +18,13 @@ pub mod MerkleTreeWithHistory {
         Map, StoragePathEntry, StoragePointerReadAccess, StoragePointerWriteAccess,
     };
 
-    // storage ====================================================================
+
+    //
+    // Storage
+    //
 
     #[storage]
-    struct Storage {
+    pub struct Storage {
         filled_subtrees: Map<usize, felt252>,
         roots: Map<usize, felt252>,
         current_root_index: usize,
@@ -28,7 +32,10 @@ pub mod MerkleTreeWithHistory {
         levels: usize,
     }
 
-    // errors ======================================================================
+
+    //
+    // Errors
+    //
 
     pub mod Errors {
         pub const MT_FULL: felt252 = 'MT: No more space';
@@ -36,31 +43,36 @@ pub mod MerkleTreeWithHistory {
         pub const MT_MIN_LEVELS: felt252 = 'MT: Levels must be > 0';
     }
 
-    // constructor =================================================================
 
-    #[constructor]
-    fn constructor(ref self: ContractState, levels: usize) {
-        assert(levels.is_non_zero(), Errors::MT_MIN_LEVELS);
-        assert(levels < 32, Errors::MT_MAX_LEVELS);
+    //
+    // External
+    //
 
-        self.levels.write(levels);
+    #[embeddable_as(MerkleTreeWithHistory)]
+    impl MerkleTreeWithHistoryImpl<
+        TContractState, +HasComponent<TContractState>,
+    > of super::IMerkleTreeWithHistory<ComponentState<TContractState>> {
+        /// Initialize the component
+        fn initialize(ref self: ComponentState<TContractState>, levels: usize) {
+            assert(levels.is_non_zero(), Errors::MT_MIN_LEVELS);
+            assert(levels < 32, Errors::MT_MAX_LEVELS);
 
-        // initialize merkle tree with zeros
-        for i in 0..levels {
-            self.filled_subtrees.entry(i).write(self._zeros(i));
-        };
-        self.roots.entry(0).write(self._zeros(levels - 1))
-    }
+            self.levels.write(levels);
 
-    // interface implementation ====================================================
+            // initialize merkle tree with zeros
+            for i in 0..levels {
+                self.filled_subtrees.entry(i).write(self._zeros(i));
+            };
+            self.roots.entry(0).write(self._zeros(levels - 1))
+        }
 
-    #[abi(embed_v0)]
-    impl MerkleTreeWithHistoryImpl of super::IMerkleTreeWithHistory<ContractState> {
-        fn get_last_root(self: @ContractState) -> felt252 {
+        /// Get latest root
+        fn get_last_root(self: @ComponentState<TContractState>) -> felt252 {
             self.roots.entry(self.current_root_index.read()).read()
         }
 
-        fn is_known_root(self: @ContractState, root: felt252) -> bool {
+        /// Whether the root is present in the root history
+        fn is_known_root(self: @ComponentState<TContractState>, root: felt252) -> bool {
             if (root.is_zero()) {
                 return false;
             }
@@ -89,10 +101,11 @@ pub mod MerkleTreeWithHistory {
             return res;
         }
 
-        fn insert(ref self: ContractState, leaf: felt252) -> usize {
+        /// Inserts leaf into the merkle tree and updates the root
+        fn insert(ref self: ComponentState<TContractState>, leaf: felt252) -> usize {
             let next_index = self.next_index.read();
             let levels = self.levels.read();
-            assert(next_index != pow(2, self.levels.read()) - 1, Errors::MT_FULL);
+            assert(next_index != pow(2, self.levels.read()), Errors::MT_FULL);
 
             let mut current_index = next_index;
             let mut current_level_hash = leaf;
@@ -122,11 +135,17 @@ pub mod MerkleTreeWithHistory {
         }
     }
 
-    // internal implementation ====================================================
+
+    //
+    // Internal
+    //
 
     #[generate_trait]
-    impl StorageImpl of StorageTrait {
-        fn _zeros(self: @ContractState, i: usize) -> felt252 {
+    pub impl InternalImpl<
+        TContractState, +HasComponent<TContractState>,
+    > of InternalTrait<TContractState> {
+        /// Dynamically compute zeros for level
+        fn _zeros(self: @ComponentState<TContractState>, i: usize) -> felt252 {
             if i == 0 {
                 return ZERO_VALUE;
             } else {

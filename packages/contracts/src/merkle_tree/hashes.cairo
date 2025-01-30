@@ -1,8 +1,4 @@
-// SPDX-License-Identifier: MIT
-// OpenZeppelin Contracts for Cairo v0.20.0 (merkle_tree/hashes.cairo)
-
 use core::hash::HashStateTrait;
-use core::pedersen::PedersenTrait;
 use core::poseidon::PoseidonTrait;
 use core::traits::PartialOrd;
 
@@ -15,20 +11,6 @@ use core::traits::PartialOrd;
 /// Frequently used when working with merkle proofs.
 pub trait CommutativeHasher {
     fn commutative_hash(a: felt252, b: felt252) -> felt252;
-}
-
-/// Computes the Pedersen commutative hash of a sorted pair of felt252 values.
-pub impl PedersenCHasher of CommutativeHasher {
-    /// Computes the Pedersen hash by chaining the two values
-    /// with the length, sorting the pair first.
-    fn commutative_hash(a: felt252, b: felt252) -> felt252 {
-        let hash_state = PedersenTrait::new(0);
-        if a < b {
-            hash_state.update(a).update(b).update(2).finalize()
-        } else {
-            hash_state.update(b).update(a).update(2).finalize()
-        }
-    }
 }
 
 /// Computes the Poseidon commutative hash of a sorted pair of felt252 values.
