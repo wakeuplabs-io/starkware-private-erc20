@@ -16,4 +16,17 @@ export default defineConfig({
   server: {
     port: 3000,
   },
+  optimizeDeps: {
+    esbuildOptions: {
+      target: "esnext",
+    },
+  },
+  build: {
+    target: "esnext",
+    rollupOptions: {
+      output: {
+        format: "esm",
+      },
+    },
+  },
 });

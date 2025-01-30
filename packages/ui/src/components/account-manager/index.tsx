@@ -50,7 +50,7 @@ const AccountManager = () => {
     setPublicKey(naclUtil.encodeBase64(keyPair.publicKey));
     setSecretKey(naclUtil.encodeBase64(keyPair.secretKey));
     localStorage.setItem("PublicKey", naclUtil.encodeBase64(keyPair.publicKey));
-    localStorage.setItem("SecretKey", naclUtil.encodeBase64(keyPair.publicKey));
+    localStorage.setItem("SecretKey", naclUtil.encodeBase64(keyPair.secretKey));
   };
 
   return (

@@ -18,7 +18,6 @@ impl Fieldable for u32 {
 
 
 pub fn main(
-    secret: Field,
     amount: u32,
     balance: u32,
     commitment: Field,
@@ -35,7 +34,7 @@ pub fn main(
     nullifier_check(nullifier_hash, nullifier);
 
     // 3. The sender can create the commitment
-    sender_commitment_check(commitment, nullifier, secret, balance);
+    sender_commitment_check(commitment, nullifier, balance);
 
     // 4. The sender has enough balance to send the amount
     assert(balance >= amount);
