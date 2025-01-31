@@ -19,6 +19,7 @@ assert_macros = "2.9.2"
 
 [[target.starknet-contract]]
 sierra = true
+casm = false
 
 [scripts]
 test = "snforge test"
