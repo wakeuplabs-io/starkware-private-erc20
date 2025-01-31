@@ -10,34 +10,16 @@ use snforge_std::{
 use contracts::merkle_tree::IMerkleTreeWithHistory;
 use contracts::privado::{
     Privado, Privado::InternalTrait, IPrivadoDispatcher, IPrivadoDispatcherTrait, IPrivado,
+    constants::{TOKEN_NAME, TOKEN_SYMBOL, TOKEN_DECIMALS, GET_MINT_COMMITMENT},
 };
-
-const TOKEN_NAME: felt252 = 'Token Name';
-const TOKEN_SYMBOL: felt252 = 'SYM';
-const TOKEN_DECIMALS: u8 = 6;
-const LEVELS: usize = 2;
 
 #[test]
 fn test_constructor() {
     let contract = declare("Privado").unwrap().contract_class();
-    let verifier_address = deploy_verifier();
 
     let mut spy = spy_events();
 
-    let (mint_commitment, mint_commitment_amount, _) = generate_commitment(1, 2, 3);
-    let (contract_address, _) = contract
-        .deploy(
-            @array![
-                TOKEN_NAME,
-                TOKEN_SYMBOL,
-                TOKEN_DECIMALS.into(),
-                LEVELS.into(),
-                mint_commitment,
-                mint_commitment_amount,
-                verifier_address.into(),
-            ],
-        )
-        .unwrap();
+    let (contract_address, _) = contract.deploy(@array![]).unwrap();
     let dispatcher = IPrivadoDispatcher { contract_address };
 
     // metadata
@@ -46,6 +28,7 @@ fn test_constructor() {
     assert(dispatcher.decimals() == TOKEN_DECIMALS, 'Invalid decimals');
 
     // minted commitment
+    let (mint_commitment, mint_amount_enc) = GET_MINT_COMMITMENT();
     spy
         .assert_emitted(
             @array![
@@ -54,7 +37,7 @@ fn test_constructor() {
                     Privado::Event::NewNote(
                         Privado::NewNote {
                             commitment: mint_commitment,
-                            amount_enc: mint_commitment_amount,
+                            amount_enc: mint_amount_enc,
                             index: 1 // next_index
                         },
                     ),
@@ -99,9 +82,9 @@ fn test_transfer() {
             root,
             sender_in_nullifier_hash,
             sender_out_commitment,
-            sender_out_amount,
+            sender_out_amount.clone(),
             receiver_out_commitment,
-            receiver_out_amount,
+            receiver_out_amount.clone(),
             valid_proof,
         );
 
@@ -211,9 +194,9 @@ fn test_transfer_double_spent() {
             root,
             sender_in_nullifier_hash,
             sender_out_commitment,
-            sender_out_amount,
+            sender_out_amount.clone(),
             receiver_out_commitment,
-            receiver_out_amount,
+            receiver_out_amount.clone(),
             valid_proof,
         );
 
@@ -238,11 +221,11 @@ fn test_transfer_double_spent() {
 
 fn generate_commitment(
     secret: felt252, nullifier: felt252, amount: felt252,
-) -> (felt252, felt252, felt252) {
+) -> (felt252, ByteArray, felt252) {
     // just a mock
     (
         PoseidonTrait::new().update_with([nullifier, secret, amount]).finalize(),
-        amount,
+        "amount",
         PoseidonTrait::new().update_with([nullifier]).finalize(),
     )
 }
@@ -251,7 +234,7 @@ fn generate_mock_proof(root: felt252, nullifier_hash: felt252) -> Span<felt252> 
     array![root, nullifier_hash].span()
 }
 
-fn deploy_verifier() -> ContractAddress {
+fn deploy_transfer_verifier() -> ContractAddress {
     let contract = declare("TransferVerifierMock").unwrap().contract_class();
     let (contract_address, _) = contract.deploy(@array![]).unwrap();
 
@@ -260,7 +243,7 @@ fn deploy_verifier() -> ContractAddress {
 
 fn get_contract_state_for_testing() -> (Privado::ContractState, ContractAddress) {
     let mut dispatcher = Privado::contract_state_for_testing();
-    let verifier_address = deploy_verifier();
+    let transfer_verifier_address = deploy_transfer_verifier();
 
     // initialize metadata
     dispatcher.name.write(TOKEN_NAME);
@@ -271,7 +254,7 @@ fn get_contract_state_for_testing() -> (Privado::ContractState, ContractAddress)
     dispatcher.merkle_tree.initialize(2);
 
     // set the verifier address
-    dispatcher.verifier_address.write(verifier_address);
+    dispatcher.transfer_verifier_address.write(transfer_verifier_address);
 
     (dispatcher, test_address())
 }

@@ -17,7 +17,7 @@ Prefund generated address with at least <max_fee> STRK tokens or an equivalent a
 just contracts-deployer-account-deploy
 ```
 
-Deployment with just command (Same for verifier if needed)
+Deployment with just command (Same for verifier if needed). First go to `src/privado/constants` and update properly.
 
 ```bash
 just contracts-declare-privado
