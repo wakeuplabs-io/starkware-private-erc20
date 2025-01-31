@@ -1,13 +1,5 @@
 
-RPC_URL := "https://starknet-sepolia.infura.io/v3/79b316faeb34447d8b9dfe185a2a67bc"
-
-VERIFIER_ADDRESS := "0x0537951480e082dfa91db5777d0d8509335dd2881e9d7135805a2efbdc42b88d"
-NAME := "0x4E616D65"
-SYMBOL := "0x53494D"
-DECIMALS := "0x6"
-LEVELS := "0xC"
-MINT_COMMITMENT := "0x292dd6501b49185427b51fd6d47db5b969cff1068d2a5e18f085a17cb7ff76eb"
-MINT_AMOUNT_ENC := "0x66daa2d2bd9defbc471142c8869438292258d21eb350a8ed9d1014ee7ec55865493216ba0a767c0dfe16fcaa1c04a9057e8ec37e1bba"
+RPC_URL := "https://starknet-sepolia.public.blastapi.io/rpc/v0_7"
 
 # contracts
 
@@ -24,7 +16,7 @@ contracts-declare-privado:
     (cd packages/contracts && sncast --account deployer declare --url {{RPC_URL}} --contract-name Privado --fee-token ETH)
 
 contracts-deploy-privado class_hash:
-    (cd packages/contracts && sncast --account deployer deploy --url {{RPC_URL}} --class-hash {{class_hash}} --fee-token ETH --constructor-calldata {{NAME}} {{SYMBOL}} {{DECIMALS}} {{LEVELS}} {{MINT_COMMITMENT}} {{MINT_AMOUNT_ENC}} {{VERIFIER_ADDRESS}})
+    (cd packages/contracts && sncast --account deployer deploy --url {{RPC_URL}} --class-hash {{class_hash}} --fee-token ETH)
 
 contracts-declare-verifier:
    (cd packages/contracts && sncast --account deployer declare --url {{RPC_URL}} --contract-name TransferVerifierMock --fee-token ETH)
