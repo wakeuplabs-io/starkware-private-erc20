@@ -22,6 +22,7 @@ packages/web3/node_modules
 packages/web3/.env
 packages/web3/cache
 packages/web3/artifacts
+/packages/web3/target
 
 # UI
 packages/ui/.dist
@@ -40,3 +41,5 @@ packages/ui/src/routeTree.gen.ts
 /coverage.json
 
 .serverless
+
+

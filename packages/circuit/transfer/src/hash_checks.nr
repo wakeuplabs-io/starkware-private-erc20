@@ -17,7 +17,6 @@ pub fn sender_commitment_check(
     assert(calculated_commitment == sender_commitment);
 }
 
-
 #[test]
 fn test_nullifier_check() {
     let nullifier = 123456;
