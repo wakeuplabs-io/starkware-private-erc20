@@ -1,0 +1,2 @@
+pub const PUBLIC_INPUTS_ROOT_INDEX: usize = 0;
+pub const PUBLIC_INPUTS_NULLIFIER_HASH_INDEX: usize = 1;

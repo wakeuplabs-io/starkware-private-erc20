@@ -1,6 +1,10 @@
 pub mod privado {
     pub mod privado;
     pub use privado::*;
+    pub mod verifier;
+    pub use verifier::*;
+    pub mod constants;
+    pub use constants::*;
 }
 
 pub mod merkle_tree {
@@ -10,6 +14,4 @@ pub mod merkle_tree {
     pub use hashes::*;
     pub mod constants;
     pub use constants::*;
-    pub mod mock;
-    pub use mock::*;
 }
