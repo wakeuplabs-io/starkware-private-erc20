@@ -23,9 +23,6 @@ fn main() {
         Result::Err(e) => panic!("Error declaring contract: {:?}", e),
     };
         
-
-    println!("Declare result: {:?}", declare_result);
-
     let deploy_result = match deploy(
         *declare_result.class_hash(),
         array![
@@ -46,9 +43,5 @@ fn main() {
         Result::Err(e) => panic!("Error deploying contract: {:?}", e),
     };
 
-    println!("Deploy ok");
-
     assert(deploy_result.transaction_hash != 0, deploy_result.transaction_hash);
-
-    println!("{:?}", deploy_result);
 }

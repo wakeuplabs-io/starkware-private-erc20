@@ -6,9 +6,6 @@ edition = "2024_07"
 [lib]
 name = "contracts"
 
-[workspace]
-members = ["scripts/deploy"]
-
 # See more keys and their definitions at https://docs.swmansion.com/scarb/docs/reference/manifest.html
 
 [dependencies]
