@@ -3,6 +3,9 @@ name = "contracts"
 version = "0.1.0"
 edition = "2024_07"
 
+[lib]
+name = "contracts"
+
 [workspace]
 members = ["scripts/deploy"]
 
@@ -19,7 +22,6 @@ assert_macros = "2.9.2"
 
 [[target.starknet-contract]]
 sierra = true
-casm = false
 
 [scripts]
 test = "snforge test"
