@@ -1,53 +1,26 @@
-use starknet::storage::StoragePointerReadAccess;
-use starknet::storage::StoragePathEntry;
-use snforge_std::EventSpyTrait;
-use contracts::merkle_tree::merkle_tree::IMerkleTreeWithHistory;
-use contracts::privado::privado::IPrivado;
-use starknet::storage::StoragePointerWriteAccess;
-use starknet::ContractAddress;
+use core::{poseidon::PoseidonTrait, hash::{HashStateTrait, HashStateExTrait}};
+use starknet::{
+    storage::{StoragePointerWriteAccess, StoragePathEntry, StoragePointerReadAccess},
+    ContractAddress,
+};
 use snforge_std::{
     spy_events, EventSpyAssertionsTrait, declare, ContractClassTrait, DeclareResultTrait,
-    test_address,
+    test_address, EventSpyTrait,
 };
+use contracts::merkle_tree::IMerkleTreeWithHistory;
 use contracts::privado::{
-    Privado, Privado::InternalTrait, IPrivadoDispatcher, IPrivadoDispatcherTrait,
+    Privado, Privado::InternalTrait, IPrivadoDispatcher, IPrivadoDispatcherTrait, IPrivado,
 };
-use core::poseidon::PoseidonTrait;
-use core::hash::{HashStateTrait, HashStateExTrait};
 
 const TOKEN_NAME: felt252 = 'Token Name';
 const TOKEN_SYMBOL: felt252 = 'SYM';
 const TOKEN_DECIMALS: u8 = 6;
 const LEVELS: usize = 2;
 
-fn generate_commitment(
-    secret: felt252, nullifier: felt252, amount: felt252,
-) -> (felt252, felt252, felt252) {
-    // just a mock
-    (
-        PoseidonTrait::new().update_with([nullifier, secret, amount]).finalize(),
-        amount,
-        PoseidonTrait::new().update_with([nullifier]).finalize(),
-    )
-}
-
-fn get_contract_state_for_testing() -> (Privado::ContractState, ContractAddress) {
-    let mut dispatcher = Privado::contract_state_for_testing();
-
-    // initialize metadata
-    dispatcher.name.write(TOKEN_NAME);
-    dispatcher.symbol.write(TOKEN_SYMBOL);
-    dispatcher.decimals.write(TOKEN_DECIMALS);
-
-    // initialize merkle tree without minting
-    dispatcher.merkle_tree.initialize(2);
-
-    (dispatcher, test_address())
-}
-
 #[test]
 fn test_constructor() {
     let contract = declare("Privado").unwrap().contract_class();
+    let verifier_address = deploy_verifier();
 
     let mut spy = spy_events();
 
@@ -61,6 +34,7 @@ fn test_constructor() {
                 LEVELS.into(),
                 mint_commitment,
                 mint_commitment_amount,
+                verifier_address.into(),
             ],
         )
         .unwrap();
@@ -97,7 +71,7 @@ fn test_transfer() {
     let (mut contract, contract_address) = get_contract_state_for_testing();
 
     // generate the minted note and the
-    let (secret, nullifier, amount) = (1, 2, 3);
+    let (secret, nullifier, amount) = (1, 20, 3);
     let (sender_in_commitment, sender_in_amount, sender_in_nullifier_hash) = generate_commitment(
         secret, nullifier, amount,
     );
@@ -108,22 +82,27 @@ fn test_transfer() {
     let (sender_out_commitment, sender_out_amount, _) = generate_commitment(
         secret, nullifier, amount,
     );
-    let (secret, nullifier, amount) = (4, 5, 6);
+    let (secret, nullifier, amount) = (7, 8, 9);
     let (receiver_out_commitment, receiver_out_amount, _) = generate_commitment(
         secret, nullifier, amount,
     );
+
+    // mock valid proof -> 1 valid 0 invalid, we verify after
+    let root = contract.merkle_tree.get_last_root();
+    let valid_proof = generate_mock_proof(root, sender_in_nullifier_hash);
 
     let mut spy = spy_events();
 
     // call transfer
     contract
         .transfer(
-            contract.merkle_tree.get_last_root(),
+            root,
             sender_in_nullifier_hash,
             sender_out_commitment,
             sender_out_amount,
             receiver_out_commitment,
             receiver_out_amount,
+            valid_proof,
         );
 
     // should nullify the sender_in_nullifier_hash
@@ -183,15 +162,20 @@ fn test_transfer_unknown_root() {
         secret, nullifier, amount,
     );
 
+    // mock valid proof -> 1 valid 0 invalid, we verify after
+    let root = contract.merkle_tree.get_last_root() + 10;
+    let valid_proof = generate_mock_proof(root, sender_in_nullifier_hash);
+
     // call transfer
     contract
         .transfer(
-            contract.merkle_tree.get_last_root() + 10,
+            root,
             sender_in_nullifier_hash,
             sender_out_commitment,
             sender_out_amount,
             receiver_out_commitment,
             receiver_out_amount,
+            valid_proof,
         );
 }
 
@@ -218,24 +202,76 @@ fn test_transfer_double_spent() {
         secret, nullifier, amount,
     );
 
+    let root = contract.merkle_tree.get_last_root();
+    let valid_proof = generate_mock_proof(root, sender_in_nullifier_hash);
+
     // call transfer
     contract
         .transfer(
-            contract.merkle_tree.get_last_root(),
+            root,
             sender_in_nullifier_hash,
             sender_out_commitment,
             sender_out_amount,
             receiver_out_commitment,
             receiver_out_amount,
+            valid_proof,
         );
+
+    // call transfer a second time, with the same nullified note
+    let root = contract.merkle_tree.get_last_root();
+    let valid_proof = generate_mock_proof(root, sender_in_nullifier_hash);
     contract
         .transfer(
-            contract.merkle_tree.get_last_root(),
+            root,
             sender_in_nullifier_hash,
             sender_out_commitment,
             sender_out_amount,
             receiver_out_commitment,
             receiver_out_amount,
+            valid_proof,
         );
 }
 
+//
+// utilities
+//
+
+fn generate_commitment(
+    secret: felt252, nullifier: felt252, amount: felt252,
+) -> (felt252, felt252, felt252) {
+    // just a mock
+    (
+        PoseidonTrait::new().update_with([nullifier, secret, amount]).finalize(),
+        amount,
+        PoseidonTrait::new().update_with([nullifier]).finalize(),
+    )
+}
+
+fn generate_mock_proof(root: felt252, nullifier_hash: felt252) -> Span<felt252> {
+    array![root, nullifier_hash].span()
+}
+
+fn deploy_verifier() -> ContractAddress {
+    let contract = declare("TransferVerifierMock").unwrap().contract_class();
+    let (contract_address, _) = contract.deploy(@array![]).unwrap();
+
+    contract_address
+}
+
+fn get_contract_state_for_testing() -> (Privado::ContractState, ContractAddress) {
+    let mut dispatcher = Privado::contract_state_for_testing();
+    let verifier_address = deploy_verifier();
+
+    // initialize metadata
+    dispatcher.name.write(TOKEN_NAME);
+    dispatcher.symbol.write(TOKEN_SYMBOL);
+    dispatcher.decimals.write(TOKEN_DECIMALS);
+
+    // initialize merkle tree without minting
+    dispatcher.merkle_tree.initialize(2);
+
+    // set the verifier address
+    dispatcher.verifier_address.write(verifier_address);
+
+    (dispatcher, test_address())
+}
