@@ -3,7 +3,7 @@ import { MerkleTree } from "@/utils/merkle-tree"; // Asegúrate de importar el M
 import { CommitmentEvent } from "@/interfaces";
 
 export const useMerkleTree = (events: CommitmentEvent[]) => {
-  const [merkleTree, setMerkleTree] = useState<MerkleTree | null>(null);
+  const [merkleTree, setMerkleTree] = useState<MerkleTree>();
   const [root, setRoot] = useState<string>("");
 
   useEffect(() => {
@@ -21,5 +21,9 @@ export const useMerkleTree = (events: CommitmentEvent[]) => {
     initializeMerkleTree();
   }, [events]);
 
-  return { merkleTree, root };
+  const getProofForCommitment = (commitment: string) => {
+    return merkleTree!.getProof(commitment);
+  };
+
+  return { merkleTree, root, getProofForCommitment };
 };

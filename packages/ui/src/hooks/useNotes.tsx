@@ -3,16 +3,15 @@ import { useNetwork } from "@starknet-react/core";
 import naclUtil from "tweetnacl-util";
 import { decryptNote, encryptNote, generateCommitment, generateHash } from "@/utils/cipher";
 import { CommitmentEvent, NoteExpanded, ReceiverAccount } from "@/interfaces";
-import { SHA256 } from "crypto-js";
 import { useMerkleTree } from "@/hooks/useMerkleTree";
 
 const MOCK_NOTES = [
-  { receiver: "a1a03444c5e440f16936d2baa0b7e67e75b55a2fd6a8d59650fcfd03dd833aaf", value: 100, nullifier: "0" },
-  { receiver: "ad93260fc550f682c2d9fa376c6094bb9a9f07ad6d52308f7bef2b7e564f989c", value: 200, nullifier: "1" },
-  { receiver: "92125e0b6fd962e370e09dde9fd9dea852d87912d131472ec9cc67a08359ea8a", value: 300, nullifier: "2" },
+  { receiver: "0xe468ab33ddc47f5235a00c38ff657eac818586e2", value: 100, nullifier: "0" },
+  { receiver: "0x9bc903a0dd19b724c87eaaa3a6b9de1b7e043a3b", value: 200, nullifier: "1" },
+  { receiver: "0x1cac4b5a6f3c8391aae7981b4a2e60a60be57c7c", value: 300, nullifier: "2" },
 ];
 
-const MOCK_NULLIFIER_HASHES = [ SHA256("1").toString() ];
+
 
 export const useNotes = () => {
   const { chain } = useNetwork();
@@ -23,7 +22,7 @@ export const useNotes = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [publicKey, setPublicKey] = useState<Uint8Array | null>(null);
   const [secretKey, setSecretKey] = useState<Uint8Array | null>(null);
-  const { merkleTree, root } = useMerkleTree(events);
+  const { merkleTree, root, getProofForCommitment } = useMerkleTree(events);
 
   useEffect(() => {
     const storedPublicKey = localStorage.getItem("PublicKey");
@@ -42,9 +41,9 @@ export const useNotes = () => {
     const fetchEvents = async () => {
       try {
         const encryptedNotes = await Promise.all(
-          MOCK_NOTES.map(async (note, index) => {
+          MOCK_NOTES.map(async (note) => {
             const encryptedValue = encryptNote({ value: note.value }, publicKey, secretKey);
-            const commitment = await generateCommitment(note.value, note.receiver, index);
+            const commitment = await generateCommitment(note.value, note.receiver);
             return { commitment, encryptedValue, address: note.receiver };
           })
         );
@@ -84,7 +83,9 @@ export const useNotes = () => {
             };
           })
         );
-  
+        const MOCK_NULLIFIER_HASHES = await Promise.all(["0"].map(async (nullifier) => {
+          return await generateHash(nullifier);
+        }));
         const filteredNotes = decryptedNotes.filter(note => {
           return !MOCK_NULLIFIER_HASHES.includes(note.nullifierHash);
         });
@@ -99,6 +100,6 @@ export const useNotes = () => {
     fetchNotes();
   }, [events, secretKey, publicKey]);
 
-  return { notes, balance, error, isLoading, secretKey, merkleTree, root };
+  return { notes, balance, error, isLoading, secretKey, merkleTree, root, getProofForCommitment };
 };
 

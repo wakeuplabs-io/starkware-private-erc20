@@ -104,7 +104,7 @@ function generateSecretAccount() {
 
 function generateReceiverAddress(secretAccount: string, index: number) {
   const input = `${secretAccount}:${index}`;
-  return { address : SHA256(input).toString(), nullifier: index.toString() };
+  return { address : `0x${SHA256(input).toString().slice(0,40)}`, nullifier: index.toString() };
 }
 
 
