@@ -42,4 +42,5 @@ packages/ui/src/routeTree.gen.ts
 
 .serverless
 
-
+.yarn
+.DS_store

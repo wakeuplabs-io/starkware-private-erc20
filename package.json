@@ -5,7 +5,7 @@
   "scripts": {
     "lint": "eslint . --ext ts,tsx --report-unused-disable-directives --max-warnings 0",
     "dev": "concurrently --kill-others \"pnpm --filter api run dev\" \"pnpm --filter ui run dev\"",
-    "build": "pnpm -r run build"
+    "build": "esbuild-wasm src/index.ts --bundle --outfile=dist/app.js"
   },
   "keywords": [],
   "author": "",
