@@ -145,6 +145,6 @@ const tokenAbi: Abi = [
     ],
     "state_mutability": "external"
   }
-]
+];
 
 export default tokenAbi;

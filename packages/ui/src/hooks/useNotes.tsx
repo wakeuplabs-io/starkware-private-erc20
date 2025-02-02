@@ -77,6 +77,7 @@ export const useNotes = () => {
             return { 
               receiver: event.address, 
               value: decrypted.value, 
+              encryptedValue: event.encryptedValue,
               nullifier, 
               nullifierHash, 
               commitment: event.commitment 
