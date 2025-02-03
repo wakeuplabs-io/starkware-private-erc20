@@ -1,9 +1,10 @@
 import { useEffect, useState } from "react";
 import naclUtil from "tweetnacl-util";
-import { decryptNote, generateHash } from "@/utils/cipher";
 import { useMerkleTree } from "@/hooks/useMerkleTree";
 import { useEvents } from "@/hooks/useEvents";
 import { NoteExpanded, ReceiverAccount } from "@/interfaces";
+import { BarretenbergService } from "@/services/bb.service";
+import { CipherService } from "@/services/cipher.service";
 
 export const useNotes = () => {
   const { events, error: eventsError, isLoading: eventsLoading } = useEvents();
@@ -12,7 +13,7 @@ export const useNotes = () => {
   const [error, setError] = useState<string | null>(eventsError);
   const [publicKey, setPublicKey] = useState<Uint8Array | null>(null);
   const [secretKey, setSecretKey] = useState<Uint8Array | null>(null);
-  const { merkleTree, root, getProofForCommitment } = useMerkleTree(events);
+  const { root, getProofForCommitment, simulateAddCommitments } = useMerkleTree(events);
 
   useEffect(() => {
     const storedPublicKey = localStorage.getItem("PublicKey");
@@ -33,9 +34,9 @@ export const useNotes = () => {
 
         const decryptedNotes = await Promise.all(
           events.map(async (event) => {
-            const decrypted = decryptNote(event.encryptedValue, secretKey, publicKey);
+            const decrypted = CipherService.decryptNote(event.encryptedValue, secretKey, publicKey);
             const nullifier: string = storedReceiverAddresses.find((receiver) => receiver.address === event.address)?.nullifier || "unknown nullifier";
-            const nullifierHash = await generateHash(nullifier);
+            const nullifierHash = BarretenbergService.generateHash(nullifier);
             return {
               receiver: event.address,
               value: decrypted.value,
@@ -47,7 +48,7 @@ export const useNotes = () => {
           })
         );
 
-        const MOCK_NULLIFIER_HASHES = await Promise.all(["0"].map(async (nullifier) => await generateHash(nullifier)));
+        const MOCK_NULLIFIER_HASHES = await Promise.all(["0"].map(async (nullifier) =>  BarretenbergService.generateHash(nullifier)));
 
         const filteredNotes = decryptedNotes.filter(note => !MOCK_NULLIFIER_HASHES.includes(note.nullifierHash));
 
@@ -62,5 +63,5 @@ export const useNotes = () => {
     fetchNotes();
   }, [events, secretKey, publicKey]);
 
-  return { notes, balance, error, eventsLoading, secretKey, merkleTree, root, getProofForCommitment };
+  return { notes, balance, error, eventsLoading, secretKey, root, getProofForCommitment, simulateAddCommitments };
 };

@@ -4,8 +4,8 @@ import "./transfer.css";
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const Transfer = () => {
   const {
-    recipientAddress,
-    setRecipientAddress,
+    publicRecipientAccount,
+    setPublicRecipientAccount,
     recipientPublicKey,
     setRecipientPublicKey,
     amount,
@@ -24,8 +24,8 @@ const Transfer = () => {
         className="transfer-input"
         type="text"
         placeholder="Recipient Address"
-        value={recipientAddress}
-        onChange={handleInputChange(setRecipientAddress)}
+        value={publicRecipientAccount}
+        onChange={handleInputChange(setPublicRecipientAccount)}
       />
 
       <input

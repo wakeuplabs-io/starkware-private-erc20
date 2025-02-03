@@ -1,7 +1,7 @@
 mod merkle_tree;
 mod hash_checks;
 use crate::merkle_tree::merkle_inclusion;
-use crate::hash_checks::{nullifier_check, sender_commitment_check};
+use crate::hash_checks::{generate_commitment, generate_commitment_with_account, nullifier_check};
 
 // use std::hash::poseidon;
 global DEPTH: u32 = 4;
@@ -16,41 +16,45 @@ impl Fieldable for u32 {
     }
 }
 
-
 pub fn main(
-    amount: u32,
     balance: u32,
-    receiver_address: Field,
-    direction_selector: pub [bool; DEPTH],
+    amount: u32,
+    receiver_account: Field,
+    change_account: Field,
+    secret_sender_account: Field,
+    nullifier: Field,
+    nullifier_hash: Field,
     root: pub Field,
     path: [Field; DEPTH],
-    commitment: Field,
-    nullifier: Field,
-    nullifier_hash: pub Field,
+    direction_selector: pub [bool; DEPTH],
+    out_commitment: pub [Field; 2],
+    new_root: pub Field,
+    new_path: [Field; DEPTH],
+    new_direction_selector: [bool; DEPTH],
+    new_path_change: [Field; DEPTH],
+    new_direction_selector_change: [bool; DEPTH],
 ) {
-    // 1. The commitment is in the merkle tree
-    merkle_inclusion(root, commitment, path, direction_selector);
+    assert(balance >= amount);  
 
-    // // 2. The sender knows the nullifier
+    let commitment = generate_commitment(balance, nullifier, secret_sender_account);
+
+    merkle_inclusion(root, path, direction_selector, commitment);
+
     nullifier_check(nullifier_hash, nullifier);
 
-    // // 3. The sender can create the commitment
-    sender_commitment_check(commitment, receiver_address, balance);
+    let receiver_commitment = generate_commitment_with_account(amount, receiver_account);
 
-    // 4. The sender has enough balance to send the amount
-    assert(balance >= amount);
+    let sender_change_commitment = generate_commitment_with_account(amount, change_account); 
 
-    // receiver_nonce_address ya es el commitment
+    assert(receiver_commitment == out_commitment[0]);
 
-    // let calculated_new_receiver = poseidon::bn254::hash_2([receiver_nonce_address, Field(amount)]);
-    // assert(calculated_new_receiver == new_commitment_receiver);
+    assert(sender_change_commitment == out_commitment[1]);
 
-    //TODO: De momento solo enviar nota completa
-    // if balance > amount {
-    //     let calculated_new_change = hash([change_addr, secret_change, balance - amount]);
-    //     assert(calculated_new_change == new_commitment_change);
-    // }
+    merkle_inclusion(new_root, new_path, new_direction_selector, out_commitment[0]);
+
+    merkle_inclusion(new_root, new_path_change, new_direction_selector_change, out_commitment[1]);
 }
+
 
 // #[test]
 // fn test_scenario_ok() {

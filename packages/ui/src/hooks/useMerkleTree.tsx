@@ -25,5 +25,9 @@ export const useMerkleTree = (events: CommitmentEvent[]) => {
     return merkleTree!.getProof(commitment);
   };
 
-  return { merkleTree, root, getProofForCommitment };
+  const simulateAddCommitments = (commitments: string[]) => {
+    return merkleTree!.simulateAddCommitments(commitments);
+  };
+
+  return { merkleTree, root, getProofForCommitment, simulateAddCommitments };
 };

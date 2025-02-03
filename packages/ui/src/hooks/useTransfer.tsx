@@ -1,23 +1,24 @@
 import { useState, useEffect } from "react";
 import { useNotes } from "./useNotes";
-import { NoteExpanded } from "@/interfaces";
+import { NoteExpanded, SimulateAddCommitmentsResult, SimulatedPath } from "@/interfaces";
 import { ProofService } from "@/services/proof.service";
 import tokenAbi from "../abi/token.abi";
 import {
   useContract,
   useSendTransaction,
 } from "@starknet-react/core";
-import { encryptNote } from "@/utils/cipher";
+import { BarretenbergService } from "@/services/bb.service";
+import { AccountService } from "@/services/account.service";
+import { CipherService } from "@/services/cipher.service";
 
 export const useTransfer = () => {
-  const [recipientAddress, setRecipientAddress] = useState("");
+  const [publicRecipientAccount, setPublicRecipientAccount] = useState("");
   const [recipientPublicKey, setRecipientPublicKey] = useState("");
   const [amount, setAmount] = useState(0);
   const [proof, setProof] = useState<Uint16Array | null>(null);
   const [status, setStatus] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
-  const { notes, getProofForCommitment, root, secretKey } = useNotes();
-
+  const { notes, getProofForCommitment, root, secretKey, simulateAddCommitments } = useNotes();
   const PRIVATE_ERC20_CONTRACT_ADDRESS =
     "0x000029f4430cc63c28456d6c5b54029d00338e4c4ec7c873aa1dc1bc3fb38d55";
 
@@ -46,11 +47,10 @@ export const useTransfer = () => {
         setter(e.target.value);
       };
 
-  async function generateProof({ notesToUse }: { notesToUse: NoteExpanded[] }) {
+  async function generateProof({ notesToUse, newRoot, receiverData, changeData }: { notesToUse: NoteExpanded[], newRoot: string, receiverData: SimulatedPath, changeData:SimulatedPath }) {
     setStatus(null);
     setIsLoading(true);
     setProof(null);
-
     try {
       const proofData = getProofForCommitment(notesToUse[0].commitment);
       if (!proofData) {
@@ -58,16 +58,25 @@ export const useTransfer = () => {
       }
       const { path, directionSelector } = proofData;
       const input = {
-        amount,
         balance: notesToUse[0].value,
-        receiver_address: notesToUse[0].receiver,
-        commitment: notesToUse[0].commitment,
-        direction_selector: directionSelector,
+        amount,
+        receiver_account: receiverData.address ,
+        change_account: changeData.address,
+        secret_sender_account: localStorage.getItem("SecretAccount") || "",
         nullifier: notesToUse[0].nullifier,
         nullifier_hash: notesToUse[0].nullifierHash,
-        path,
         root,
+        path: path,
+        direction_selector: directionSelector,
+        out_commitment: [receiverData.commitment, changeData.commitment],
+        new_root: newRoot,
+        new_path: receiverData.path,
+        new_direction_selector: receiverData.directionSelector,
+        new_path_change: changeData.path,
+        new_direction_selector_change: changeData.directionSelector
       };
+
+      console.log(input);
 
       const generatedProof = await ProofService.generateProof(input);
       setProof(generatedProof);
@@ -86,7 +95,13 @@ export const useTransfer = () => {
   }
 
   const sendTransfer = async () => {
-    if (!recipientAddress || !recipientPublicKey || amount <= 0 || !secretKey) {
+    console.log({
+      publicRecipientAccount,
+      recipientPublicKey,
+      amount,
+      secretKey
+    });
+    if (!publicRecipientAccount || !recipientPublicKey || amount <= 0 || !secretKey) {
       console.log("Invalid recipient address, public key, or amount");
       return;
     }
@@ -96,7 +111,6 @@ export const useTransfer = () => {
       return;
     }
 
-    // Ordenar notas de mayor a menor valor
     const noteOrdened = notes.sort((a, b) => b.value - a.value);
     let accumulatedValue = 0;
     const notesToUse = [];
@@ -111,9 +125,23 @@ export const useTransfer = () => {
       console.log("Insufficient funds in notes");
       return;
     }
+    const changeValue = accumulatedValue - amount;
+    const changeAddress = AccountService.generateReceiverAccount();
+    const changeCommitment = BarretenbergService.generateCommitment(changeValue, changeAddress.address );
+    const receiverCommitment = BarretenbergService.generateCommitment(changeValue, publicRecipientAccount );
+    const { newRoot, proofs: simulatedPaths} : SimulateAddCommitmentsResult = await simulateAddCommitments([receiverCommitment, changeCommitment]);
 
+
+    const receiverData: SimulatedPath = {
+      ...simulatedPaths[0],
+      address: publicRecipientAccount
+    };
+    const changeData: SimulatedPath = {
+      ...simulatedPaths[1],
+      address: changeAddress.address
+    };
     try {
-      const generatedProof = await generateProof({ notesToUse });
+      const generatedProof = await generateProof({ notesToUse, newRoot, receiverData, changeData });
 
       if (!generatedProof) {
         console.log("Proof generation failed");
@@ -121,27 +149,22 @@ export const useTransfer = () => {
       }
 
       const callData = contract.populate("transfer", [
-        root,
-        notesToUse[0].nullifierHash,
-        notesToUse[0].commitment,
+
         notesToUse[0].encryptedValue,
-        recipientAddress,
-        encryptNote({value: amount}, recipientPublicKey, secretKey),
+        publicRecipientAccount,
+        CipherService.encryptNote({value: amount}, recipientPublicKey, secretKey),
         generatedProof,
       ]);
 
-      console.log("Calling transfer with:", callData);
-
       await send([callData]);
-
     } catch (error) {
       console.error("Error sending transfer:", error);
     }
   };
 
   return {
-    recipientAddress,
-    setRecipientAddress,
+    publicRecipientAccount,
+    setPublicRecipientAccount,
     recipientPublicKey,
     setRecipientPublicKey,
     amount,

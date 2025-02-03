@@ -1,9 +1,9 @@
 import { useState, useEffect } from "react";
 import "./account-manager.css";
-import SHA256 from "crypto-js/sha256";
 import nacl from "tweetnacl";
 import naclUtil from "tweetnacl-util";
 import { ReceiverAccount } from "@/interfaces";
+import { AccountService } from "@/services/account.service";
 
 const AccountManager = () => {
   const [secretAccount, setSecretAccount] = useState<string | null>(null);
@@ -19,14 +19,17 @@ const AccountManager = () => {
     const savedPublicKey = localStorage.getItem("PublicKey");
     const savedSecretKey = localStorage.getItem("SecretKey");
 
-    if (savedSecret) setSecretAccount(savedSecret);
+    if (savedSecret){ 
+      AccountService.secretAccount = savedSecret;
+      setSecretAccount(savedSecret);
+    }
     setReceiverAccounts(savedReceivers);
     if (savedPublicKey) setPublicKey(savedPublicKey);
     if (savedSecretKey) setSecretKey(savedSecretKey);
   }, []);
 
   const handleInitialize = () => {
-    const secret = generateSecretAccount();
+    const secret = AccountService.generateSecretAccount();
     setSecretAccount(secret);
     localStorage.setItem("SecretAccount", secret);
 
@@ -36,7 +39,7 @@ const AccountManager = () => {
   const handleGenerateReceiver = () => {
     if (!secretAccount) return;
 
-    const newReceiverAddress = generateReceiverAddress(secretAccount, receiverAccounts.length);
+    const newReceiverAddress = AccountService.generateReceiverAccount();
     setReceiverAccounts((prev) => {
       const updatedReceivers = [...prev, newReceiverAddress];
       localStorage.setItem("ReceiverAccounts", JSON.stringify(updatedReceivers));
@@ -95,18 +98,6 @@ const AccountManager = () => {
     </div>
   );
 };
-
-function generateSecretAccount() {
-  const array = new Uint8Array(32);
-  window.crypto.getRandomValues(array);
-  return Array.from(array, (byte) => byte.toString(16).padStart(2, "0")).join("");
-}
-
-function generateReceiverAddress(secretAccount: string, index: number) {
-  const input = `${secretAccount}:${index}`;
-  return { address : `0x${SHA256(input).toString().slice(0,40)}`, nullifier: index.toString() };
-}
-
 
 
 export default AccountManager;
