@@ -1,9 +1,42 @@
-amount = ""
-balance = ""
-commitment = ""
-direction_selector = ["", "", "", ""]
-nullifier = ""
-nullifier_hash = ""
-path = ["", "", "", ""]
-receiver_address = ""
-root = ""
+balance = "500"
+amount = "123"
+receiver_account = "0x246956d284ee9a05672f5ca4067d005a37768d"
+change_account = "0x2a165b3b4bffeed9041aac3e528c2741021863"
+secret_sender_account = "0x8bbb0f698a69ba68873960f99a5a121d6180193a"
+nullifier = "2"
+nullifier_hash = "0x10a1bcbc8042d777b9e26d836704377fdd79202b3b5db02f36eb70407c332b75"
+root = "0x232ff55a1e9cb6788757a2187d5b2d872b9a8d5aff2fd8ea79f5cdf0305c8a08"
+
+path = [
+    "0x00",
+    "0x25c7d996766f2883d11f27069bd86ab8672610ba1d26f9cc428a6350fa8894c4",
+    "0x0e34ac2c09f45a503d2908bcb12f1cbae5fa4065759c88d501c097506a8b2290",
+    "0x21f9172d72fdcdafc312eee05cf5092980dda821da5b760a9fb8dbdf607c8a20"
+]
+
+direction_selector = [false, true, false, false]
+
+out_commitment = [
+    "0x1d9549cdccad3c52a2ba7d6eb95de54f30e2f9d3d58f38b6200d37fc94fe402c",
+    "0x25da79a727bb0c35c2628daf92553f7c4235b8c47060f59fb42b8c76e850376b"
+]
+
+new_root = "0x2c3878f6bbef022f487953381d7528e3f26f4176b25f1d43899b8f746f0584da"
+
+new_path = [
+    "0xdeadbeefcafebabe",
+    "0x25c7d996766f2883d11f27069bd86ab8672610ba1d26f9cc428a6350fa8894c4",
+    "0x1f990b7b3dfdfb8484664b0274f7431d5a0d370bc0a1a44a18bb52d534897fcc",
+    "0x21f9172d72fdcdafc312eee05cf5092980dda821da5b760a9fb8dbdf607c8a20"
+]
+
+new_direction_selector = [true, true, false, false]
+
+new_path_change = [
+    "0x00",
+    "0x0b63a53787021a4a962a452c2921b3663aff1ffd8d5510540f8e659e782956f1",
+    "0x0c5a36a7a8e25a9530b82613efcdb83f217f468fefad0ba40bc181a089d76ffc",
+    "0x21f9172d72fdcdafc312eee05cf5092980dda821da5b760a9fb8dbdf607c8a20"
+]
+
+new_direction_selector_change = [false, false, true, false]
