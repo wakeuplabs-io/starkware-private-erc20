@@ -24,26 +24,18 @@ pub trait IPrivado<TContractState> {
     ///
     /// Requirements:
     ///
-    /// - `root` is the root that will be used to corroborate user commitment is in the tree
-    /// - `nullifier_hash` is the hash of the nullifier used to build the commitment
-    /// - `sender_commitment` is the commitment that will be used to create the change note
-    /// - `sender_amount_enc` is the amount of the change note encrypted with the sender public
+    /// - `proof` validates utxos, ownership and exposes public inputs later
+    /// - `sender_enc_output` is the amount of the change note encrypted with the sender public
     ///    key
-    /// - `receiver_commitment` in the commitment that will be used to create the receiver
-    ///    note
-    /// - `receiver_amount_enc` is the amount of the note encrypted with the receiver
+    /// - `receiver_enc_output` is the amount of the note encrypted with the receiver
     ///    public key
     ///
-    /// Emits a `NewNote` event.
+    /// Emits a `NewCommitment` event.
     fn transfer(
         ref self: TContractState,
-        root: felt252,
-        nullifier_hash: felt252,
-        sender_commitment: felt252,
-        sender_amount_enc: ByteArray,
-        receiver_commitment: felt252,
-        receiver_amount_enc: ByteArray,
-        full_proof_with_hints: Span<felt252>,
+        proof: Span<felt252>,
+        sender_enc_output: ByteArray,
+        receiver_enc_output: ByteArray,
     ) -> bool;
 
     /// Returns the remaining number of tokens that `spender` is
@@ -69,7 +61,15 @@ pub trait IPrivado<TContractState> {
     ///
     /// Emits an `Approval` event.
     fn approve(ref self: TContractState, spender: ContractAddress, amount: u256) -> bool;
+
+
+    /// Reads current_root from contract
+    fn current_root(self: @TContractState) -> u256;
+
+    /// Reads current_root from contract
+    fn current_commitment_index(self: @TContractState) -> u256;
 }
+
 
 #[starknet::contract]
 pub mod Privado {
@@ -78,26 +78,27 @@ pub mod Privado {
     use core::starknet::storage::{
         Map, StoragePathEntry, StoragePointerReadAccess, StoragePointerWriteAccess,
     };
-    use contracts::merkle_tree::{MerkleTreeWithHistoryComponent, IMerkleTreeWithHistory};
     use contracts::privado::verifier::{
         ITransferVerifierContractDispatcherTrait, ITransferVerifierContractDispatcher,
     };
     use contracts::privado::constants::{
-        TOKEN_NAME, TOKEN_SYMBOL, TOKEN_DECIMALS, MERKLE_TREE_LEVELS, PUBLIC_INPUTS_ROOT_INDEX,
-        PUBLIC_INPUTS_NULLIFIER_HASH_INDEX, TRANSFER_VERIFIER_ADDRESS, GET_MINT_COMMITMENT,
+        TOKEN_NAME, TOKEN_SYMBOL, TOKEN_DECIMALS, MERKLE_TREE_INITIAL_ROOT,
+        TRANSFER_VERIFIER_ADDRESS, GET_MINT_COMMITMENT,
     };
 
-    component!(path: MerkleTreeWithHistoryComponent, storage: merkle_tree, event: MerkleTreeEvent);
+    // 
+    // Storage
+    // 
 
     #[storage]
     struct Storage {
         pub name: felt252,
         pub symbol: felt252,
         pub decimals: u8,
-        pub nullified_notes: Map<felt252, bool>,
         pub transfer_verifier_address: ContractAddress,
-        #[substorage(v0)]
-        pub merkle_tree: MerkleTreeWithHistoryComponent::Storage,
+        pub nullified_notes: Map<u256, bool>,
+        pub current_root: u256,
+        pub current_commitment_index: u256
     }
 
     //
@@ -107,8 +108,7 @@ pub mod Privado {
     #[event]
     #[derive(Drop, starknet::Event)]
     pub enum Event {
-        NewNote: NewNote,
-        MerkleTreeEvent: MerkleTreeWithHistoryComponent::Event,
+        NewCommitment: NewCommitment,
     }
 
     /// Emitted when a transfer happens, we'll create 2 entries, one for the sender as a utxo
@@ -117,10 +117,10 @@ pub mod Privado {
     /// - `commitment` is H(H(nullifier, secret), amount) where amount is plaintext and H(nullifier,
     ///    secret) the receiver address
     #[derive(Drop, starknet::Event)]
-    pub struct NewNote {
-        pub commitment: felt252,
+    pub struct NewCommitment {
+        pub commitment: u256,
         pub amount_enc: ByteArray,
-        pub index: usize,
+        pub index: u256,
     }
 
     //
@@ -139,6 +139,18 @@ pub mod Privado {
         pub const INSUFFICIENT_ALLOWANCE: felt252 = 'ERC20: insufficient allowance';
     }
 
+    // 
+    // Structs
+    // 
+
+    pub struct ProofPublicInputs {
+        root: u256,
+        new_root: u256,
+        nullifier_hash: u256,
+        sender_commitment: u256,
+        receiver_commitment: u256
+    }
+
     //
     // Constructor
     //
@@ -152,8 +164,7 @@ pub mod Privado {
         // set transfer verifier address
         self.transfer_verifier_address.write(TRANSFER_VERIFIER_ADDRESS.try_into().unwrap());
 
-        // initialize merkle_tree
-        self.merkle_tree.initialize(MERKLE_TREE_LEVELS);
+        self.current_root.write(MERKLE_TREE_INITIAL_ROOT);
 
         // mint initial note with all funds
         let (mint_commitment, mint_amount_enc) = GET_MINT_COMMITMENT();
@@ -191,39 +202,27 @@ pub mod Privado {
 
         fn transfer(
             ref self: ContractState,
-            root: felt252,
-            nullifier_hash: felt252,
-            sender_commitment: felt252,
-            sender_amount_enc: ByteArray,
-            receiver_commitment: felt252,
-            receiver_amount_enc: ByteArray,
-            full_proof_with_hints: Span<felt252>,
+            proof: Span<felt252>,
+            sender_enc_output: ByteArray,
+            receiver_enc_output: ByteArray,
         ) -> bool {
-            assert(self.merkle_tree.is_known_root(root), Errors::UNKNOWN_ROOT);
-            assert(!self.nullified_notes.entry(nullifier_hash).read(), Errors::SPENT_NOTE);
-
             // verify proof and that public inputs match
-            let verifier = ITransferVerifierContractDispatcher {
-                contract_address: self.transfer_verifier_address.read(),
-            };
-            let public_inputs = verifier
-                .verify_ultra_keccak_honk_proof(full_proof_with_hints)
-                .unwrap();
+            let public_inputs = self._verify_proof(proof);
             assert(
-                (*public_inputs.at(PUBLIC_INPUTS_ROOT_INDEX)) == root.into(),
-                Errors::CORRUPTED_INPUTS,
+                public_inputs.root == self.current_root.read(),
+                Errors::UNKNOWN_ROOT,
             );
-            assert(
-                (*public_inputs.at(PUBLIC_INPUTS_NULLIFIER_HASH_INDEX)) == nullifier_hash.into(),
-                Errors::CORRUPTED_INPUTS,
-            );
+            assert(!self.nullified_notes.entry(public_inputs.nullifier_hash).read(), Errors::SPENT_NOTE);
+
+            // assign new_root
+            self.current_root.write(public_inputs.new_root);
 
             // spend the notes
-            self.nullified_notes.entry(nullifier_hash).write(true);
+            self.nullified_notes.entry(public_inputs.nullifier_hash).write(true);
 
             // create new notes for receiver and sender
-            self._create_note(sender_commitment, sender_amount_enc);
-            self._create_note(receiver_commitment, receiver_amount_enc);
+            self._create_note(public_inputs.sender_commitment, sender_enc_output);
+            self._create_note(public_inputs.receiver_commitment, receiver_enc_output);
 
             true
         }
@@ -248,6 +247,15 @@ pub mod Privado {
         fn approve(ref self: ContractState, spender: ContractAddress, amount: u256) -> bool {
             true
         }
+
+
+        fn current_root(self: @ContractState) -> u256 {
+            self.current_root.read()
+        }
+
+        fn current_commitment_index(self: @ContractState) -> u256 {
+            self.current_commitment_index.read()
+        }
     }
 
 
@@ -264,10 +272,38 @@ pub mod Privado {
         /// - `commitment` is the commitment that will be created
         /// - `amount_enc` is amount encrypted with the receiver public key
         ///
-        /// Emits a `NewNote` event.
-        fn _create_note(ref self: ContractState, commitment: felt252, amount_enc: ByteArray) {
-            let index = self.merkle_tree.insert(commitment);
-            self.emit(NewNote { commitment, amount_enc, index });
+        /// Emits a `NewCommitment` event.
+        fn _create_note(ref self: ContractState, commitment: u256, amount_enc: ByteArray) {
+            let current_index = self.current_commitment_index.read();
+            self.emit(NewCommitment { commitment, amount_enc: amount_enc.clone(), index: current_index });
+            self.current_commitment_index.write(current_index + 1);
+        }
+
+        /// Internal method that verifies proof and returns formatted public inputs
+        ///
+        /// Requirements:
+        ///
+        /// - `commitment` is the commitment that will be created
+        /// - `amount_enc` is amount encrypted with the receiver public key
+        ///
+        /// Emits a `NewCommitment` event.
+        fn _verify_proof(ref self: ContractState, proof: Span<felt252>) -> ProofPublicInputs {
+            let verifier = ITransferVerifierContractDispatcher {
+                contract_address: self.transfer_verifier_address.read(),
+            };
+            let public_inputs = verifier
+                .verify_ultra_keccak_honk_proof(proof)
+                .unwrap();
+
+                ProofPublicInputs {
+                    root:(*public_inputs.at(0)),
+                    new_root: (*public_inputs.at(1)),
+                    nullifier_hash: (*public_inputs.at(2)),
+                    sender_commitment: (*public_inputs.at(3)),
+                    receiver_commitment: (*public_inputs.at(4)),
+                }
         }
     }
 }
+
+
