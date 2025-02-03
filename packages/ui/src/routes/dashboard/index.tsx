@@ -3,7 +3,6 @@ import { createFileRoute } from "@tanstack/react-router";
 import AccountManager from "@/components/account-manager";
 import NotesList from "@/components/notes-list";
 import "./dashboard.css";
-import acir from "@/circuits/transfer.json";
 
 
 export const Route = createFileRoute("/dashboard/")({
@@ -16,7 +15,7 @@ function Dashboard () {
     <div className="dashboard-container">
       <AccountManager />
       <NotesList />
-      <Transfer acir={acir}/>
+      <Transfer/>
     </div>
   );
 }

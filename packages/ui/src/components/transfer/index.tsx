@@ -2,7 +2,7 @@ import { useTransfer } from "@/hooks/useTransfer";
 import "./transfer.css";
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-const Transfer = ({ acir }: { acir: any }) => {
+const Transfer = () => {
   const {
     recipientAddress,
     setRecipientAddress,
@@ -10,13 +10,11 @@ const Transfer = ({ acir }: { acir: any }) => {
     setRecipientPublicKey,
     amount,
     setAmount,
-    proof,
     status,
     isLoading,
-    // generateProof,
     sendTransfer,
     handleInputChange,
-  } = useTransfer({ acir });
+  } = useTransfer();
 
   return (
     <div className="transfer-container">
@@ -50,11 +48,6 @@ const Transfer = ({ acir }: { acir: any }) => {
         {isLoading ? "Transferring..." : "Transfer "}
       </button>
 
-      {proof && (
-        <button className="transfer-button" onClick={sendTransfer}>
-          Transfer
-        </button>
-      )}
 
       {status && (
         <div className={`transfer-status ${status.includes("Error") ? "error" : "success"}`}>
