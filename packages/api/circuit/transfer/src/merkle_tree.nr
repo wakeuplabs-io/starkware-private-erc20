@@ -4,9 +4,9 @@ global DEPTH: u32 = 4;
 
 pub fn merkle_inclusion(
     root: Field,
-    commitment: Field,
     path: [Field; DEPTH],
-    direction_selector: [bool; DEPTH]
+    direction_selector: [bool; DEPTH],
+    commitment: Field,
 ) {
     let mut digest = commitment;
     
