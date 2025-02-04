@@ -6,10 +6,8 @@ class AccountService {
   private static nullifier: number = 0;
 
   static generateSecretAccount(): string {
-    const array = new Uint8Array(20); // 20 bytes -> 40 hex characters
+    const array = new Uint8Array(20);
     window.crypto.getRandomValues(array);
-
-    // Convert bytes to a hex string of exactly 40 characters
     this.secretAccount = "0x" + Array.from(array, (byte) => byte.toString(16).padStart(2, "0")).join("");
     return this.secretAccount;
   }
@@ -26,19 +24,17 @@ class AccountService {
   }
 
   static generateReceiverAccount(): { address: string; nullifier: string } {
-    const bb = BarretenbergService.getInstance();
+
     const secretAccount = this.getSecretAccount();
-    
-    // Convert secretAccount to BigInt safely before hashing
-    const receiverAccount = bb.poseidon2Hash([
+    const receiverAccount = BarretenbergService.generateHashArray([
       new Fr(BigInt(secretAccount)),
       new Fr(BigInt(this.nullifier)),
     ]);
 
-    this.nullifier++; // Increment nullifier for next use
+    this.nullifier++;
 
     return {
-      address: receiverAccount.toString().slice(0, 40),
+      address: receiverAccount.toString(),
       nullifier: (this.nullifier - 1).toString(),
     };
   }

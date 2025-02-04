@@ -1,7 +1,6 @@
 import { useTransfer } from "@/hooks/useTransfer";
 import "./transfer.css";
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
 const Transfer = () => {
   const {
     publicRecipientAccount,
