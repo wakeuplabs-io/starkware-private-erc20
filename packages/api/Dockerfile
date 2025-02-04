@@ -1,6 +1,6 @@
 FROM --platform=linux/amd64 python:3.10-slim AS base
 
-# 1. Instalar dependencias del sistema
+# 1. Install system dependencies
 RUN apt-get update && \
     apt-get install -y \
     git \
@@ -56,16 +56,16 @@ COPY package.json yarn.lock ./
 # Opcional: si usás Yarn 3, copiá la carpeta .yarn y el archivo .yarnrc.yml
 COPY .yarnrc.yml ./
 
-# 5️⃣ Remover la configuración de Workspaces antes de instalar dependencias
+# 11 Remover la configuración de Workspaces antes de instalar dependencias
 RUN jq 'del(.workspaces)' package.json > package-docker.json && mv package-docker.json package.json
 
-# 6️⃣ Instalar dependencias sin Workspaces
+# 12 Instalar dependencias sin Workspaces
 RUN yarn install
 
-# 12. Copiar el resto del código
+# 13. Copiar el resto del código
 COPY . .
 
 
-# 13. Exponer puerto y comando final
+# 14. Exponer puerto y comando final
 EXPOSE 5001
 CMD ["yarn", "dev"]

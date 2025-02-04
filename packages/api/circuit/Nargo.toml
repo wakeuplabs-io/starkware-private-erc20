@@ -1,3 +1,0 @@
-[workspace]
-members = ["transfer"]
-default-member = "transfer"
