@@ -1,15 +1,11 @@
 import { useEffect, useState } from "react";
-import { useNetwork, useAccount, useProvider } from "@starknet-react/core";
+import naclUtil from "tweetnacl-util";
 import { selector } from "starknet";
+import { useNetwork, useAccount, useProvider } from "@starknet-react/core";
 import { CommitmentEvent } from "@/interfaces";
 import { CipherService } from "@/services/cipher.service";
-import naclUtil from "tweetnacl-util";
-
 import { BarretenbergService } from "@/services/bb.service";
-
-
-const PRIVATE_ERC20_CONTRACT_ADDRESS =
-  "0x000029f4430cc63c28456d6c5b54029d00338e4c4ec7c873aa1dc1bc3fb38d55";
+import { PRIVATE_ERC20_CONTRACT_ADDRESS } from "@/constants";
 
 export const useEvents = () => {
   const { chain } = useNetwork();
@@ -94,7 +90,7 @@ export const useEvents = () => {
 
           nullifiersParsed = [BarretenbergService.generateHash("0")];
         }
-
+        console.log({eventsDataParsed});
         setEvents(eventsDataParsed);
         setNullifierHashes(nullifiersParsed);
       } catch (err) {

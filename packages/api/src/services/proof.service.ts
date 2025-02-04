@@ -14,30 +14,29 @@ const PROOFS_MAX_LENGTH = 20;
 
 export async function generateProofFile(input: GenerateProofDto): Promise<void> {
   const tomlContent = `
-    amount = "${input.amount}"
-    balance = "${input.balance}"
-    receiver_account = "${input.receiver_account}"
-    change_account = "${input.change_account}"
-    secret_sender_account = "${input.secret_sender_account}"
-    nullifier = "${input.nullifier}"
-    nullifier_hash = "${input.nullifier_hash}"
     root = "${input.root}"
-
     path = ${JSON.stringify(input.path)}
     direction_selector = ${JSON.stringify(input.direction_selector)}
-
-    out_commitment = ${JSON.stringify(input.out_commitment)}
-
+    
     new_root = "${input.new_root}"
     new_path = ${JSON.stringify(input.new_path)}
     new_direction_selector = ${JSON.stringify(input.new_direction_selector)}
-
-    new_path_change = ${JSON.stringify(input.new_path_change)}
-    new_direction_selector_change = ${JSON.stringify(input.new_direction_selector_change)}
-    `.trim();
+    
+    in_amount = "${input.in_amount}"
+    in_commitment_nullifier = "${input.in_commitment_nullifier}"
+    in_commitment_nullifier_hash = "${input.in_commitment_nullifier_hash}"
+    in_commitment_secret = "${input.in_commitment_secret}"
+    
+    out_amount_sender = "${input.out_amount_sender}"
+    out_amount_receiver = "${input.out_amount_receiver}"
+    receiver_account = "${input.receiver_account}"
+    
+    out_commitments = ${JSON.stringify(input.out_commitments)}
+  `.trim();
 
   await fs.writeFile(PROVER_TOML_PATH, tomlContent, "utf-8");
 }
+
 
 export async function generateProof(): Promise<string[]> {
   try {
