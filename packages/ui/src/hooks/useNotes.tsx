@@ -7,7 +7,7 @@ import { BarretenbergService } from "@/services/bb.service";
 import { CipherService } from "@/services/cipher.service";
 
 export const useNotes = () => {
-  const { events, error: eventsError, isLoading: eventsLoading } = useEvents();
+  const { events, nullifierHashes, error: eventsError, isLoading: eventsLoading } = useEvents();
   const [notes, setNotes] = useState<NoteExpanded[]>([]);
   const [balance, setBalance] = useState<number>(0);
   const [error, setError] = useState<string | null>(eventsError);
@@ -48,9 +48,7 @@ export const useNotes = () => {
           })
         );
 
-        const MOCK_NULLIFIER_HASHES = await Promise.all(["0"].map(async (nullifier) =>  BarretenbergService.generateHash(nullifier)));
-
-        const filteredNotes = decryptedNotes.filter(note => !MOCK_NULLIFIER_HASHES.includes(note.nullifierHash));
+        const filteredNotes = decryptedNotes.filter(note => !nullifierHashes.includes(note.nullifierHash));
 
         setNotes(filteredNotes);
         setBalance(filteredNotes.reduce((acc, note) => acc + note.value, 0));
@@ -61,7 +59,7 @@ export const useNotes = () => {
     };
 
     fetchNotes();
-  }, [events, secretKey, publicKey]);
+  }, [events, nullifierHashes, secretKey, publicKey]);
 
   return { notes, balance, error, eventsLoading, secretKey, root, getProofForCommitment, simulateAddCommitments };
 };

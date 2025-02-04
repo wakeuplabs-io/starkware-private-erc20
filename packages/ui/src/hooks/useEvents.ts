@@ -15,10 +15,13 @@ export const useEvents = () => {
   const { chain } = useNetwork();
   const { address } = useAccount();
   const [events, setEvents] = useState<CommitmentEvent[]>([]);
+  const [nullifierHashes, setNullifierHashes] = useState<string[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const { provider } = useProvider();
-  const newNoteHash = selector.getSelectorFromName("NewNote");
+  const newCommitmentHash = selector.getSelectorFromName("newCommitment");
+  const newNullifierHash = selector.getSelectorFromName("NewNullifier");
+
   useEffect(() => {
     if (!chain || !address) return;
 
@@ -28,22 +31,33 @@ export const useEvents = () => {
       try {
         const savedPublicKey = localStorage.getItem("PublicKey");
         const savedSecretKey = localStorage.getItem("SecretKey");
-        const events = await provider.channel.getEvents({
+        const eventsResponse = await provider.channel.getEvents({
           address: PRIVATE_ERC20_CONTRACT_ADDRESS,
-          keys: [[newNoteHash.toString()]],
+          keys: [[newCommitmentHash], [newNullifierHash]],
           from_block: { block_number: 490000 },
           to_block: "latest",
           chunk_size: 100, 
         });
-        console.log("events", events);
-        const eventsData = events.events.map(event => event.data).filter(event => event[0].length > 5);
-        let eventsDataParsed : CommitmentEvent[] = eventsData.map(event => {
+
+        const commitmentEventsData = eventsResponse.events
+          .filter(event => event.keys[0] === newCommitmentHash.toString())
+          .map(event => event.data)
+          .filter(event => event[0].length > 5);
+
+        const nullifierEventsData = eventsResponse.events
+          .filter(event => event.keys[0] === newNullifierHash.toString())
+          .map(event => event.data);
+
+        let eventsDataParsed : CommitmentEvent[] = commitmentEventsData.map(event => {
           return {
             commitment: event[0],
             encryptedValue: event[1],
             address: event[2]
           };
         });
+
+        let nullifiersParsed: string[] = nullifierEventsData.map(event => (event[0]));
+
         if (savedPublicKey && savedSecretKey) {
           eventsDataParsed = [
             {
@@ -77,9 +91,12 @@ export const useEvents = () => {
               address: "0x09ee9b0a2e8a3fe6677891a7886921b6baa0dc642bd985333f8735e8d9020366",
             },
           ];
+
+          nullifiersParsed = [BarretenbergService.generateHash("0")];
         }
 
         setEvents(eventsDataParsed);
+        setNullifierHashes(nullifiersParsed);
       } catch (err) {
         console.error("Error fetching events:", err);
         setError("Failed to fetch events");
@@ -89,7 +106,7 @@ export const useEvents = () => {
     };
 
     fetchEvents();
-  }, [chain, address, newNoteHash, provider]);
+  }, [chain, address, newCommitmentHash, newNullifierHash, provider]);
 
-  return { events, error, isLoading };
+  return { events, nullifierHashes, error, isLoading };
 };

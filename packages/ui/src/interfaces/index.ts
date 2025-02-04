@@ -13,7 +13,6 @@ export interface Note {
   addressReceiver: string;
 }
 
-
 export interface CommitmentEvent {
   commitment: string;
   encryptedValue: string;
