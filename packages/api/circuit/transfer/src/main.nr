@@ -9,7 +9,6 @@ global DEPTH: u32 = 4;
 pub fn main(
     balance: Field,
     amount: Field,
-
     receiver_account: Field,
     change_account: Field,
     secret_sender_account: Field,
@@ -17,9 +16,9 @@ pub fn main(
     nullifier_hash: Field,
     root: pub Field,
     path: [Field; DEPTH],
-    direction_selector: pub [bool; DEPTH],
-    out_commitment: pub [Field; 2],
-    new_root: pub Field,
+    direction_selector: [bool; DEPTH],
+    out_commitment: [Field; 2],
+    new_root: Field,
     new_path: [Field; DEPTH],
     new_direction_selector: [bool; DEPTH],
     new_path_change: [Field; DEPTH],

@@ -9,7 +9,7 @@ pub fn generate_commitment( value: Field, nullifier: Field, secret_account: Fiel
 
 pub fn generate_commitment_with_account( value: Field, receiver_account: Field ) -> Field {
     poseidon2::Poseidon2::hash([receiver_account, value], 2)
-
+}
 
 pub fn nullifier_check(
     nullifier_hash: Field,
