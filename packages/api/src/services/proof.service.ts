@@ -50,48 +50,55 @@ export async function generateProof(): Promise<string[]> {
       .catch(() => false);
 
     if (!vkExists) {
+      console.log("Verifying circuit execution...");
       await execPromise("nargo execute", { cwd: CIRCUIT_PATH });
-      console.log("nargo executed");
+      console.log("Circuit executed successfully.");
+
+      console.log("Generating verification key (vk.bin)...");
       await execPromise("/root/.bb/bb write_vk_ultra_keccak_honk -b target/transfer.json -o ./target/vk.bin", {
         cwd: CIRCUIT_PATH,
       });
-      console.log("vk generated");
-    } else{
-      console.log("vk was generated");
+      console.log("Verification key (vk.bin) generated successfully.");
+    } else {
+      console.log("Verification key (vk.bin) already exists. Skipping generation.");
     }
-
 
     await fs.mkdir(proofDir, { recursive: true });
 
     const timestamp = Date.now();
     const proofPath = path.join(proofDir, `transfer_proof_${timestamp}.bin`);
 
+    console.log("Generating proof...");
     await execPromise(`/root/.bb/bb prove_ultra_keccak_honk -b target/transfer.json -w target/transfer.gz -o ${proofPath}`, {
       cwd: CIRCUIT_PATH,
     });
-    console.log(`Proof generated: ${proofPath}`);
+    console.log(`Proof successfully generated: ${proofPath}`);
 
+    console.log("Generating proof calldata...");
     const { stdout } = await execPromise(
       `garaga calldata --system ultra_keccak_honk --vk target/vk.bin --proof ${proofPath} --format array`,
       { cwd: CIRCUIT_PATH }
     );
+    console.log("Calldata successfully generated.");
+
     const trimmedStdout = stdout.trim();
     const modifiedStdout = trimmedStdout.substring(1, trimmedStdout.length - 1);
-    
+
     const proofFiles = (await fs.readdir(proofDir))
       .filter(file => file.startsWith("transfer_proof_") && file.endsWith(".bin"))
       .sort((a, b) => parseInt(a.split("_")[2]) - parseInt(b.split("_")[2]));
 
     if (proofFiles.length > PROOFS_MAX_LENGTH) {
-      const filesToDelete = proofFiles.slice(0, proofFiles.length - 10);
+      const filesToDelete = proofFiles.slice(0, proofFiles.length - PROOFS_MAX_LENGTH);
       for (const file of filesToDelete) {
         await fs.unlink(path.join(proofDir, file));
       }
-      console.log(`Cleanup done: Removed ${filesToDelete.length} old proof files.`);
+      console.log(`Cleanup completed: Removed ${filesToDelete.length} outdated proof files.`);
     }
 
     return modifiedStdout.split(",").map((x) => x.trim());
   } catch (error) {
-    throw new Error(`Error generating proof: ${(error as Error).message}`);
+    console.error("Error occurred during proof generation:", error);
+    throw new Error(`Proof generation failed: ${(error as Error).message}`);
   }
 }
