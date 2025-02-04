@@ -8,7 +8,6 @@ class AccountService {
   static generateSecretAccount(): string {
     const array = new Uint8Array(20);
     window.crypto.getRandomValues(array);
-
     this.secretAccount = "0x" + Array.from(array, (byte) => byte.toString(16).padStart(2, "0")).join("");
     return this.secretAccount;
   }
@@ -25,6 +24,7 @@ class AccountService {
   }
 
   static generateReceiverAccount(): { address: string; nullifier: string } {
+
     const secretAccount = this.getSecretAccount();
     const receiverAccount = BarretenbergService.generateHashArray([
       new Fr(BigInt(secretAccount)),

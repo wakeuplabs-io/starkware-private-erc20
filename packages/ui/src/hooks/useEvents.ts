@@ -4,7 +4,9 @@ import { selector } from "starknet";
 import { CommitmentEvent } from "@/interfaces";
 import { CipherService } from "@/services/cipher.service";
 import naclUtil from "tweetnacl-util";
+
 import { BarretenbergService } from "@/services/bb.service";
+
 
 const PRIVATE_ERC20_CONTRACT_ADDRESS =
   "0x000029f4430cc63c28456d6c5b54029d00338e4c4ec7c873aa1dc1bc3fb38d55";
@@ -45,12 +47,14 @@ export const useEvents = () => {
         if (savedPublicKey && savedSecretKey) {
           eventsDataParsed = [
             {
+
               commitment: BarretenbergService.generateCommitment("0x246956d284ee9a05672f5ca4067d005a37768de580e0737246dcbbf9e79c390f", 100),
               encryptedValue: CipherService.encryptNote(
                 { value: 100 },
                 naclUtil.decodeBase64(savedPublicKey),
                 naclUtil.decodeBase64(savedSecretKey)
               ),
+
               address: "0x246956d284ee9a05672f5ca4067d005a37768de580e0737246dcbbf9e79c390f",
             },
             {
@@ -69,10 +73,12 @@ export const useEvents = () => {
                 naclUtil.decodeBase64(savedPublicKey),
                 naclUtil.decodeBase64(savedSecretKey)
               ),
+
               address: "0x09ee9b0a2e8a3fe6677891a7886921b6baa0dc642bd985333f8735e8d9020366",
             },
           ];
         }
+
         setEvents(eventsDataParsed);
       } catch (err) {
         console.error("Error fetching events:", err);

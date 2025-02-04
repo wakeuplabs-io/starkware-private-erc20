@@ -11,6 +11,7 @@ import { AccountService } from "@/services/account.service";
 import { CipherService } from "@/services/cipher.service";
 import privateTokenAbi from "@/abi/private-erc20.abi";
 
+
 export const useTransfer = () => {
   const [publicRecipientAccount, setPublicRecipientAccount] = useState("");
   const [recipientPublicKey, setRecipientPublicKey] = useState("");
@@ -125,6 +126,7 @@ export const useTransfer = () => {
       console.log("Insufficient funds in notes");
       return;
     }
+
     const receiverCommitment = BarretenbergService.generateCommitment(publicRecipientAccount, amount );
     const changeAddress = AccountService.generateReceiverAccount();
     const changeValue = accumulatedValue - amount;
