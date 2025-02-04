@@ -31,6 +31,24 @@ const privateTokenAbi: Abi = [
     ]
   },
   {
+    "name": "core::byte_array::ByteArray",
+    "type": "struct",
+    "members": [
+      {
+        "name": "data",
+        "type": "core::array::Array::<core::bytes_31::bytes31>"
+      },
+      {
+        "name": "pending_word",
+        "type": "core::felt252"
+      },
+      {
+        "name": "pending_word_len",
+        "type": "core::integer::u32"
+      }
+    ]
+  },
+  {
     "name": "core::bool",
     "type": "enum",
     "variants": [
@@ -113,32 +131,16 @@ const privateTokenAbi: Abi = [
         "type": "function",
         "inputs": [
           {
-            "name": "root",
-            "type": "core::felt252"
-          },
-          {
-            "name": "nullifier_hash",
-            "type": "core::felt252"
-          },
-          {
-            "name": "sender_commitment",
-            "type": "core::felt252"
-          },
-          {
-            "name": "sender_amount_enc",
-            "type": "core::felt252"
-          },
-          {
-            "name": "receiver_commitment",
-            "type": "core::felt252"
-          },
-          {
-            "name": "receiver_amount_enc",
-            "type": "core::felt252"
-          },
-          {
-            "name": "full_proof_with_hints",
+            "name": "proof",
             "type": "core::array::Span::<core::felt252>"
+          },
+          {
+            "name": "sender_enc_output",
+            "type": "core::byte_array::ByteArray"
+          },
+          {
+            "name": "receiver_enc_output",
+            "type": "core::byte_array::ByteArray"
           }
         ],
         "outputs": [
@@ -211,92 +213,69 @@ const privateTokenAbi: Abi = [
           }
         ],
         "state_mutability": "external"
+      },
+      {
+        "name": "current_root",
+        "type": "function",
+        "inputs": [],
+        "outputs": [
+          {
+            "type": "core::integer::u256"
+          }
+        ],
+        "state_mutability": "view"
+      },
+      {
+        "name": "current_commitment_index",
+        "type": "function",
+        "inputs": [],
+        "outputs": [
+          {
+            "type": "core::integer::u256"
+          }
+        ],
+        "state_mutability": "view"
       }
     ]
   },
   {
     "name": "constructor",
     "type": "constructor",
-    "inputs": [
-      {
-        "name": "name",
-        "type": "core::felt252"
-      },
-      {
-        "name": "symbol",
-        "type": "core::felt252"
-      },
-      {
-        "name": "decimals",
-        "type": "core::integer::u8"
-      },
-      {
-        "name": "levels",
-        "type": "core::integer::u32"
-      },
-      {
-        "name": "mint_commitment",
-        "type": "core::felt252"
-      },
-      {
-        "name": "mint_amount_enc",
-        "type": "core::felt252"
-      },
-      {
-        "name": "verifier_address",
-        "type": "core::starknet::contract_address::ContractAddress"
-      }
-    ]
+    "inputs": []
   },
   {
     "kind": "struct",
-    "name": "contracts::privado::privado::Privado::NewNote",
+    "name": "contracts::privado::privado::Privado::NewCommitment",
     "type": "event",
     "members": [
       {
         "kind": "data",
         "name": "commitment",
-        "type": "core::felt252"
+        "type": "core::integer::u256"
       },
       {
         "kind": "data",
         "name": "amount_enc",
-        "type": "core::felt252"
+        "type": "core::byte_array::ByteArray"
       },
       {
         "kind": "data",
         "name": "index",
-        "type": "core::integer::u32"
-      }
-    ]
-  },
-  {
-    "kind": "struct",
-    "name": "contracts::privado::privado::Privado::Approval",
-    "type": "event",
-    "members": [
-      {
-        "kind": "data",
-        "name": "owner",
-        "type": "core::starknet::contract_address::ContractAddress"
-      },
-      {
-        "kind": "data",
-        "name": "spender",
-        "type": "core::starknet::contract_address::ContractAddress"
-      },
-      {
-        "kind": "data",
-        "name": "value",
         "type": "core::integer::u256"
       }
     ]
   },
   {
-    "kind": "enum",
-    "name": "contracts::merkle_tree::merkle_tree::MerkleTreeWithHistoryComponent::Event",
+    "kind": "struct",
+    "name": "contracts::privado::privado::Privado::NewNullifier",
     "type": "event",
-    "variants": []
+    "members": [
+      {
+        "kind": "data",
+        "name": "nullifier_hash",
+        "type": "core::integer::u256"
+      }
+    ]
   },
   {
     "kind": "enum",
@@ -305,18 +284,13 @@ const privateTokenAbi: Abi = [
     "variants": [
       {
         "kind": "nested",
-        "name": "NewNote",
-        "type": "contracts::privado::privado::Privado::NewNote"
+        "name": "NewCommitment",
+        "type": "contracts::privado::privado::Privado::NewCommitment"
       },
       {
         "kind": "nested",
-        "name": "Approval",
-        "type": "contracts::privado::privado::Privado::Approval"
-      },
-      {
-        "kind": "nested",
-        "name": "MerkleTreeEvent",
-        "type": "contracts::merkle_tree::merkle_tree::MerkleTreeWithHistoryComponent::Event"
+        "name": "NewNullifier",
+        "type": "contracts::privado::privado::Privado::NewNullifier"
       }
     ]
   }

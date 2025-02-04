@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useNotes } from "./useNotes";
 import { NoteExpanded, SimulateAddCommitmentsResult, SimulatedPath } from "@/interfaces";
 import { ProofService } from "@/services/proof.service";
@@ -30,14 +30,6 @@ export const useTransfer = () => {
   const { send, error: transferError, status: txStatus } = useSendTransaction({
     calls: undefined,
   });
-
-  useEffect(() => {
-    console.log({ status });
-  }, [status]);
-
-  useEffect(() => {
-    console.log({ notes });
-  }, [notes]);
 
   const handleInputChange =
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -78,6 +70,7 @@ export const useTransfer = () => {
 
       const generatedProof = await ProofService.generateProof(input);
       setProof(generatedProof);
+      
       setStatus("Proof generated successfully!");
       return generatedProof;
     } catch (error) {
@@ -141,7 +134,6 @@ export const useTransfer = () => {
     };
     try {
       const generatedProof = await generateProof({ notesToUse, newRoot, receiverData, changeData });
-      console.log({generatedProof});
       if (!generatedProof) {
         console.log("Proof generation failed");
         return;
