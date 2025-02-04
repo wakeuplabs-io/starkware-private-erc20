@@ -6,19 +6,19 @@ use crate::hash_checks::{generate_commitment, generate_commitment_with_account, 
 // use std::hash::poseidon;
 global DEPTH: u32 = 4;
 
-trait Fieldable {
-    fn to_field(self) -> Field;
-}
+// trait Fieldable {
+//     fn to_field(self) -> Field;
+// }
 
-impl Fieldable for u32 {
-    fn to_field(self) -> Field {
-        self as Field
-    }
-}
+// impl Fieldable for u32 {
+//     fn to_field(self) -> Field {
+//         self as Field
+//     }
+// }
 
 pub fn main(
-    balance: u32,
-    amount: u32,
+    balance: Field,
+    amount: Field,
     receiver_account: Field,
     change_account: Field,
     secret_sender_account: Field,
@@ -34,8 +34,6 @@ pub fn main(
     new_path_change: [Field; DEPTH],
     new_direction_selector_change: [bool; DEPTH],
 ) {
-    assert(balance >= amount);  
-
     let commitment = generate_commitment(balance, nullifier, secret_sender_account);
 
     merkle_inclusion(root, path, direction_selector, commitment);
@@ -44,7 +42,7 @@ pub fn main(
 
     let receiver_commitment = generate_commitment_with_account(amount, receiver_account);
 
-    let sender_change_commitment = generate_commitment_with_account(amount, change_account); 
+    let sender_change_commitment = generate_commitment_with_account(balance - amount, change_account); 
 
     assert(receiver_commitment == out_commitment[0]);
 
