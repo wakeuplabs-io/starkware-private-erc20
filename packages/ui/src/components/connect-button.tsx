@@ -1,7 +1,6 @@
 import { StarknetkitConnector, useStarknetkitConnectModal } from "starknetkit";
 import { useAccount, useConnect, useDisconnect } from "@starknet-react/core";
 
-
 const ConnectButton = () => {
   const { connect, connectors } = useConnect();
   const { disconnect } = useDisconnect();
@@ -9,30 +8,30 @@ const ConnectButton = () => {
   const { starknetkitConnectModal } = useStarknetkitConnectModal({
     connectors: connectors as StarknetkitConnector[],
   });
-   
+
   async function connectWallet() {
-    const { connector } = await starknetkitConnectModal()
+    const { connector } = await starknetkitConnectModal();
     if (!connector) {
-      return
+      return;
     }
-    await connect({ connector })
+    await connect({ connector });
   }
 
   async function disconnectWallet() {
-    await disconnect()
+    await disconnect();
   }
   return (
     <div>
-    <div>
-      {address ? (
-        <div>
-          <p>Connected to: {address}</p>
-          <button onClick={disconnectWallet}>Disconnect</button>
-        </div>
-      ) : (
-        <button onClick={connectWallet}>Connect Wallet</button>
-      )}
-    </div>
+      <div>
+        {address ? (
+          <div>
+            <p>Connected to: {address}</p>
+            <button onClick={disconnectWallet}>Disconnect</button>
+          </div>
+        ) : (
+          <button onClick={connectWallet}>Connect Wallet</button>
+        )}
+      </div>
     </div>
   );
 };

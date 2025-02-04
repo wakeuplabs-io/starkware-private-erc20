@@ -2,7 +2,6 @@ import { useState, useEffect } from "react";
 import { useNotes } from "./useNotes";
 import { NoteExpanded, SimulateAddCommitmentsResult, SimulatedPath } from "@/interfaces";
 import { ProofService } from "@/services/proof.service";
-import tokenAbi from "../abi/token.abi";
 import {
   useContract,
   useSendTransaction,
@@ -10,6 +9,7 @@ import {
 import { BarretenbergService } from "@/services/bb.service";
 import { AccountService } from "@/services/account.service";
 import { CipherService } from "@/services/cipher.service";
+import privateTokenAbi from "@/abi/private-erc20.abi";
 
 export const useTransfer = () => {
   const [publicRecipientAccount, setPublicRecipientAccount] = useState("");
@@ -22,9 +22,8 @@ export const useTransfer = () => {
   const PRIVATE_ERC20_CONTRACT_ADDRESS =
     "0x000029f4430cc63c28456d6c5b54029d00338e4c4ec7c873aa1dc1bc3fb38d55";
 
-  // Instancia del contrato
   const { contract } = useContract({
-    abi: tokenAbi,
+    abi: privateTokenAbi,
     address: PRIVATE_ERC20_CONTRACT_ADDRESS,
   });
 
@@ -56,6 +55,7 @@ export const useTransfer = () => {
       if (!proofData) {
         throw new Error("Proof data not found");
       }
+      console.log({commitment: notesToUse[0].commitment});
       const { path, directionSelector } = proofData;
       const input = {
         balance: notesToUse[0].value,
@@ -81,7 +81,7 @@ export const useTransfer = () => {
       const generatedProof = await ProofService.generateProof(input);
       setProof(generatedProof);
       setStatus("Proof generated successfully!");
-      return generatedProof;
+      return "generatedProof";
     } catch (error) {
       setStatus(
         `Error generating proof: ${
@@ -125,10 +125,10 @@ export const useTransfer = () => {
       console.log("Insufficient funds in notes");
       return;
     }
-    const changeValue = accumulatedValue - amount;
+    const receiverCommitment = BarretenbergService.generateCommitment(publicRecipientAccount, amount );
     const changeAddress = AccountService.generateReceiverAccount();
-    const changeCommitment = BarretenbergService.generateCommitment(changeValue, changeAddress.address );
-    const receiverCommitment = BarretenbergService.generateCommitment(changeValue, publicRecipientAccount );
+    const changeValue = accumulatedValue - amount;
+    const changeCommitment = BarretenbergService.generateCommitment(changeAddress.address, changeValue );
     const { newRoot, proofs: simulatedPaths} : SimulateAddCommitmentsResult = await simulateAddCommitments([receiverCommitment, changeCommitment]);
 
 

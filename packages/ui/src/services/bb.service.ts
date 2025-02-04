@@ -28,12 +28,13 @@ class BarretenbergService {
     return bb.poseidon2Hash(inputs).toString();
   }
 
-  static generateCommitment(value: number, address: string): string {
+  static generateCommitment(address: string, value: number): string {
     const bb = this.getInstance();
     const addressFr = new Fr(BigInt(address));
     const valueFr = new Fr(BigInt(value));
     return bb.poseidon2Hash([addressFr, valueFr]).toString();
   }
+
 
   static convertToField(value: string | number | bigint): Fr {
     let bigIntValue: bigint;
