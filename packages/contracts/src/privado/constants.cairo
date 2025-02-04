@@ -5,7 +5,7 @@ pub const TOKEN_NAME: felt252 = 'Privado';
 pub const TOKEN_SYMBOL: felt252 = 'PRV';
 pub const TOKEN_DECIMALS: u8 = 6;
 pub const MERKLE_TREE_INITIAL_ROOT: u256 = 0x14673c177b52999e9ba7c4e17f8854c48c01e0d860f2e1d82116194869c7b290;  // should already include the first commitment
-pub const TRANSFER_VERIFIER_ADDRESS: felt252 = 0x018ec86664d941e659f64bdcbd53d06ab9034b1981a6e5b8181017194e702a66; // 0x018ec86664d941e659f64bdcbd53d06ab9034b1981a6e5b8181017194e702a66 sepolia mock
+pub const TRANSFER_VERIFIER_ADDRESS: felt252 = 0x013084bdd0cd0911728a391da9d705a9b5e8abea9efad557d8f78ae4e9f5a08e; // 0x018ec86664d941e659f64bdcbd53d06ab9034b1981a6e5b8181017194e702a66 sepolia mock. 0x013084bdd0cd0911728a391da9d705a9b5e8abea9efad557d8f78ae4e9f5a08e sepolia verifier
 
 pub fn GET_MINT_COMMITMENT() -> (u256, ByteArray) {
     (

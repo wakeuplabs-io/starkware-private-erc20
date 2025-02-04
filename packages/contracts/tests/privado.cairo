@@ -176,7 +176,7 @@ fn test_transfer_double_spent() {
 //
 
 fn generate_mock_proof(root: felt252, new_root: felt252, nullifier_hash: felt252, sender_commitment: felt252, receiver_commitment: felt252) -> Span<felt252> {
-    array![root, new_root, nullifier_hash, sender_commitment, receiver_commitment].span()
+    array![root, nullifier_hash, new_root, sender_commitment, receiver_commitment].span()
 }
 
 fn deploy_transfer_verifier() -> ContractAddress {
