@@ -1,42 +1,22 @@
-balance = "500"
-amount = "123"
-receiver_account = "0x246956d284ee9a05672f5ca4067d005a37768d"
-change_account = "0x2a165b3b4bffeed9041aac3e528c2741021863"
+
+amount = "34"
+balance = "650"
+receiver_account = "0x029d91eae49a118f06e100470d1cbd8372ee1c59693901d810b33662d32708e5"
+change_account = "0x09ee9b0a2e8a3fe6677891a7886921b6baa0dc642bd985333f8735e8d9020366"
 secret_sender_account = "0x8bbb0f698a69ba68873960f99a5a121d6180193a"
-nullifier = "2"
-nullifier_hash = "0x10a1bcbc8042d777b9e26d836704377fdd79202b3b5db02f36eb70407c332b75"
-root = "0x232ff55a1e9cb6788757a2187d5b2d872b9a8d5aff2fd8ea79f5cdf0305c8a08"
+nullifier = "1"
+nullifier_hash = "0x168758332d5b3e2d13be8048c8011b454590e06c44bce7f702f09103eef5a373"
+root = "0x0800453ccd4e6811fa04ae70537f0945e43690a10a349cc7bdb43bcd95080893"
 
-path = [
-    "0x00",
-    "0x25c7d996766f2883d11f27069bd86ab8672610ba1d26f9cc428a6350fa8894c4",
-    "0x0e34ac2c09f45a503d2908bcb12f1cbae5fa4065759c88d501c097506a8b2290",
-    "0x21f9172d72fdcdafc312eee05cf5092980dda821da5b760a9fb8dbdf607c8a20"
-]
+path = ["0x1776706e41a946a3b5b1622ead6af4227030235102907f1f585d4358455c6e00","0x0f7e311468b9554d17ba97ca08d47883babe6f731fba1e0cc50d3fadfad5ac54","0x0e34ac2c09f45a503d2908bcb12f1cbae5fa4065759c88d501c097506a8b2290","0x21f9172d72fdcdafc312eee05cf5092980dda821da5b760a9fb8dbdf607c8a20"]
+direction_selector = [true,false,false,false]
 
-direction_selector = [false, true, false, false]
+out_commitment = ["0x158bab88410e2dd3a46ae310e521b55a1eb0aa81d49768f14259789a1b42dca6","0x03db18c0b9048e5dd9bba8f8d8feb904e07b4363d9d5d8b10fd50a99e4501817"]
 
-out_commitment = [
-    "0x1d9549cdccad3c52a2ba7d6eb95de54f30e2f9d3d58f38b6200d37fc94fe402c",
-    "0x25da79a727bb0c35c2628daf92553f7c4235b8c47060f59fb42b8c76e850376b"
-]
+new_root = "0x2f550d05b26c4df9923532c97d15109a280a519029746c10ab32e3df51ef965f"
+new_path = ["0x1e27eff1f07d4c7d5a09075de1c35a350a0103892f50eed35e75cc6d12c08b0f","0x1ca1b915124a875987136c8791ba5b3a210a41dc051fdead87d5eef6097b8eff","0x209f70eb97360110b512a954c970499409638bee50e004e7e8b5c6c843b59da6","0x21f9172d72fdcdafc312eee05cf5092980dda821da5b760a9fb8dbdf607c8a20"]
+new_direction_selector = [true,true,false,false]
 
-new_root = "0x2c3878f6bbef022f487953381d7528e3f26f4176b25f1d43899b8f746f0584da"
+new_path_change = ["0x00","0x0b63a53787021a4a962a452c2921b3663aff1ffd8d5510540f8e659e782956f1","0x14c95ad44e9e0693743ede1de01c989c61ce610ffe86ae39c8b8028dbb74fe61","0x21f9172d72fdcdafc312eee05cf5092980dda821da5b760a9fb8dbdf607c8a20"]
+new_direction_selector_change = [false,false,true,false]
 
-new_path = [
-    "0xdeadbeefcafebabe",
-    "0x25c7d996766f2883d11f27069bd86ab8672610ba1d26f9cc428a6350fa8894c4",
-    "0x1f990b7b3dfdfb8484664b0274f7431d5a0d370bc0a1a44a18bb52d534897fcc",
-    "0x21f9172d72fdcdafc312eee05cf5092980dda821da5b760a9fb8dbdf607c8a20"
-]
-
-new_direction_selector = [true, true, false, false]
-
-new_path_change = [
-    "0x00",
-    "0x0b63a53787021a4a962a452c2921b3663aff1ffd8d5510540f8e659e782956f1",
-    "0x0c5a36a7a8e25a9530b82613efcdb83f217f468fefad0ba40bc181a089d76ffc",
-    "0x21f9172d72fdcdafc312eee05cf5092980dda821da5b760a9fb8dbdf607c8a20"
-]
-
-new_direction_selector_change = [false, false, true, false]

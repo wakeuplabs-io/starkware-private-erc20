@@ -15,7 +15,6 @@ export class MerkleTree {
     this.nextIndex = 0;
   }
 
-
   async addCommitment(commitment: string) {
     if (this.nextIndex >= MAX_LEAVES) {
       throw new Error("Merkle tree is full. No more leaves can be added.");
@@ -40,19 +39,10 @@ export class MerkleTree {
       for (let i = 0; i < nextSize; i++) {
         const left = currentLevel[2*i] ?? ZERO_LEAF;
         const right = currentLevel[2*i + 1] ?? left;
-          
-
         const leftFr = new Fr(BigInt(left));
         const rightFr = new Fr(BigInt(right));
 
-        // Noir pone left en el índice menor y right en el mayor
-
         const hash = await BarretenbergService.generateHashArray([leftFr, rightFr]);
-        if(left == "0x16b640ef5bf81ef5ea750c244eb9e53370709adba1fc6c37f385fa6a740161e5"){
-          console.log("left", left);
-          console.log("right", right);
-          console.log("result", hash.toString());
-        }
 
         nextLevel[i] = hash.toString();
       }
@@ -94,7 +84,7 @@ export class MerkleTree {
       if (pairIndex < levelNodes.length) {
         path.push(levelNodes[pairIndex]);
       } else {
-        path.push(ZERO_LEAF); // Asegurar que sea 0 si no hay par
+        path.push(ZERO_LEAF);
       }
       directionSelector.push(isRightNode);
 

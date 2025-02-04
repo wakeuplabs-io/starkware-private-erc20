@@ -28,7 +28,8 @@ class BarretenbergService {
     return bb.poseidon2Hash(inputs).toString();
   }
 
-  static generateCommitment(value: number, address: string): string {
+
+  static generateCommitment(address: string, value: number): string {
     const bb = this.getInstance();
     const addressFr = new Fr(BigInt(address));
     const valueFr = new Fr(BigInt(value));
@@ -50,4 +51,6 @@ class BarretenbergService {
 (async () => {
   await BarretenbergService.initialize();
 })();
+
 export { BarretenbergService };
+

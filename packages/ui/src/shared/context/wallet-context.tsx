@@ -1,4 +1,4 @@
-import { createContext, useContext, useState, useEffect } from "react";
+import { createContext, useContext, useState } from "react";
 import { AccountInterface, Provider } from "starknet";
 import { connect, disconnect, StarknetWindowObject } from "starknetkit";
 import { InjectedConnector } from "starknetkit/injected";
@@ -23,6 +23,7 @@ const WalletContext = createContext<WalletState>({
 export const WalletProvider = ({ children }: { children: React.ReactNode }) => {
   const [isConnected, setIsConnected] = useState(false);
   const [wallet, setWallet] = useState<StarknetWindowObject | null>(null);
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const [account, setAccount] = useState<any | null>(null);
 
   const connectWallet = async () => {
@@ -72,4 +73,5 @@ export const WalletProvider = ({ children }: { children: React.ReactNode }) => {
   );
 };
 
+// eslint-disable-next-line react-refresh/only-export-components
 export const useWallet = () => useContext(WalletContext);

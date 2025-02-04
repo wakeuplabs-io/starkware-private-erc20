@@ -1,14 +1,15 @@
 use std::hash::poseidon2;
 
 
-pub fn generate_commitment( value: u32, nullifier: Field, secret_account: Field ) -> Field {
+pub fn generate_commitment( value: Field, nullifier: Field, secret_account: Field ) -> Field {
     let receiver_account = poseidon2::Poseidon2::hash([secret_account, nullifier], 2);
-    poseidon2::Poseidon2::hash([receiver_account, value.to_field()], 2)
+    let hash = poseidon2::Poseidon2::hash([receiver_account, value], 2);
+    hash
 }
 
-pub fn generate_commitment_with_account( value: u32, receiver_account: Field ) -> Field {
-    poseidon2::Poseidon2::hash([receiver_account, value.to_field()], 2)
-}
+pub fn generate_commitment_with_account( value: Field, receiver_account: Field ) -> Field {
+    poseidon2::Poseidon2::hash([receiver_account, value], 2)
+
 
 pub fn nullifier_check(
     nullifier_hash: Field,
@@ -21,9 +22,9 @@ pub fn nullifier_check(
 pub fn sender_commitment_check(
     sender_commitment: Field,
     receiver_address: Field,
-    balance: u32
+    balance: Field
 ) {
-    let calculated_commitment = poseidon2::Poseidon2::hash([receiver_address, balance.to_field()],2);
+    let calculated_commitment = poseidon2::Poseidon2::hash([receiver_address, balance],2);
     assert(calculated_commitment == sender_commitment);
 }
 

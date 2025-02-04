@@ -18,9 +18,6 @@ pub fn merkle_inclusion(
             (digest, path[i])
         };
         digest = poseidon2::Poseidon2::hash([left, right], 2);
-        let fmt_str = f"left2: {left}, right: {right}, result {digest}";
-        println(fmt_str);
-        println("------")
     }
 
     assert(digest == root);
@@ -37,27 +34,3 @@ pub fn merkle_inclusion_with_index(
     println(root);
     assert(merkle_root == root);
 }
-
-// #[test]
-// fn test_merkle_inclusion() {
-//     let commitment: Field = poseidon::bn254::hash_1([123456]);
-//     let leafs: [Field; 4] = [
-//         commitment,
-//         poseidon::bn254::hash_1([2]),
-//         poseidon::bn254::hash_1([3]),
-//         poseidon::bn254::hash_1([4]),
-//     ];
-
-
-//     let second_level_1 = poseidon::bn254::hash_2([leafs[0], leafs[1]]);
-//     let second_level_2 = poseidon::bn254::hash_2([leafs[2], leafs[3]]);
-//     let root = poseidon::bn254::hash_2([second_level_1, second_level_2]);
-//     let path: [Field; DEPTH] = [
-//         leafs[1], second_level_2,
-//     ];
-//     let direction_selector: [bool; DEPTH] = [
-//         false, false
-//     ];
-
-//     merkle_inclusion(root, commitment, path, direction_selector);
-// }

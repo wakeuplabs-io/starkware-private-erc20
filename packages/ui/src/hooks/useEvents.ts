@@ -5,6 +5,9 @@ import { CommitmentEvent } from "@/interfaces";
 import { CipherService } from "@/services/cipher.service";
 import naclUtil from "tweetnacl-util";
 
+import { BarretenbergService } from "@/services/bb.service";
+
+
 const PRIVATE_ERC20_CONTRACT_ADDRESS =
   "0x000029f4430cc63c28456d6c5b54029d00338e4c4ec7c873aa1dc1bc3fb38d55";
 
@@ -44,36 +47,38 @@ export const useEvents = () => {
         if (savedPublicKey && savedSecretKey) {
           eventsDataParsed = [
             {
-              commitment: "0xabcdef1234567891",
+
+              commitment: BarretenbergService.generateCommitment("0x246956d284ee9a05672f5ca4067d005a37768de580e0737246dcbbf9e79c390f", 100),
               encryptedValue: CipherService.encryptNote(
                 { value: 100 },
                 naclUtil.decodeBase64(savedPublicKey),
                 naclUtil.decodeBase64(savedSecretKey)
               ),
-              address: "0x246956d284ee9a05672f5ca4067d005a37768d",
+
+              address: "0x246956d284ee9a05672f5ca4067d005a37768de580e0737246dcbbf9e79c390f",
             },
             {
-              commitment: "0xabcdef1234567890",
+              commitment: BarretenbergService.generateCommitment("0x2a165b3b4bffeed9041aac3e528c2741021863f50f096c25f15c3c60272074ee", 650),
               encryptedValue: CipherService.encryptNote(
-                { value: 250 },
+                { value: 650 },
                 naclUtil.decodeBase64(savedPublicKey),
                 naclUtil.decodeBase64(savedSecretKey)
               ),
-              address: "0x2a165b3b4bffeed9041aac3e528c2741021863",
+              address: "0x2a165b3b4bffeed9041aac3e528c2741021863f50f096c25f15c3c60272074ee",
             },
             {
-              commitment: "0xdeadbeefcafebabe",
+              commitment: BarretenbergService.generateCommitment("0x09ee9b0a2e8a3fe6677891a7886921b6baa0dc642bd985333f8735e8d9020366", 500 ),
               encryptedValue: CipherService.encryptNote(
                 { value: 500 },
                 naclUtil.decodeBase64(savedPublicKey),
                 naclUtil.decodeBase64(savedSecretKey)
               ),
-              address: "0x09ee9b0a2e8a3fe6677891a7886921b6baa0dc",
+
+              address: "0x09ee9b0a2e8a3fe6677891a7886921b6baa0dc642bd985333f8735e8d9020366",
             },
           ];
         }
 
-        
         setEvents(eventsDataParsed);
       } catch (err) {
         console.error("Error fetching events:", err);
