@@ -2,6 +2,7 @@ mod merkle_tree;
 use crate::merkle_tree::assert_merkle_inclusion;
 use std::hash::poseidon2::Poseidon2::hash;
 
+// TODO: update before deploying. So far haven't found way to override for testing
 global DEPTH: u32 = 2;
 
 // TODO: amount as u32?
