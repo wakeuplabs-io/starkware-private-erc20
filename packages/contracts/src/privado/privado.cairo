@@ -109,6 +109,7 @@ pub mod Privado {
     #[derive(Drop, starknet::Event)]
     pub enum Event {
         NewCommitment: NewCommitment,
+        NewNullifier: NewNullifier,
     }
 
     /// Emitted when a transfer happens, we'll create 2 entries, one for the sender as a utxo
@@ -121,6 +122,13 @@ pub mod Privado {
         pub commitment: u256,
         pub amount_enc: ByteArray,
         pub index: u256,
+    }
+
+    /// Emitted when a a note is nullified
+    /// - `nullifier_hash` hash of the nullifier used
+    #[derive(Drop, starknet::Event)]
+    pub struct NewNullifier {
+        pub nullifier_hash: u256,
     }
 
     //
@@ -218,7 +226,7 @@ pub mod Privado {
             self.current_root.write(public_inputs.new_root);
 
             // spend the notes
-            self.nullified_notes.entry(public_inputs.nullifier_hash).write(true);
+            self._spend_note(public_inputs.nullifier_hash);
 
             // create new notes for receiver and sender
             self._create_note(public_inputs.sender_commitment, sender_enc_output);
@@ -278,6 +286,19 @@ pub mod Privado {
             self.emit(NewCommitment { commitment, amount_enc: amount_enc.clone(), index: current_index });
             self.current_commitment_index.write(current_index + 1);
         }
+
+        /// Internal method that spends notes
+        ///
+        /// Requirements:
+        ///
+        /// - `nullifier_hash` is the commitment that will be created
+        ///
+        /// Emits a `NewNullifier` event.
+        fn _spend_note(ref self: ContractState, nullifier_hash: u256) {
+            self.nullified_notes.entry(nullifier_hash).write(true);
+            self.emit(NewNullifier { nullifier_hash });
+        }
+
 
         /// Internal method that verifies proof and returns formatted public inputs
         ///

@@ -1,4 +1,4 @@
-use std::hash::poseidon2;
+use std::hash::poseidon2::Poseidon2::hash;
 
 global DEPTH: u32 = 4;
 
@@ -12,52 +12,37 @@ pub fn merkle_inclusion(
     
     for i in 0..DEPTH {
         let (left, right) = if direction_selector[i] {
-
             (path[i], digest)
         } else {
             (digest, path[i])
         };
-        digest = poseidon2::Poseidon2::hash([left, right], 2);
-        let fmt_str = f"left2: {left}, right: {right}, result {digest}";
-        println(fmt_str);
-        println("------")
+
+        digest = hash([left, right], 2);
     }
 
     assert(digest == root);
 }
 
-pub fn merkle_inclusion_with_index(
-    root : Field,
-    commitment: Field,
-    path : [Field; DEPTH],
-    index : Field,
-) {
-    let merkle_root = std::merkle::compute_merkle_root(commitment, index, path);
-    println(merkle_root);
-    println(root);
-    assert(merkle_root == root);
-}
-
 // #[test]
 // fn test_merkle_inclusion() {
-//     let commitment: Field = poseidon::bn254::hash_1([123456]);
+//     let commitment: Field = hash([123456], 1);
 //     let leafs: [Field; 4] = [
 //         commitment,
-//         poseidon::bn254::hash_1([2]),
-//         poseidon::bn254::hash_1([3]),
-//         poseidon::bn254::hash_1([4]),
+//         hash([0], 1),
+//         hash([0], 1),
+//         hash([0], 1),
 //     ];
 
 
-//     let second_level_1 = poseidon::bn254::hash_2([leafs[0], leafs[1]]);
-//     let second_level_2 = poseidon::bn254::hash_2([leafs[2], leafs[3]]);
-//     let root = poseidon::bn254::hash_2([second_level_1, second_level_2]);
+//     let second_level_l = hash([leafs[0], leafs[1]], 2);
+//     let second_level_r = hash([leafs[2], leafs[3]], 2);
+//     let root = hash([second_level_l, second_level_r], 2);
 //     let path: [Field; DEPTH] = [
-//         leafs[1], second_level_2,
+//         leafs[1], second_level_r,
 //     ];
 //     let direction_selector: [bool; DEPTH] = [
-//         false, false
+//         false, false, 
 //     ];
 
-//     merkle_inclusion(root, commitment, path, direction_selector);
+//     merkle_inclusion(root, path, direction_selector, commitment);
 // }
