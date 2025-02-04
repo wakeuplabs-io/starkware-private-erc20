@@ -14,14 +14,17 @@ circuits-check:
 circuits-build:
     (cd {{TRANSFER_CIRCUIT_ROOT}} && nargo build)
 
-circuits-generate-contracts:
-    (cd {{TRANSFER_CIRCUIT_ROOT}} && bb write_vk_ultra_keccak_honk -b target/transfer.json -o target/vk.bin)
-    (cd {{TRANSFER_CIRCUIT_ROOT}} && garaga gen --system ultra_keccak_honk --vk target/vk.bin)
+circuits-proof:
+    (cd {{TRANSFER_CIRCUIT_ROOT}} && nargo execute witness && bb prove_ultra_keccak_honk -b target/transfer.json -w target/witness.gz -o target/proof.bin && garaga calldata --system ultra_keccak_honk --vk target/vk.bin --proof target/proof.bin --format array > calldata.txt)
 
-circuits-declare-contracts:
+circuits-generate-verifier: circuits-build
+    (cd {{TRANSFER_CIRCUIT_ROOT}} && bb write_vk_ultra_keccak_honk -b target/transfer.json -o target/vk.bin)
+    (cd {{TRANSFER_CIRCUIT_ROOT}} && garaga gen --system ultra_keccak_honk --vk target/vk.bin --project-name contracts)
+
+circuits-declare-verifier:
     (cd {{TRANSFER_CIRCUIT_ROOT}}/contracts && sncast --account deployer declare --url {{RPC_URL}} --contract-name UltraKeccakHonkVerifier --fee-token ETH)
 
-circuits-deploy-contracts class_hash:
+circuits-deploy-verifier class_hash:
     (cd {{TRANSFER_CIRCUIT_ROOT}}/contracts && sncast --account deployer deploy --url {{RPC_URL}} --class-hash {{class_hash}} --fee-token ETH)
 
 # contracts

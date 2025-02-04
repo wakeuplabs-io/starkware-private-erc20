@@ -317,9 +317,9 @@ pub mod Privado {
                 .unwrap();
 
             ProofPublicInputs {
-                root:(*public_inputs.at(0)),
-                new_root: (*public_inputs.at(1)),
-                nullifier_hash: (*public_inputs.at(2)),
+                root: (*public_inputs.at(0)),
+                nullifier_hash: (*public_inputs.at(1)),
+                new_root: (*public_inputs.at(2)),
                 sender_commitment: (*public_inputs.at(3)),
                 receiver_commitment: (*public_inputs.at(4)),
             }
