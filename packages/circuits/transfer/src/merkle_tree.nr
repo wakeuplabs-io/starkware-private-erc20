@@ -1,16 +1,15 @@
 use std::hash::poseidon2::Poseidon2::hash;
 
-global DEPTH: u32 = 4;
-
-pub fn merkle_inclusion(
+pub fn assert_merkle_inclusion(
     root: Field,
-    path: [Field; DEPTH],
-    direction_selector: [bool; DEPTH],
+    path: [Field],
+    direction_selector: [bool],
     commitment: Field,
 ) {
-    let mut digest = commitment;
+    assert(path.len() == direction_selector.len());
     
-    for i in 0..DEPTH {
+    let mut digest = commitment;
+    for i in 0..path.len() {
         let (left, right) = if direction_selector[i] {
             (path[i], digest)
         } else {
@@ -23,26 +22,27 @@ pub fn merkle_inclusion(
     assert(digest == root);
 }
 
-// #[test]
-// fn test_merkle_inclusion() {
-//     let commitment: Field = hash([123456], 1);
-//     let leafs: [Field; 4] = [
-//         commitment,
-//         hash([0], 1),
-//         hash([0], 1),
-//         hash([0], 1),
-//     ];
+#[test]
+fn should_included() {
+    let first_level_l = hash([hash([1], 1), hash([0], 1)], 2);
+    let first_level_r = hash([hash([0], 1), hash([0], 1)], 2);
+    let root = hash([first_level_l, first_level_r], 2);
+
+    let path: [Field; 2] = [ hash([0], 1), first_level_r ];
+    let direction_selector: [bool; 2] = [ false, false ];
+
+    assert_merkle_inclusion(root, path, direction_selector, hash([1], 1));
+}
 
 
-//     let second_level_l = hash([leafs[0], leafs[1]], 2);
-//     let second_level_r = hash([leafs[2], leafs[3]], 2);
-//     let root = hash([second_level_l, second_level_r], 2);
-//     let path: [Field; DEPTH] = [
-//         leafs[1], second_level_r,
-//     ];
-//     let direction_selector: [bool; DEPTH] = [
-//         false, false, 
-//     ];
+#[test(should_fail)]
+fn should_not_included() {
+    let first_level_l = hash([hash([1], 1), hash([0], 1)], 2);
+    let first_level_r = hash([hash([0], 1), hash([0], 1)], 2);
+    let root = hash([first_level_l, first_level_r], 2);
 
-//     merkle_inclusion(root, path, direction_selector, commitment);
-// }
+    let path: [Field; 2] = [ hash([0], 1), first_level_r ];
+    let direction_selector: [bool; 2] = [ false, false ];
+
+    assert_merkle_inclusion(root, path, direction_selector, hash([100], 1));
+}

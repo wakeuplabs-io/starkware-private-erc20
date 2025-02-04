@@ -1,94 +1,253 @@
 mod merkle_tree;
-use crate::merkle_tree::merkle_inclusion;
+use crate::merkle_tree::assert_merkle_inclusion;
 use std::hash::poseidon2::Poseidon2::hash;
 
-global DEPTH: u32 = 4;
-
-// address = hash(private key)
-// commitment = hash(address, bliding, amount)
-// nullifier =  hash(commitment, private key) 
+global DEPTH: u32 = 2;
 
 // TODO: amount as u32?
 
 pub fn main(
-    // merkle tree
-    root: pub Field,
-    path: [Field; DEPTH],
-    direction_selector: [bool; DEPTH],
-    new_root: pub Field,
-    new_path: [Field; DEPTH],
-    new_direction_selector: [bool; DEPTH],
-    // inputs
+    // utxo inputs
+    in_root: pub Field,
+    in_path: [Field; DEPTH],
+    in_direction_selector: [bool; DEPTH],
     in_amount: Field,
     in_commitment_nullifier: Field,
     in_commitment_nullifier_hash: pub Field,
     in_commitment_secret: Field,
-    // outputs
+    // utxo outputs
+    out_receiver_account: Field,
+    out_root: pub Field,
     out_amount_sender: Field,
     out_amount_receiver: Field,
-    receiver_account: Field,
-    out_commitments: pub [Field; 2],
+    out_commitment_sender: pub Field,
+    out_commitment_receiver: pub Field,
+    out_subtree_root_path: [Field; DEPTH - 1], // path of hash(out_commitment_sender, out_commitment_receiver)
+    out_subtree_root_direction: [bool; DEPTH - 1] // path direction of hash(out_commitment_sender, out_commitment_receiver)
 ) {
     // check in_commitment is included in the root and belongs to sender
-    let sender_account = hash([in_commitment_secret, in_commitment_nullifier], 2);
+    let sender_account = generate_account(in_commitment_secret, in_commitment_nullifier);
     let in_commitment = generate_commitment(sender_account, in_amount);
-    merkle_inclusion(root, path, direction_selector, in_commitment);
+    assert_merkle_inclusion(in_root, in_path, in_direction_selector, in_commitment);
 
     // check nullifier_hash belongs to nullifier, tied with previous check nullifier derives in commitment
     assert(hash([in_commitment_nullifier], 1) == in_commitment_nullifier_hash);
 
     // check utxo
-    assert(in_amount == out_amount_receiver + out_amount_sender);
+    assert(in_amount == out_amount_receiver + out_amount_sender, "Invalid UTXO amounts");
     
     // validate commitment amounts and receivers are correct
-    assert(generate_commitment(sender_account, out_amount_sender) == out_commitments[0]);
-    assert(generate_commitment(receiver_account, out_amount_receiver) == out_commitments[1]);
+    assert(generate_commitment(sender_account, out_amount_sender) == out_commitment_sender);
+    assert(generate_commitment(out_receiver_account, out_amount_receiver) == out_commitment_receiver);
 
-    // check new commitments are included in the new_root
-    // merkle_inclusion(new_root, new_path, new_direction_selector, out_commitments[0]);
-    // merkle_inclusion(new_root, new_path, new_direction_selector, out_commitments[1]); // TODO:
+    // check we're inserting in a previously empty subtree
+    let zero_subtree_root = hash([0, 0], 2);
+    assert_merkle_inclusion(in_root, out_subtree_root_path, out_subtree_root_direction, zero_subtree_root);
+
+    // check newly inserted commitments belong to new_root
+    let new_subtree_root = hash([out_commitment_sender, out_commitment_receiver], 2);
+    assert_merkle_inclusion(out_root, out_subtree_root_path, out_subtree_root_direction, new_subtree_root);
 }
 
-pub fn generate_commitment(receiver_account: Field, value: Field) -> Field {
-    hash([receiver_account, value], 2)
+pub fn generate_commitment(account: Field, value: Field) -> Field {
+    hash([account, value], 2)
+}
+
+pub fn generate_account(secret: Field, nullifier: Field) -> Field {
+    hash([secret, nullifier], 2)
+}
+
+#[test]
+fn test_allowed_transfer() {
+    // generate amounts
+    let in_amount = 10;
+    let out_amount_receiver = 2;
+    let out_amount_sender = 8;
+
+    // input commitment generation
+    let in_commitment_secret = 1;
+    let in_commitment_nullifier = 2;
+    let in_commitment_nullifier_hash = hash([in_commitment_nullifier], 1);
+    let sender_account = generate_account(in_commitment_secret, in_commitment_nullifier);
+    let in_commitment = generate_commitment(sender_account, in_amount);
+
+    // output commitment generation
+    let receiver_account = generate_account(0, 0);
+    let out_commitment_receiver = generate_commitment(receiver_account, out_amount_receiver);
+    let out_commitment_sender = generate_commitment(sender_account, out_amount_sender);
+
+    // old tree
+    let old_first_level_l = hash([in_commitment, 1], 2);
+    let old_first_level_r = hash([0, 0], 2);
+    let old_root = hash([old_first_level_l, old_first_level_r], 2);
+
+    // new tree
+    let new_first_level_l = hash([in_commitment, 1], 2);
+    let new_first_level_r = hash([out_commitment_sender, out_commitment_receiver], 2);
+    let new_root = hash([new_first_level_l, new_first_level_r], 2);
+
+    main(
+        old_root,
+        [ 1, old_first_level_r ],
+        [false, false],
+        in_amount,
+        in_commitment_nullifier,
+        in_commitment_nullifier_hash,
+        in_commitment_secret,
+        receiver_account,
+        new_root,
+        out_amount_sender,
+        out_amount_receiver,
+        out_commitment_sender,
+        out_commitment_receiver,
+        [new_first_level_l],
+        [true]
+    );
+}
+
+#[test(should_fail_with = "Invalid UTXO amounts")]
+fn test_invalid_utxo_amounts() {
+    // generate amounts
+    let in_amount = 10;
+    let out_amount_receiver = 2;
+    let out_amount_sender = 1000;
+
+    // input commitment generation
+    let in_commitment_secret = 1;
+    let in_commitment_nullifier = 2;
+    let in_commitment_nullifier_hash = hash([in_commitment_nullifier], 1);
+    let sender_account = generate_account(in_commitment_secret, in_commitment_nullifier);
+    let in_commitment = generate_commitment(sender_account, in_amount);
+
+    // output commitment generation
+    let receiver_account = generate_account(0, 0);
+    let out_commitment_receiver = generate_commitment(receiver_account, out_amount_receiver);
+    let out_commitment_sender = generate_commitment(sender_account, out_amount_sender);
+
+    // old tree
+    let old_first_level_l = hash([in_commitment, 1], 2);
+    let old_first_level_r = hash([0, 0], 2);
+    let old_root = hash([old_first_level_l, old_first_level_r], 2);
+
+    // new tree
+    let new_first_level_l = hash([in_commitment, 1], 2);
+    let new_first_level_r = hash([out_commitment_sender, out_commitment_receiver], 2);
+    let new_root = hash([new_first_level_l, new_first_level_r], 2);
+
+    main(
+        old_root,
+        [ 1, old_first_level_r ],
+        [false, false],
+        in_amount,
+        in_commitment_nullifier,
+        in_commitment_nullifier_hash,
+        in_commitment_secret,
+        receiver_account,
+        new_root,
+        out_amount_sender,
+        out_amount_receiver,
+        out_commitment_sender,
+        out_commitment_receiver,
+        [new_first_level_l],
+        [true]
+    );
 }
 
 
-// #[test]
-// fn test_scenario_ok() {
-//     let amount = 200;
-//     let balance = 300;
-//     let nullifier = 123456;
-//     let nullifier_hash = poseidon::bn254::hash_1([nullifier]);
 
-//     let commitment = poseidon::bn254::hash_2([nullifier, balance.to_field()]);
+#[test(should_fail)]
+fn test_unlinked_root() {
+    // generate amounts
+    let in_amount = 10;
+    let out_amount_receiver = 2;
+    let out_amount_sender = 8;
+
+    // input commitment generation
+    let in_commitment_secret = 1;
+    let in_commitment_nullifier = 2;
+    let in_commitment_nullifier_hash = hash([in_commitment_nullifier], 1);
+    let sender_account = generate_account(in_commitment_secret, in_commitment_nullifier);
+    let in_commitment = generate_commitment(sender_account, in_amount);
+
+    // output commitment generation
+    let receiver_account = generate_account(0, 0);
+    let out_commitment_receiver = generate_commitment(receiver_account, out_amount_receiver);
+    let out_commitment_sender = generate_commitment(sender_account, out_amount_sender);
+
+    // old tree
+    let old_first_level_l = hash([in_commitment, 1], 2);
+    let old_first_level_r = hash([0, 0], 2);
+    let old_root = hash([old_first_level_l, old_first_level_r], 2);
+
+    // new tree
+    let new_first_level_l = hash([100, 1], 2); // removed in_commitment
+    let new_first_level_r = hash([out_commitment_sender, out_commitment_receiver], 2);
+    let new_root = hash([new_first_level_l, new_first_level_r], 2);
+
+    main(
+        old_root,
+        [ 1, old_first_level_r ],
+        [false, false],
+        in_amount,
+        in_commitment_nullifier,
+        in_commitment_nullifier_hash,
+        in_commitment_secret,
+        receiver_account,
+        new_root,
+        out_amount_sender,
+        out_amount_receiver,
+        out_commitment_sender,
+        out_commitment_receiver,
+        [new_first_level_l],
+        [true]
+    );
+}
 
 
-//     let leafs: [Field; 4096] = [
-//         commitment,
-//         poseidon::bn254::hash_1([2]),
-//         poseidon::bn254::hash_1([3]),
-//         poseidon::bn254::hash_1([4]),
-//     ];
+#[test(should_fail)]
+fn test_missing_new_commits() {
+    // generate amounts
+    let in_amount = 10;
+    let out_amount_receiver = 2;
+    let out_amount_sender = 8;
 
-//     let second_level_1 = poseidon::bn254::hash_2([leafs[0], leafs[1]]);
-//     let second_level_2 = poseidon::bn254::hash_2([leafs[2], leafs[3]]);
-//     let root = poseidon::bn254::hash_2([second_level_1, second_level_2]);
-//     let path: [Field; DEPTH] = [
-//         leafs[1], second_level_2,
-//     ];
-//     let direction_selector: [bool; DEPTH] = [
-//         false, false
-//     ];
+    // input commitment generation
+    let in_commitment_secret = 1;
+    let in_commitment_nullifier = 2;
+    let in_commitment_nullifier_hash = hash([in_commitment_nullifier], 1);
+    let sender_account = generate_account(in_commitment_secret, in_commitment_nullifier);
+    let in_commitment = generate_commitment(sender_account, in_amount);
 
-//     main(
-//       amount,
-//       balance,
-//       commitment,
-//       root,
-//       path,
-//       direction_selector,
-//       nullifier,
-//       nullifier_hash,
-//     );
-// }
+    // output commitment generation
+    let receiver_account = generate_account(0, 0);
+    let out_commitment_receiver = generate_commitment(receiver_account, out_amount_receiver);
+    let out_commitment_sender = generate_commitment(sender_account, out_amount_sender);
+
+    // old tree
+    let old_first_level_l = hash([in_commitment, 1], 2);
+    let old_first_level_r = hash([0, 0], 2);
+    let old_root = hash([old_first_level_l, old_first_level_r], 2);
+
+    // new tree. Note avoid including new commits
+    let new_first_level_l = hash([in_commitment, 1], 2);
+    let new_first_level_r = hash([0, 0], 2);
+    let new_root = hash([new_first_level_l, new_first_level_r], 2);
+
+    main(
+        old_root,
+        [ 1, old_first_level_r ],
+        [false, false],
+        in_amount,
+        in_commitment_nullifier,
+        in_commitment_nullifier_hash,
+        in_commitment_secret,
+        receiver_account,
+        new_root,
+        out_amount_sender,
+        out_amount_receiver,
+        out_commitment_sender,
+        out_commitment_receiver,
+        [new_first_level_l],
+        [true]
+    );
+}

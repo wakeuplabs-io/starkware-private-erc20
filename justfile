@@ -6,7 +6,7 @@ CONTRACTS_ROOT := "packages/contracts"
 # circuits
 
 circuits-test:
-    (cd {{TRANSFER_CIRCUIT_ROOT}} && nargo test)
+    (cd {{TRANSFER_CIRCUIT_ROOT}} && nargo test --show-output)
 
 circuits-check:
     (cd {{TRANSFER_CIRCUIT_ROOT}} && nargo check)

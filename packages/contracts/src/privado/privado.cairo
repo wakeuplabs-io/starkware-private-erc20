@@ -316,13 +316,13 @@ pub mod Privado {
                 .verify_ultra_keccak_honk_proof(proof)
                 .unwrap();
 
-                ProofPublicInputs {
-                    root:(*public_inputs.at(0)),
-                    new_root: (*public_inputs.at(1)),
-                    nullifier_hash: (*public_inputs.at(2)),
-                    sender_commitment: (*public_inputs.at(3)),
-                    receiver_commitment: (*public_inputs.at(4)),
-                }
+            ProofPublicInputs {
+                root:(*public_inputs.at(0)),
+                new_root: (*public_inputs.at(1)),
+                nullifier_hash: (*public_inputs.at(2)),
+                sender_commitment: (*public_inputs.at(3)),
+                receiver_commitment: (*public_inputs.at(4)),
+            }
         }
     }
 }
