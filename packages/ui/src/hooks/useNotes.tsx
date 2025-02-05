@@ -1,11 +1,15 @@
 import naclUtil from "tweetnacl-util";
 import { useMemo } from "react";
 import { useEvents } from "@/hooks/useEvents";
-import { NoteExpanded, ReceiverAccount } from "@/interfaces";
+import { Note, ReceiverAccount } from "@/interfaces";
 import { BarretenbergService } from "@/services/bb.service";
 import { CipherService } from "@/services/cipher.service";
 
-export const useNotes = () => {
+export const useNotes: () => {
+  notes: Note[],
+  balance: bigint,
+  loading: boolean
+} = () => {
   const {
     commitments,
     nullifierHashes,
@@ -35,7 +39,7 @@ export const useNotes = () => {
             secretKey,
             publicKey
           );
-          
+
           const nullifier: string =
             storedReceiverAddresses.find(
               (receiver) => receiver.address === commitment.address

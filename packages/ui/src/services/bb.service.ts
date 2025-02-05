@@ -23,17 +23,27 @@ class BarretenbergService {
     return bb.poseidon2Hash([inputFr]).toString();
   }
 
-  static generateHashArray(inputs: Fr[]): string {
+  static generateHashArray(inputs: Fr[]): bigint {
     const bb = this.getInstance();
-    return bb.poseidon2Hash(inputs).toString();
+    return BigInt(bb.poseidon2Hash(inputs).toString());
   }
 
 
-  static generateCommitment(address: string, value: number): string {
+  static generateNote(address: string, value: bigint): {
+    commitment: bigint;
+    encOutput: string;
+    bliding: bigint;
+    value: bigint;
+   } {
     const bb = this.getInstance();
     const addressFr = new Fr(BigInt(address));
     const valueFr = new Fr(BigInt(value));
-    return bb.poseidon2Hash([addressFr, valueFr]).toString();
+    return {
+      commitment: BigInt(bb.poseidon2Hash([addressFr, valueFr]).toString()),
+      encOutput: "TODO:",
+      bliding: BigInt(0),
+      value: BigInt(0),
+    }
   }
 
   static convertToField(value: string | number | bigint): Fr {
