@@ -5,8 +5,6 @@ use std::hash::poseidon2::Poseidon2::hash;
 // TODO: update before deploying. So far haven't found way to override for testing
 global DEPTH: u32 = 2;
 
-// TODO: amount as u32?
-
 pub fn main(
     // utxo inputs
     in_root: pub Field,
