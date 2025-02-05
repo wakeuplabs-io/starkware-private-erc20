@@ -4,7 +4,11 @@ import { DecryptedOutput, Note } from "@/interfaces";
 import { CipherService } from "@/services/cipher.service";
 import { ZERO_BIG_INT } from "@/constants";
 
-export const useNotes = () => {
+export const useNotes: () => {
+  notes: Note[],
+  balance: bigint,
+  loading: boolean
+} = () => {
   const {
     commitments,
     isLoading: eventsLoading,

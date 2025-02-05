@@ -1,42 +1,56 @@
 import { Fr } from "@aztec/bb.js";
 import { BarretenbergService } from "./bb.service";
+import sodium from "libsodium-wrappers";
+
+const FIELD_SIZE = 100;
 
 class AccountService {
-  static secretAccount: string | null = null;
-  private static nullifier: number = 0;
-
-  static generateSecretAccount(): string {
-    const array = new Uint8Array(20);
-    window.crypto.getRandomValues(array);
-    this.secretAccount = "0x" + Array.from(array, (byte) => byte.toString(16).padStart(2, "0")).join("");
-    return this.secretAccount;
-  }
-
-  static getSecretAccount(): string {
-    if (!this.secretAccount) {
-      throw new Error("Secret account has not been generated yet.");
+  static getAccount() {
+    try {
+      return this._load();
+    } catch {
+      return this._generate();
     }
-    return this.secretAccount;
   }
 
-  static getNextNullifier(): number {
-    return this.nullifier;
+  private static async _generate(): Promise<{
+    publicKey: bigint;
+    privateKey: bigint;
+    address: bigint;
+  }> {
+    await sodium.ready;
+    const keypair = await sodium.crypto_box_keypair();
+    const publicKey = BigInt(sodium.to_hex(keypair.publicKey));
+    const privateKey = BigInt(sodium.to_hex(keypair.privateKey));
+    const address = BarretenbergService.generateHashArray([new Fr(privateKey)]);
+
+    localStorage.setItem("PrivateKey", privateKey.toString(16));
+    localStorage.setItem("PublicKey", publicKey.toString(16));
+    localStorage.setItem("Address", address.toString(16));
+
+    return { publicKey, privateKey, address };
   }
 
-  static generateReceiverAccount(): { address: string; nullifier: string } {
+  private static async _load(): Promise<{
+    publicKey: bigint;
+    privateKey: bigint;
+    address: bigint;
+  }> {
+    await sodium.ready;
 
-    const secretAccount = this.getSecretAccount();
-    const receiverAccount = BarretenbergService.generateHashArray([
-      new Fr(BigInt(secretAccount)),
-      new Fr(BigInt(this.nullifier)),
-    ]);
+    const privateKeyString = localStorage.getItem("PrivateKey");
+    const publicKeyString = localStorage.getItem("PublicKey");
+    const addressString = localStorage.getItem("Address");
 
-    this.nullifier++;
+    if (!privateKeyString || !publicKeyString || !addressString) {
+      throw new Error("Could not load account");
+    }
 
-    return {
-      address: receiverAccount.toString(),
-      nullifier: (this.nullifier - 1).toString(),
-    };
+    const privateKey = BigInt(privateKeyString);
+    const publicKey = BigInt(publicKeyString);
+    const address = BigInt(addressString);
+
+    return { publicKey, privateKey, address };
   }
 }
 

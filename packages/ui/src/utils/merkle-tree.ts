@@ -1,12 +1,13 @@
 import { BarretenbergService } from "@/services/bb.service";
 import { Fr } from "@aztec/bb.js";
 
-const DEPTH = 4;
+const DEPTH = 12;
 const MAX_LEAVES = 2 ** DEPTH;
-const ZERO_LEAF = "0x00";
+const ZERO_LEAF = BigInt(0);
 
 export class MerkleTree {
-  private leaves: string[];
+  private leaves: bigint[];
+  private levels: bigint[][] = [];
   private nextIndex: number;
 
   constructor() {
@@ -14,7 +15,7 @@ export class MerkleTree {
     this.nextIndex = 0;
   }
 
-  async addCommitment(commitment: string) {
+  async addCommitment(commitment: bigint) {
     if (this.nextIndex >= MAX_LEAVES) {
       throw new Error("Merkle tree is full. No more leaves can be added.");
     }
@@ -22,8 +23,6 @@ export class MerkleTree {
     this.nextIndex++;
     await this.recalculateTree();
   }
-
-  private levels: string[][] = [];
 
   private async recalculateTree() {
     this.levels = [ [...this.leaves] ];
@@ -33,17 +32,17 @@ export class MerkleTree {
 
     while (size > 1) {
       const nextSize = Math.ceil(size / 2);
-      const nextLevel: string[] = new Array(nextSize);
+      const nextLevel: bigint[] = new Array(nextSize);
 
       for (let i = 0; i < nextSize; i++) {
         const left = currentLevel[2*i] ?? ZERO_LEAF;
         const right = currentLevel[2*i + 1] ?? left;
-        const leftFr = new Fr(BigInt(left));
-        const rightFr = new Fr(BigInt(right));
+        const leftFr = new Fr(left);
+        const rightFr = new Fr(right);
 
         const hash = await BarretenbergService.generateHashArray([leftFr, rightFr]);
 
-        nextLevel[i] = hash.toString();
+        nextLevel[i] = BigInt(hash.toString());
       }
 
       this.levels.push(nextLevel);
@@ -54,7 +53,7 @@ export class MerkleTree {
 
 
 
-  getRoot(): string {
+  getRoot(): bigint {
     if (this.levels.length === 0) {
       return ZERO_LEAF; 
     }
@@ -63,11 +62,11 @@ export class MerkleTree {
   }
 
   
-  getProof(commitment: string): { path: string[]; directionSelector: boolean[] } | null {
+  getProof(commitment: bigint): { path: bigint[]; directionSelector: boolean[] } | null {
     const index = this.leaves.indexOf(commitment);
     if (index === -1) return null;
 
-    const path: string[] = [];
+    const path: bigint[] = [];
     const directionSelector: boolean[] = [];
 
     let currentIndex = index;
