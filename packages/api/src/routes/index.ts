@@ -1,17 +1,11 @@
-import { Request, Response, Router, NextFunction } from "express";
+import { Router } from "express";
 
-import proofRoute from "./proof/route.js";
+import proofRouter from "./proof/route.js";
+import healthRouter from "./health/route.js";
 
 const router = Router();
 
-router.get("/health", async (req: Request, res: Response, next: NextFunction) => {
-  try {
-    res.status(200).json({ status: "UP" });
-  } catch (error) {
-    next(error);
-  }
-});
-
-router.use("/proof", proofRoute);
+router.get("/health", healthRouter);
+router.use("/proof", proofRouter);
 
 export default router;

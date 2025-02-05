@@ -1,16 +1,17 @@
 export interface GenerateProofDto {
-  root: string;
-  path: string[];
-  direction_selector: boolean[];
-  new_root: string;
-  new_path: string[];
-  new_direction_selector: boolean[];
-  in_amount: number;
-  in_commitment_nullifier: string;
-  in_commitment_nullifier_hash: string;
-  in_commitment_secret: string;
-  out_amount_sender: number;
-  out_amount_receiver: number;
-  receiver_account: string;
-  out_commitments: string[];
+  in_root : string,
+  in_path : string[],
+  in_direction_selector : boolean[],
+  in_amount : string,
+  in_commitment_nullifier : string,
+  in_commitment_nullifier_hash : string,
+  in_commitment_secret : string,
+  out_receiver_account : string,
+  out_root : string,
+  out_amount_sender : string,
+  out_amount_receiver : string,
+  out_commitment_sender : string,
+  out_commitment_receiver : string,
+  out_subtree_root_path : string[]
+  out_subtree_root_direction : boolean[]
 }

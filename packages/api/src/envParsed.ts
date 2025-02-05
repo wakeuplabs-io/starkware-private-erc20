@@ -3,8 +3,6 @@ import dotenv from "dotenv";
 
 dotenv.config();
 
-// NOTE: DO NOT destructure process.env
-
 const env = {
   NODE_ENV: process.env.NODE_ENV,
   PORT: process.env.PORT,
