@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useNotes } from "./useNotes";
 import { NoteExpanded, SimulateAddCommitmentsResult, SimulatedPath } from "@/interfaces";
 import { ProofService } from "@/services/proof.service";
@@ -10,6 +10,7 @@ import { BarretenbergService } from "@/services/bb.service";
 import { AccountService } from "@/services/account.service";
 import { CipherService } from "@/services/cipher.service";
 import privateTokenAbi from "@/abi/private-erc20.abi";
+import { PRIVATE_ERC20_CONTRACT_ADDRESS } from "@/constants";
 
 
 export const useTransfer = () => {
@@ -20,8 +21,6 @@ export const useTransfer = () => {
   const [status, setStatus] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const { notes, getProofForCommitment, root, secretKey, simulateAddCommitments } = useNotes();
-  const PRIVATE_ERC20_CONTRACT_ADDRESS =
-    "0x000029f4430cc63c28456d6c5b54029d00338e4c4ec7c873aa1dc1bc3fb38d55";
 
   const { contract } = useContract({
     abi: privateTokenAbi,
@@ -31,14 +30,6 @@ export const useTransfer = () => {
   const { send, error: transferError, status: txStatus } = useSendTransaction({
     calls: undefined,
   });
-
-  useEffect(() => {
-    console.log({ status });
-  }, [status]);
-
-  useEffect(() => {
-    console.log({ notes });
-  }, [notes]);
 
   const handleInputChange =
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -59,30 +50,29 @@ export const useTransfer = () => {
       console.log({commitment: notesToUse[0].commitment});
       const { path, directionSelector } = proofData;
       const input = {
-        balance: notesToUse[0].value,
-        amount,
-        receiver_account: receiverData.address ,
-        change_account: changeData.address,
-        secret_sender_account: localStorage.getItem("SecretAccount") || "",
-        nullifier: notesToUse[0].nullifier,
-        nullifier_hash: notesToUse[0].nullifierHash,
         root,
         path: path,
         direction_selector: directionSelector,
-        out_commitment: [receiverData.commitment, changeData.commitment],
         new_root: newRoot,
         new_path: receiverData.path,
         new_direction_selector: receiverData.directionSelector,
-        new_path_change: changeData.path,
-        new_direction_selector_change: changeData.directionSelector
+        in_amount: notesToUse[0].value,
+        in_commitment_nullifier: notesToUse[0].nullifier,
+        in_commitment_nullifier_hash: notesToUse[0].nullifierHash,
+        in_commitment_secret: localStorage.getItem("SecretAccount") || "",
+        out_amount_sender: notesToUse[0].value - amount,
+        out_amount_receiver: amount,
+        receiver_account: receiverData.address,
+        out_commitments: [receiverData.commitment, changeData.commitment],
       };
 
       console.log(input);
 
       const generatedProof = await ProofService.generateProof(input);
       setProof(generatedProof);
+      
       setStatus("Proof generated successfully!");
-      return "generatedProof";
+      return generatedProof;
     } catch (error) {
       setStatus(
         `Error generating proof: ${
@@ -144,18 +134,15 @@ export const useTransfer = () => {
     };
     try {
       const generatedProof = await generateProof({ notesToUse, newRoot, receiverData, changeData });
-
       if (!generatedProof) {
         console.log("Proof generation failed");
         return;
       }
 
       const callData = contract.populate("transfer", [
-
-        notesToUse[0].encryptedValue,
-        publicRecipientAccount,
-        CipherService.encryptNote({value: amount}, recipientPublicKey, secretKey),
         generatedProof,
+        notesToUse[0].encryptedValue,
+        CipherService.encryptNote({value: amount}, recipientPublicKey, secretKey),
       ]);
 
       await send([callData]);

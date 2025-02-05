@@ -7,7 +7,7 @@ const API_URL = `${envParsed().API_BASE_URL}/api/proof/generate`;
 export const ProofService = {
   async generateProof(proofInputs: GenerateProofDto) {
     try {
-      const response = await axios.post(API_URL, proofInputs, {
+      const response = await axios.post(`${API_URL}/proof/generate`, proofInputs, {
         headers: {
           "Content-Type": "application/json",
         },

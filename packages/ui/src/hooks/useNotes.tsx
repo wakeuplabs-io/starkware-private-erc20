@@ -7,13 +7,13 @@ import { BarretenbergService } from "@/services/bb.service";
 import { CipherService } from "@/services/cipher.service";
 
 export const useNotes = () => {
-  const { events, error: eventsError, isLoading: eventsLoading } = useEvents();
+  const { commitments, nullifierHashes, error: eventsError, isLoading: eventsLoading } = useEvents();
   const [notes, setNotes] = useState<NoteExpanded[]>([]);
   const [balance, setBalance] = useState<number>(0);
   const [error, setError] = useState<string | null>(eventsError);
   const [publicKey, setPublicKey] = useState<Uint8Array | null>(null);
   const [secretKey, setSecretKey] = useState<Uint8Array | null>(null);
-  const { root, getProofForCommitment, simulateAddCommitments } = useMerkleTree(events);
+  const { root, getProofForCommitment, simulateAddCommitments } = useMerkleTree(commitments);
 
   useEffect(() => {
     const storedPublicKey = localStorage.getItem("PublicKey");
@@ -26,31 +26,29 @@ export const useNotes = () => {
   }, []);
 
   useEffect(() => {
-    if (!events.length || !secretKey || !publicKey) return;
+    if (!commitments.length || !secretKey || !publicKey) return;
 
     const fetchNotes = async () => {
       try {
         const storedReceiverAddresses: ReceiverAccount[] = JSON.parse(localStorage.getItem("ReceiverAccounts") || "[]");
 
         const decryptedNotes = await Promise.all(
-          events.map(async (event) => {
-            const decrypted = CipherService.decryptNote(event.encryptedValue, secretKey, publicKey);
-            const nullifier: string = storedReceiverAddresses.find((receiver) => receiver.address === event.address)?.nullifier || "unknown nullifier";
+          commitments.map(async (commitments) => {
+            const decrypted = CipherService.decryptNote(commitments.encryptedValue, secretKey, publicKey);
+            const nullifier: string = storedReceiverAddresses.find((receiver) => receiver.address === commitments.address)?.nullifier || "unknown nullifier";
             const nullifierHash = BarretenbergService.generateHash(nullifier);
             return {
-              receiver: event.address,
+              receiver: commitments.address,
               value: decrypted.value,
-              encryptedValue: event.encryptedValue,
+              encryptedValue: commitments.encryptedValue,
               nullifier,
               nullifierHash,
-              commitment: event.commitment,
+              commitment: commitments.commitment,
             };
           })
         );
 
-        const MOCK_NULLIFIER_HASHES = await Promise.all(["0"].map(async (nullifier) =>  BarretenbergService.generateHash(nullifier)));
-
-        const filteredNotes = decryptedNotes.filter(note => !MOCK_NULLIFIER_HASHES.includes(note.nullifierHash));
+        const filteredNotes = decryptedNotes.filter(note => !nullifierHashes.includes(note.nullifierHash));
 
         setNotes(filteredNotes);
         setBalance(filteredNotes.reduce((acc, note) => acc + note.value, 0));
@@ -61,7 +59,7 @@ export const useNotes = () => {
     };
 
     fetchNotes();
-  }, [events, secretKey, publicKey]);
+  }, [commitments, nullifierHashes, secretKey, publicKey]);
 
   return { notes, balance, error, eventsLoading, secretKey, root, getProofForCommitment, simulateAddCommitments };
 };

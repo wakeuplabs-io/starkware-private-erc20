@@ -6,18 +6,20 @@ import { GenerateProofDto } from "@/dtos/generate-proof.dto.js";
 import { fileURLToPath } from "url";
 import { randomUUID } from "crypto";
 import os from "os";
-import { stringify as tomlStringify } from 'smol-toml'
+import { stringify as tomlStringify } from "smol-toml";
 
 const execPromise = promisify(exec);
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const CIRCUIT_PATH = path.join(__dirname, "../../circuits/transfer");
-const ACIR_PATH = path.join(CIRCUIT_PATH, `target/transfer.json`);
-const VK_PATH = path.join(CIRCUIT_PATH, `target/vk.bin`);
+const ACIR_PATH = path.join(CIRCUIT_PATH, "target/transfer.json");
+const VK_PATH = path.join(CIRCUIT_PATH, "target/vk.bin");
 const TMP_DIR = os.tmpdir();
 
-export async function generateProof(input: GenerateProofDto): Promise<string[]> {
+export async function generateProof(
+  input: GenerateProofDto
+): Promise<string[]> {
   const proofId = randomUUID().toString();
   const proverPath = path.join(TMP_DIR, `${proofId}-prover.toml`);
   const witnessName = path.join(TMP_DIR, `${proofId}-witness.gz`);
@@ -29,13 +31,16 @@ export async function generateProof(input: GenerateProofDto): Promise<string[]> 
 
     // generate witness
     await execPromise(`nargo execute -p ${proverPath} ${witnessName}`, {
-      cwd: CIRCUIT_PATH
+      cwd: CIRCUIT_PATH,
     });
 
     // generate proof
-    await execPromise(`bb prove_ultra_keccak_honk -b ${ACIR_PATH} -w ${witnessName} -o ${proofPath}`, {
-      cwd: CIRCUIT_PATH,
-    });
+    await execPromise(
+      `bb prove_ultra_keccak_honk -b ${ACIR_PATH} -w ${witnessName} -o ${proofPath}`,
+      {
+        cwd: CIRCUIT_PATH,
+      }
+    );
 
     // generate calldata
     const { stdout } = await execPromise(
@@ -45,7 +50,7 @@ export async function generateProof(input: GenerateProofDto): Promise<string[]> 
 
     const trimmedStdout = stdout.trim();
     const calldata = trimmedStdout.substring(1, trimmedStdout.length - 1);
-    
+
     return calldata.split(",").map((x) => x.trim());
   } catch (error) {
     console.error("Error occurred during proof generation:", error);
@@ -55,6 +60,6 @@ export async function generateProof(input: GenerateProofDto): Promise<string[]> 
       fs.unlink(proverPath),
       fs.unlink(witnessName),
       fs.unlink(proofPath),
-    ]).catch(() => console.log("cleanup failed"))
+    ]).catch(() => console.log("cleanup failed"));
   }
 }
