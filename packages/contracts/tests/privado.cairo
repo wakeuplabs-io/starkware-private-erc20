@@ -29,7 +29,7 @@ fn test_constructor() {
     assert(dispatcher.current_commitment_index() == 1, '');
 
     // minted commitment
-    let (mint_commitment, mint_amount_enc) = GET_MINT_COMMITMENT();
+    let (mint_commitment, mint_output_enc) = GET_MINT_COMMITMENT();
     spy
         .assert_emitted(
             @array![
@@ -38,7 +38,7 @@ fn test_constructor() {
                     Privado::Event::NewCommitment(
                         Privado::NewCommitment {
                             commitment: mint_commitment,
-                            amount_enc: mint_amount_enc,
+                            output_enc: mint_output_enc,
                             index: 0 // next_index
                         },
                     ),
@@ -93,7 +93,7 @@ fn test_transfer() {
                     Privado::Event::NewCommitment(
                         Privado::NewCommitment {
                             commitment: sender_out_commitment.into(),
-                            amount_enc: "sender_enc_output",
+                            output_enc: "sender_enc_output",
                             index: current_commitment_index,
                         },
                     ),
@@ -103,7 +103,7 @@ fn test_transfer() {
                     Privado::Event::NewCommitment(
                         Privado::NewCommitment {
                             commitment: receiver_out_commitment.into(),
-                            amount_enc: "receiver_enc_output",
+                            output_enc: "receiver_enc_output",
                             index: current_commitment_index + 1,
                         },
                     ),

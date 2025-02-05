@@ -40,16 +40,3 @@ export interface GenerateProofDto {
   receiver_account: string;
   out_commitments: string[];
 }
-
-
-export interface SimulateAddCommitmentsResult {
-  newRoot: string;
-  proofs: { commitment: string; path: string[]; directionSelector: boolean[] }[];
-}
-
-export interface SimulatedPath {
-  commitment: string;
-  path: string[];
-  directionSelector: boolean[]
-  address: string;
-}

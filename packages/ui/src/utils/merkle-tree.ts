@@ -1,4 +1,3 @@
-import { SimulateAddCommitmentsResult } from "@/interfaces";
 import { BarretenbergService } from "@/services/bb.service";
 import { Fr } from "@aztec/bb.js";
 
@@ -93,36 +92,5 @@ export class MerkleTree {
 
     return { path, directionSelector };
   }
-  async simulateAddCommitments(commitments: string[]): Promise<SimulateAddCommitmentsResult> {
-    const simulatedTree = new MerkleTree();
-    simulatedTree.leaves = [...this.leaves];
-    simulatedTree.nextIndex = this.nextIndex;
-    await simulatedTree.recalculateTree();
-  
-    for (const commitment of commitments) {
-      if (simulatedTree.nextIndex >= MAX_LEAVES) {
-        throw new Error("Simulated tree is full. Cannot add more commitments.");
-      }
-      await simulatedTree.addCommitment(commitment);
-    }
-  
-    // Una vez agregados todos los commitments, calcula los proofs en base al árbol final.
-    const proofs: { commitment: string; path: string[]; directionSelector: boolean[] }[] = [];
-    for (const commitment of commitments) {
-      const proof = simulatedTree.getProof(commitment);
-      if (!proof) {
-        throw new Error(`Proof for commitment ${commitment} not found after simulation.`);
-      }
-      proofs.push({
-        commitment,
-        path: proof.path,
-        directionSelector: proof.directionSelector,
-      });
-    }
-  
-    const newRoot = simulatedTree.getRoot();
-    return { newRoot, proofs };
-  }
-  
 
 }

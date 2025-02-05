@@ -41,11 +41,11 @@ export const useEvents = () => {
         const commitmentsParsed: CommitmentEvent[] = eventsParsed
           .filter(event => event["contracts::privado::privado::Privado::NewCommitment"]) // Filtra eventos válidos
           .map(event => {
-            const { commitment, amount_enc } = event["contracts::privado::privado::Privado::NewCommitment"];
+            const { commitment, output_enc, index } = event["contracts::privado::privado::Privado::NewCommitment"];
             return {
               commitment: commitment.toString(),
-              encryptedValue: amount_enc.toString(),
-              address: "0x2a165b3b4bffeed9041aac3e528c2741021863f50f096c25f15c3c60272074ee"
+              outputEnc: output_enc.toString(),
+              index: index
             };
           });
         

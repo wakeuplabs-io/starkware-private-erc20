@@ -114,13 +114,13 @@ pub mod Privado {
 
     /// Emitted when a transfer happens, we'll create 2 entries, one for the sender as a utxo
     /// and one for the receiver.
-    /// - `amount_enc` should be encrypted with the note owner public key
+    /// - `output_enc` should be encrypted with the note owner public key
     /// - `commitment` is H(H(nullifier, secret), amount) where amount is plaintext and H(nullifier,
     ///    secret) the receiver address
     #[derive(Drop, starknet::Event)]
     pub struct NewCommitment {
         pub commitment: u256,
-        pub amount_enc: ByteArray,
+        pub output_enc: ByteArray,
         pub index: u256,
     }
 
@@ -175,8 +175,8 @@ pub mod Privado {
         self.current_root.write(MERKLE_TREE_INITIAL_ROOT);
 
         // mint initial note with all funds
-        let (mint_commitment, mint_amount_enc) = GET_MINT_COMMITMENT();
-        self._create_note(mint_commitment, mint_amount_enc);
+        let (mint_commitment, mint_output_enc) = GET_MINT_COMMITMENT();
+        self._create_note(mint_commitment, mint_output_enc);
     }
 
     //
@@ -278,12 +278,12 @@ pub mod Privado {
         /// Requirements:
         ///
         /// - `commitment` is the commitment that will be created
-        /// - `amount_enc` is amount encrypted with the receiver public key
+        /// - `output_enc` is amount encrypted with the receiver public key
         ///
         /// Emits a `NewCommitment` event.
-        fn _create_note(ref self: ContractState, commitment: u256, amount_enc: ByteArray) {
+        fn _create_note(ref self: ContractState, commitment: u256, output_enc: ByteArray) {
             let current_index = self.current_commitment_index.read();
-            self.emit(NewCommitment { commitment, amount_enc: amount_enc.clone(), index: current_index });
+            self.emit(NewCommitment { commitment, output_enc: output_enc.clone(), index: current_index });
             self.current_commitment_index.write(current_index + 1);
         }
 
@@ -305,7 +305,7 @@ pub mod Privado {
         /// Requirements:
         ///
         /// - `commitment` is the commitment that will be created
-        /// - `amount_enc` is amount encrypted with the receiver public key
+        /// - `output_enc` is amount encrypted with the receiver public key
         ///
         /// Emits a `NewCommitment` event.
         fn _verify_proof(ref self: ContractState, proof: Span<felt252>) -> ProofPublicInputs {
