@@ -12,6 +12,7 @@
   "license": "ISC",
   "devDependencies": {
     "@types/aws-lambda": "8.10.147",
+    "@types/libsodium-wrappers": "^0.7.14",
     "@typescript-eslint/eslint-plugin": "7.6.0",
     "@typescript-eslint/parser": "7.6.0",
     "concurrently": "8.2.2",
@@ -26,9 +27,8 @@
   },
   "dependencies": {
     "dotenv": "16.4.5",
+    "libsodium-wrappers": "^0.7.15",
     "sst": "3.7.8",
-    "tweetnacl": "^1.0.3",
-    "tweetnacl-util": "^0.15.1",
     "zod": "3.22.4"
   }
 }

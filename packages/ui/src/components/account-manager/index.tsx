@@ -1,9 +1,8 @@
 import { useState, useEffect } from "react";
 import "./account-manager.css";
-import nacl from "tweetnacl";
-import naclUtil from "tweetnacl-util";
 import { ReceiverAccount } from "@/interfaces";
 import { AccountService } from "@/services/account.service";
+import { CipherService } from "@/services/cipher.service";
 
 const AccountManager = () => {
   const [secretAccount, setSecretAccount] = useState<string | null>(null);
@@ -48,12 +47,10 @@ const AccountManager = () => {
     setNewReceiver(newReceiverAddress);
   };
 
-  const generateKeyPair = () => {
-    const keyPair = nacl.box.keyPair();
-    setPublicKey(naclUtil.encodeBase64(keyPair.publicKey));
-    setSecretKey(naclUtil.encodeBase64(keyPair.secretKey));
-    localStorage.setItem("PublicKey", naclUtil.encodeBase64(keyPair.publicKey));
-    localStorage.setItem("SecretKey", naclUtil.encodeBase64(keyPair.secretKey));
+  const generateKeyPair = async () => {
+    const keyPair = await CipherService.generateKeyPair();
+    setPublicKey(keyPair.publicKey);
+    setSecretKey(keyPair.secretKey);
   };
 
   return (

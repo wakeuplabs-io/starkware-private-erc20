@@ -1,4 +1,3 @@
-import naclUtil from "tweetnacl-util";
 import { useMemo } from "react";
 import { useEvents } from "@/hooks/useEvents";
 import { Note, ReceiverAccount } from "@/interfaces";
@@ -16,18 +15,13 @@ export const useNotes: () => {
     isLoading: eventsLoading,
   } = useEvents();
 
-  const { notes, balance } = useMemo(() => {
+  const { notes, balance } = useMemo(async () => {
     try {
       if (!commitments.length) {
         throw new Error("No commitments");
       }
 
-      const publicKey = naclUtil.decodeBase64(
-        localStorage.getItem("PublicKey")!
-      );
-      const secretKey = naclUtil.decodeBase64(
-        localStorage.getItem("SecretKey")!
-      );
+      const { publicKey, secretKey} = await CipherService.getKeyPair();
       const storedReceiverAddresses: ReceiverAccount[] = JSON.parse(
         localStorage.getItem("ReceiverAccounts") || "[]"
       );
@@ -36,8 +30,8 @@ export const useNotes: () => {
         .map((commitment) => {
           const decrypted = CipherService.decryptNote(
             commitment.encryptedValue,
+            publicKey,
             secretKey,
-            publicKey
           );
 
           const nullifier: string =
