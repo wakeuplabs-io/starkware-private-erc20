@@ -20,7 +20,6 @@ export const useEvents = () => {
   const newCommitmentHash = selector.getSelectorFromName("NewCommitment");
   const newNullifierHash = selector.getSelectorFromName("NewNullifier");
 
-
   useEffect(() => {
     if (!chain || !address) return;
 
@@ -33,30 +32,45 @@ export const useEvents = () => {
           keys: [[newCommitmentHash]],
           from_block: { block_number: 500000 },
           to_block: "latest",
-          chunk_size: 100, 
+          chunk_size: 100,
         });
 
-        const eventsParsed = Events.parseEvents(eventsResponse.events, abiEvents, abiStructs, abiEnums);
+        const eventsParsed = Events.parseEvents(
+          eventsResponse.events,
+          abiEvents,
+          abiStructs,
+          abiEnums
+        );
 
         const commitmentsParsed: CommitmentEvent[] = eventsParsed
-          .filter(event => event["contracts::privado::privado::Privado::NewCommitment"])
-          .map(event => {
-            const { commitment, amount_enc, index } = event["contracts::privado::privado::Privado::NewCommitment"];
-            // const { commitment, output_enc, index } = event["contracts::privado::privado::Privado::NewCommitment"];
+          .filter(
+            (event) =>
+              event["contracts::privado::privado::Privado::NewCommitment"]
+          )
+          .map((event) => {
+            const { commitment, enc_output, index } =
+              event["contracts::privado::privado::Privado::NewCommitment"];
             return {
-              commitment: commitment.toString(),
-              outputEncrypted: amount_enc.toString(),
-              index: BigInt(index.toString())
+              commitment: BigInt(commitment.toString()),
+              encryptedOutput: enc_output.toString(),
+              index: BigInt(index.toString()),
             };
           });
-        
+
         const nullifiersParsed: string[] = eventsParsed
-          .filter(event => event["contracts::privado::privado::Privado::NewNullifier"])
-          .map(event => event["contracts::privado::privado::Privado::NewNullifier"]?.nullifier_hash?.toString() || "");
-        
+          .filter(
+            (event) =>
+              event["contracts::privado::privado::Privado::NewNullifier"]
+          )
+          .map(
+            (event) =>
+              event[
+                "contracts::privado::privado::Privado::NewNullifier"
+              ]?.nullifier_hash?.toString() || ""
+          );
+
         setCommitments(commitmentsParsed);
         setNullifierHashes(nullifiersParsed);
-        
       } catch (err) {
         console.error("Error fetching events:", err);
         setError("Failed to fetch events");
@@ -64,7 +78,6 @@ export const useEvents = () => {
         setIsLoading(false);
       }
     };
-
 
     fetchEvents();
   }, [chain, address, newCommitmentHash, newNullifierHash, provider]);
