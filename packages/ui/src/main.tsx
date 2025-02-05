@@ -1,4 +1,4 @@
-import ProvidersWrapper from "@/hoc/ProvidersWrapper.tsx";
+import ProvidersWrapper from "@/providers/providers-wrapper.tsx";
 import React from "react";
 import ReactDOM from "react-dom/client";
 import App from "./App.tsx";
