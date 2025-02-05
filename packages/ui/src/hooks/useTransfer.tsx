@@ -1,3 +1,4 @@
+import { Fr } from "@aztec/bb.js";
 import { useNotes } from "./useNotes";
 import { ProofService } from "@/services/proof.service";
 import { useContract, useSendTransaction } from "@starknet-react/core";
@@ -5,8 +6,9 @@ import { BarretenbergService } from "@/services/bb.service";
 import privateTokenAbi from "@/abi/private-erc20.abi";
 import { PRIVATE_ERC20_CONTRACT_ADDRESS } from "@/constants";
 import { MerkleTree } from "@/utils/merkle-tree";
-import { Fr } from "@aztec/bb.js";
 import { AccountService } from "@/services/account.service";
+import { CallData } from "starknet";
+import { MERKLE_TREE_DEPTH } from "@/shared/config/constants";
 
 export const useTransfer = () => {
   const { notes } = useNotes();
@@ -79,16 +81,16 @@ export const useTransfer = () => {
       throw new Error("Input commitment doesn't belong to the tree");
     }
 
-    tree.addCommitment(outSenderNote.commitment);
-    tree.addCommitment(outReceiverNote.commitment);
+    await Promise.all([
+      tree.addCommitment(outSenderNote.commitment),
+      tree.addCommitment(outReceiverNote.commitment)
+    ]);
 
     const outRoot = tree.getRoot();
     const outPathProof = tree.getProof(
-      BarretenbergService.generateHashArray([
-        new Fr(outSenderNote.commitment),
-        new Fr(outReceiverNote.commitment),
-      ])
+      outSenderNote.commitment
     );
+
     if (!outPathProof) {
       throw new Error("Couldn't generate output path proof");
     }
@@ -112,14 +114,14 @@ export const useTransfer = () => {
         out_sender_amount: outSenderAmount.toString(16),
         out_sender_bliding: outSenderNote.bliding.toString(16),
         out_sender_commitment: outSenderNote.commitment.toString(16),
-        out_subtree_root_path: outPathProof.path.map((e) => e.toString(16)),
-        out_subtree_root_direction: outPathProof.directionSelector,
+        out_subtree_root_path: outPathProof.path.slice(0, MERKLE_TREE_DEPTH).map((e) => e.toString(16)),
+        out_subtree_root_direction: outPathProof.directionSelector.slice(0, MERKLE_TREE_DEPTH),
       });
 
       const callData = contract.populate("transfer", [
         generatedProof,
-        outSenderNote.encOutput,
-        outReceiverNote.encOutput,
+        CallData.compile([outSenderNote.encOutput]),
+        CallData.compile([outReceiverNote.encOutput]),
       ]);
 
       await send([callData]);

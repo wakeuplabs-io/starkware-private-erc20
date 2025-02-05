@@ -49,7 +49,7 @@ class BarretenbergService {
       ),
       encOutput: await CipherService.encrypt(
         JSON.stringify({
-          toAddress: toAddress.toString(16),
+          bliding: bliding.toString(16),
           value: value.toString(16),
         }),
         toPublicKey

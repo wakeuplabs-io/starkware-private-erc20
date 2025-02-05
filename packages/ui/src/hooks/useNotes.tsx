@@ -3,6 +3,7 @@ import { useEvents } from "@/hooks/useEvents";
 import { Note, ReceiverAccount } from "@/interfaces";
 import { BarretenbergService } from "@/services/bb.service";
 import { CipherService } from "@/services/cipher.service";
+import { AccountService } from "@/services/account.service";
 
 export const useNotes: () => {
   notes: Note[],
@@ -21,17 +22,17 @@ export const useNotes: () => {
         throw new Error("No commitments");
       }
 
-      const { publicKey, secretKey} = await CipherService.getKeyPair();
+      const { publicKey, privateKey } = await AccountService.getAccount();
       const storedReceiverAddresses: ReceiverAccount[] = JSON.parse(
         localStorage.getItem("ReceiverAccounts") || "[]"
       );
 
       const notes = commitments
         .map((commitment) => {
-          const decrypted = CipherService.decryptNote(
+          const decrypted = CipherService.decrypt(
             commitment.encryptedValue,
             publicKey,
-            secretKey,
+            privateKey,
           );
 
           const nullifier: string =
@@ -40,7 +41,7 @@ export const useNotes: () => {
             )?.nullifier || "unknown nullifier";
 
           const nullifierHash = BarretenbergService.generateHash(nullifier);
-          const note: NoteExpanded = {
+          const note: Note = {
             index: commitment.index
             receiver: commitments.address,
             value: decrypted.value,

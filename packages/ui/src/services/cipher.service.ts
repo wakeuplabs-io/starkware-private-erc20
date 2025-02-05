@@ -26,7 +26,6 @@ class CipherService {
 
     return sodium.to_string(decrypted);
   }
-
 }
 
 export { CipherService };

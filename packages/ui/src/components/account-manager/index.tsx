@@ -1,5 +1,5 @@
-import { useState, useEffect } from "react";
 import "./account-manager.css";
+import { useState, useEffect } from "react";
 import { ReceiverAccount } from "@/interfaces";
 import { AccountService } from "@/services/account.service";
 import { CipherService } from "@/services/cipher.service";
