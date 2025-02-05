@@ -1,7 +1,5 @@
 import { z } from "zod";
-import dotenv from "dotenv";
 
-dotenv.config();
 
 // NOTE: DO NOT destructure process.env
 

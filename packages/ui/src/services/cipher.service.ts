@@ -1,38 +1,43 @@
-import nacl from "tweetnacl";
-import naclUtil from "tweetnacl-util";
-
+import sodium from "libsodium-wrappers";
 class CipherService {
-  static encryptNote(
-    note: { value: number },
-    receiverPublicKey: Uint8Array | string,
-    senderPrivateKey: Uint8Array
-  ): string {
-    if (typeof receiverPublicKey === "string") {
-      receiverPublicKey = naclUtil.decodeBase64(receiverPublicKey);
-    }
-    const message = naclUtil.decodeUTF8(JSON.stringify(note));
-    const nonce = nacl.randomBytes(nacl.box.nonceLength);
-    const encrypted = nacl.box(message, nonce, receiverPublicKey, senderPrivateKey);
-
-    if (!encrypted) throw new Error("Encryption failed");
-
-    const fullEncrypted = new Uint8Array([...nonce, ...encrypted]);
-    return naclUtil.encodeBase64(fullEncrypted);
+  static async encryptNote(note: { value: number }, receiverPublicKey: Uint8Array): Promise<string> {
+    await sodium.ready;
+    const message = sodium.from_string(JSON.stringify(note));
+    const encrypted = sodium.crypto_box_seal(message, receiverPublicKey);
+    return sodium.to_base64(encrypted);
   }
 
-  static decryptNote(
-    encryptedString: string,
-    receiverPrivateKey: Uint8Array,
-    senderPublicKey: Uint8Array
-  ): { value: number } {
-    const fullEncrypted = naclUtil.decodeBase64(encryptedString);
-    const nonce = fullEncrypted.slice(0, nacl.box.nonceLength);
-    const encryptedData = fullEncrypted.slice(nacl.box.nonceLength);
+  static async decryptNote(encryptedString: string, receiverPublicKey: Uint8Array, receiverPrivateKey: Uint8Array): Promise<{ value: number }> {
+    await sodium.ready;
+    const encrypted = sodium.from_base64(encryptedString);
+    const decrypted = sodium.crypto_box_seal_open(encrypted, receiverPublicKey, receiverPrivateKey);
+    return JSON.parse(sodium.to_string(decrypted));
+  }
 
-    const decrypted = nacl.box.open(encryptedData, nonce, senderPublicKey, receiverPrivateKey);
-    if (!decrypted) throw new Error("Failed to decrypt");
+  static async generateKeyPair(): Promise<{ publicKey: string; secretKey: string }> {
+    await sodium.ready;
+    const { publicKey, privateKey} = await sodium.crypto_box_keypair();
+    const publicKeyString = sodium.to_base64(publicKey);
+    const secretKeyString = sodium.to_base64(privateKey);
+    localStorage.setItem("PublicKey", publicKeyString);
+    localStorage.setItem("SecretKey", secretKeyString);
+    return { publicKey: publicKeyString, secretKey: secretKeyString };
+  }
 
-    return JSON.parse(naclUtil.encodeUTF8(decrypted));
+  static async getKeyPair(): Promise<{ publicKey: Uint8Array; secretKey: Uint8Array } | null> {
+    await sodium.ready;
+    
+    const publicKeyString = localStorage.getItem("PublicKey");
+    const secretKeyString = localStorage.getItem("SecretKey");
+
+    if (!publicKeyString || !secretKeyString) {
+      return null;
+    }
+
+    return {
+      publicKey: sodium.from_base64(publicKeyString),
+      secretKey: sodium.from_base64(secretKeyString),
+    };
   }
 }
 
