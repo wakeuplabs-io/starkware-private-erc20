@@ -4,101 +4,57 @@ import { promisify } from "util";
 import path from "path";
 import { GenerateProofDto } from "@/dtos/generate-proof.dto.js";
 import { fileURLToPath } from "url";
+import { randomUUID } from "crypto";
+import os from "os";
+import { stringify as tomlStringify } from 'smol-toml'
 
 const execPromise = promisify(exec);
+
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
-const PROVER_TOML_PATH = path.join(__dirname, "../../circuit/transfer/Prover.toml");
-const CIRCUIT_PATH = path.join(__dirname, "../../circuit/transfer");
-const PROOFS_MAX_LENGTH = 20;
+const CIRCUIT_PATH = path.join(__dirname, "../../circuits/transfer");
+const ACIR_PATH = path.join(CIRCUIT_PATH, `target/transfer.json`);
+const VK_PATH = path.join(CIRCUIT_PATH, `target/vk.bin`);
+const TMP_DIR = os.tmpdir();
 
-export async function generateProofFile(input: GenerateProofDto): Promise<void> {
-  const tomlContent = `
-    amount = "${input.amount}"
-    balance = "${input.balance}"
-    receiver_account = "${input.receiver_account}"
-    change_account = "${input.change_account}"
-    secret_sender_account = "${input.secret_sender_account}"
-    nullifier = "${input.nullifier}"
-    nullifier_hash = "${input.nullifier_hash}"
-    root = "${input.root}"
+export async function generateProof(input: GenerateProofDto): Promise<string[]> {
+  const proofId = randomUUID().toString();
+  const proverPath = path.join(TMP_DIR, `${proofId}-prover.toml`);
+  const witnessName = path.join(TMP_DIR, `${proofId}-witness.gz`);
+  const proofPath = path.join(TMP_DIR, `${proofId}-proof.bin`);
 
-    path = ${JSON.stringify(input.path)}
-    direction_selector = ${JSON.stringify(input.direction_selector)}
-
-    out_commitment = ${JSON.stringify(input.out_commitment)}
-
-    new_root = "${input.new_root}"
-    new_path = ${JSON.stringify(input.new_path)}
-    new_direction_selector = ${JSON.stringify(input.new_direction_selector)}
-
-    new_path_change = ${JSON.stringify(input.new_path_change)}
-    new_direction_selector_change = ${JSON.stringify(input.new_direction_selector_change)}
-    `.trim();
-
-  await fs.writeFile(PROVER_TOML_PATH, tomlContent, "utf-8");
-}
-
-export async function generateProof(): Promise<string[]> {
   try {
-    const vkPath = path.join(CIRCUIT_PATH, "target/vk.bin");
-    const proofDir = path.join(CIRCUIT_PATH, "target/proofs");
+    // generate prover file
+    await fs.writeFile(proverPath, tomlStringify(input), "utf-8");
 
-    const vkExists = await fs
-      .access(vkPath)
-      .then(() => true)
-      .catch(() => false);
+    // generate witness
+    await execPromise(`nargo execute -p ${proverPath} ${witnessName}`, {
+      cwd: CIRCUIT_PATH
+    });
 
-    if (!vkExists) {
-      console.log("Verifying circuit execution...");
-      await execPromise("nargo execute", { cwd: CIRCUIT_PATH });
-      console.log("Circuit executed successfully.");
-
-      console.log("Generating verification key (vk.bin)...");
-      await execPromise("/root/.bb/bb write_vk_ultra_keccak_honk -b target/transfer.json -o ./target/vk.bin", {
-        cwd: CIRCUIT_PATH,
-      });
-      console.log("Verification key (vk.bin) generated successfully.");
-    } else {
-      console.log("Verification key (vk.bin) already exists. Skipping generation.");
-    }
-
-    await fs.mkdir(proofDir, { recursive: true });
-
-    const timestamp = Date.now();
-    const proofPath = path.join(proofDir, `transfer_proof_${timestamp}.bin`);
-
-    console.log("Generating proof...");
-    await execPromise(`/root/.bb/bb prove_ultra_keccak_honk -b target/transfer.json -w target/transfer.gz -o ${proofPath}`, {
+    // generate proof
+    await execPromise(`bb prove_ultra_keccak_honk -b ${ACIR_PATH} -w ${witnessName} -o ${proofPath}`, {
       cwd: CIRCUIT_PATH,
     });
-    console.log(`Proof successfully generated: ${proofPath}`);
 
-    console.log("Generating proof calldata...");
+    // generate calldata
     const { stdout } = await execPromise(
-      `garaga calldata --system ultra_keccak_honk --vk target/vk.bin --proof ${proofPath} --format array`,
+      `garaga calldata --system ultra_keccak_honk --vk ${VK_PATH} --proof ${proofPath} --format array`,
       { cwd: CIRCUIT_PATH }
     );
-    console.log("Calldata successfully generated.");
 
     const trimmedStdout = stdout.trim();
-    const modifiedStdout = trimmedStdout.substring(1, trimmedStdout.length - 1);
-
-    const proofFiles = (await fs.readdir(proofDir))
-      .filter(file => file.startsWith("transfer_proof_") && file.endsWith(".bin"))
-      .sort((a, b) => parseInt(a.split("_")[2]) - parseInt(b.split("_")[2]));
-
-    if (proofFiles.length > PROOFS_MAX_LENGTH) {
-      const filesToDelete = proofFiles.slice(0, proofFiles.length - PROOFS_MAX_LENGTH);
-      for (const file of filesToDelete) {
-        await fs.unlink(path.join(proofDir, file));
-      }
-      console.log(`Cleanup completed: Removed ${filesToDelete.length} outdated proof files.`);
-    }
-
-    return modifiedStdout.split(",").map((x) => x.trim());
+    const calldata = trimmedStdout.substring(1, trimmedStdout.length - 1);
+    
+    return calldata.split(",").map((x) => x.trim());
   } catch (error) {
     console.error("Error occurred during proof generation:", error);
     throw new Error(`Proof generation failed: ${(error as Error).message}`);
+  } finally {
+    await Promise.allSettled([
+      fs.unlink(proverPath),
+      fs.unlink(witnessName),
+      fs.unlink(proofPath),
+    ]).catch(() => console.log("cleanup failed"))
   }
 }

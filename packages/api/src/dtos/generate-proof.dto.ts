@@ -1,18 +1,17 @@
 export interface GenerateProofDto {
-  amount: number;
-  balance: number;
-  direction_selector: boolean[];
-  nullifier: string;
-  nullifier_hash: string;
-  path: string[];
-  root: string;
-  receiver_account: string;
-  change_account: string;
-  secret_sender_account: string;
-  out_commitment: string[];
-  new_root: string;
-  new_path: string[];
-  new_direction_selector: boolean[];
-  new_path_change: string[];
-  new_direction_selector_change: boolean[];
+  in_root : string,
+  in_path : string[],
+  in_direction_selector : boolean[],
+  in_amount : string,
+  in_commitment_nullifier : string,
+  in_commitment_nullifier_hash : string,
+  in_commitment_secret : string,
+  out_receiver_account : string,
+  out_root : string,
+  out_amount_sender : string,
+  out_amount_receiver : string,
+  out_commitment_sender : string,
+  out_commitment_receiver : string,
+  out_subtree_root_path : string[]
+  out_subtree_root_direction : boolean[]
 }

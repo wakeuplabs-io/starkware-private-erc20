@@ -47,3 +47,6 @@ packages/ui/src/routeTree.gen.ts
 
 
 target
+
+# sst
+.sst
