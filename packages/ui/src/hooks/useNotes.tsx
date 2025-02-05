@@ -1,9 +1,8 @@
-import { useMemo } from "react";
+import { useEffect, useState } from "react";
 import { useEvents } from "@/hooks/useEvents";
-import { Note, ReceiverAccount } from "@/interfaces";
-import { BarretenbergService } from "@/services/bb.service";
+import { DecryptedOutput, Note } from "@/interfaces";
 import { CipherService } from "@/services/cipher.service";
-import { AccountService } from "@/services/account.service";
+import { ZERO_BIG_INT } from "@/constants";
 
 export const useNotes: () => {
   notes: Note[],
@@ -12,57 +11,75 @@ export const useNotes: () => {
 } = () => {
   const {
     commitments,
-    nullifierHashes,
     isLoading: eventsLoading,
   } = useEvents();
 
-  const { notes, balance } = useMemo(async () => {
-    try {
-      if (!commitments.length) {
-        throw new Error("No commitments");
+  const [publicKey, setPublicKey] = useState<Uint8Array | null>(null);
+  const [secretKey, setSecretKey] = useState<Uint8Array | null>(null);
+  const [notes, setNotes] = useState<Note[]>([]);
+  const [balance, setBalance] = useState<bigint>(ZERO_BIG_INT);
+  const [loading, setLoading] = useState<boolean>(true);
+
+  useEffect(() => {
+    const fetchKeys = async () => {
+      const keyPair = await CipherService.getKeyPair();
+      if (keyPair) {
+        setPublicKey(keyPair.publicKey);
+        setSecretKey(keyPair.secretKey);
+      }
+    };
+    fetchKeys();
+  }, []);
+
+  useEffect(() => {
+    const decryptNotes = async () => {
+      if (!commitments.length || !publicKey || !secretKey) {
+        setNotes([]);
+        setBalance(ZERO_BIG_INT);
+        setLoading(false);
+        return;
       }
 
-      const { publicKey, privateKey } = await AccountService.getAccount();
-      const storedReceiverAddresses: ReceiverAccount[] = JSON.parse(
-        localStorage.getItem("ReceiverAccounts") || "[]"
-      );
+      try {
+        const notesExpanded: Note[] = await Promise.all(
+          commitments.map(async (commitment) => {
+            try {
+              const decrypted: DecryptedOutput = await CipherService.decryptNote(
+                commitment.encryptedOutput,
+                publicKey,
+                secretKey
+              );
 
-      const notes = commitments
-        .map((commitment) => {
-          const decrypted = CipherService.decrypt(
-            commitment.encryptedValue,
-            publicKey,
-            privateKey,
-          );
+              return {
+                commitment: commitment.commitment,
+                encryptedOutput: commitment.encryptedOutput,
+                index: commitment.index,
+                value: decrypted.value,
+                blinding: decrypted.bliding,
+              };
+            } catch (error) {
+              return {
+                commitment: commitment.commitment,
+                encryptedOutput: commitment.encryptedOutput,
+                index: commitment.index,
+              };
+            }
+          })
+        );
 
-          const nullifier: string =
-            storedReceiverAddresses.find(
-              (receiver) => receiver.address === commitment.address
-            )?.nullifier || "unknown nullifier";
+        setNotes(notesExpanded);
+        setBalance(notesExpanded.filter((note: Note) => note.value ).reduce((acc, note) => acc + note.value!, ZERO_BIG_INT));
+      } catch (error) {
+        console.error("Error decrypting notes:", error);
+        setNotes([]);
+        setBalance(ZERO_BIG_INT);
+      } finally {
+        setLoading(false);
+      }
+    };
 
-          const nullifierHash = BarretenbergService.generateHash(nullifier);
-          const note: Note = {
-            index: commitment.index
-            receiver: commitments.address,
-            value: decrypted.value,
-            encryptedValue: commitments.encryptedValue,
-            nullifier,
-            nullifierHash,
-            commitment: commitments.commitment,
-          };
+    decryptNotes();
+  }, [commitments, publicKey, secretKey]);
 
-          return note;
-        })
-        .filter((note) => !nullifierHashes.includes(note.nullifierHash)); // TODO: should return all notes, and then we filter in transfer
-
-      return {
-        notes,
-        balance: notes.reduce((acc, note) => acc + note.value, 0),
-      };
-    } catch (e) {
-      return { notes: [], balance: 0 };
-    }
-  }, [commitments, nullifierHashes]);
-
-  return { notes, balance, loading: eventsLoading };
+  return { notes, balance, loading: eventsLoading || loading };
 };

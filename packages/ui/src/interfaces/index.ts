@@ -1,16 +1,21 @@
 export interface Note {
-  index: bigint;
   commitment: bigint;
-  encOutput: string;
   bliding?: bigint;
+  encryptedOutput: string;
   value?: bigint;
   nullifier?: bigint;
+  index: bigint;
 }
 
 export interface CommitmentEvent {
-  commitment: string;
-  encryptedValue: string;
-  address: string;
+  commitment: bigint;
+  encryptedOutput: string;
+  index: bigint;
+}
+
+export interface DecryptedOutput {
+  value: bigint;    
+  bliding: bigint;
 }
 
 export interface ReceiverAccount {
