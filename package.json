@@ -3,14 +3,15 @@
   "version": "0.0.0",
   "type": "module",
   "scripts": {
-    "lint": "eslint . --ext ts,tsx --report-unused-disable-directives --max-warnings 0",
+    "build": "esbuild-wasm src/index.ts --bundle --outfile=dist/app.js",
     "dev": "concurrently --kill-others \"pnpm --filter api run dev\" \"pnpm --filter ui run dev\"",
-    "build": "esbuild-wasm src/index.ts --bundle --outfile=dist/app.js"
+    "lint": "eslint . --ext ts,tsx --report-unused-disable-directives --max-warnings 0"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
   "devDependencies": {
+    "@types/aws-lambda": "8.10.147",
     "@typescript-eslint/eslint-plugin": "7.6.0",
     "@typescript-eslint/parser": "7.6.0",
     "concurrently": "8.2.2",
@@ -25,6 +26,7 @@
   },
   "dependencies": {
     "dotenv": "16.4.5",
+    "sst": "3.7.8",
     "tweetnacl": "^1.0.3",
     "tweetnacl-util": "^0.15.1",
     "zod": "3.22.4"

@@ -5,10 +5,5 @@ services:
     image: private-erc20-api:latest
     build: .
     ports:
-      - "5001:5001"
-    volumes:
-      - .:/app
-    environment:
-      - PATH=/root/.nargo/bin:$PATH
-    command: /bin/sh -c "yarn install && yarn dev || tail -f /dev/null"
+      - "5001:80"
 

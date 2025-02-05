@@ -6,12 +6,12 @@ dotenv.config();
 // NOTE: DO NOT destructure process.env
 
 const env = {
-  APP_URL: process.env.APP_URL,
+  API_BASE_URL: process.env.VITE_API_BASE_URL,
 };
 
 const envSchema = z
   .object({
-    APP_URL: z.string().url().optional().default("http://localhost:5000"),
+    API_BASE_URL: z.string().default("http://localhost:5001"),
   })
   .required();
 
