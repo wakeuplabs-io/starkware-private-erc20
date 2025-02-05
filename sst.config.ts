@@ -2,12 +2,12 @@
 
 import "dotenv/config";
 
-const PROJECT_NAME = "starkware-privado";
+const PROJECT_NAME = "starkware-privado-erc20";
 
 export default $config({
   app(input) {
     return {
-      name: "starkware-private-erc20",
+      name: "starkware-privado",
       removal: input?.stage === "production" ? "retain" : "remove",
       protect: ["production"].includes(input?.stage),
       home: "aws",
