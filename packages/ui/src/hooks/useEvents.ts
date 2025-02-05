@@ -39,18 +39,19 @@ export const useEvents = () => {
         const eventsParsed = Events.parseEvents(eventsResponse.events, abiEvents, abiStructs, abiEnums);
 
         const commitmentsParsed: CommitmentEvent[] = eventsParsed
-          .filter(event => event["contracts::privado::privado::Privado::NewCommitment"]) // Filtra eventos válidos
+          .filter(event => event["contracts::privado::privado::Privado::NewCommitment"])
           .map(event => {
-            const { commitment, output_enc, index } = event["contracts::privado::privado::Privado::NewCommitment"];
+            const { commitment, amount_enc, index } = event["contracts::privado::privado::Privado::NewCommitment"];
+            // const { commitment, output_enc, index } = event["contracts::privado::privado::Privado::NewCommitment"];
             return {
               commitment: commitment.toString(),
-              outputEnc: output_enc.toString(),
-              index: index
+              outputEncrypted: amount_enc.toString(),
+              index: BigInt(index.toString())
             };
           });
         
         const nullifiersParsed: string[] = eventsParsed
-          .filter(event => event["contracts::privado::privado::Privado::NewNullifier"]) // Filtra eventos válidos
+          .filter(event => event["contracts::privado::privado::Privado::NewNullifier"])
           .map(event => event["contracts::privado::privado::Privado::NewNullifier"]?.nullifier_hash?.toString() || "");
         
         setCommitments(commitmentsParsed);

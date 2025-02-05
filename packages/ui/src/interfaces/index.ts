@@ -1,22 +1,21 @@
-export interface NoteExpanded {
-  receiver: string;
-  value: number;
-  encryptedValue: string;
-  commitment: string;
-  nullifier: string;
-  nullifierHash: string;
-}
-
 export interface Note {
-  commitment: string;
-  valueEncrypted: number;
-  addressReceiver: string;
+  commitment: bigint;
+  bliding?: bigint;
+  encryptedOutput: string;
+  value?: bigint;
+  nullifier?: bigint;
+  index: bigint;
 }
 
 export interface CommitmentEvent {
-  commitment: string;
-  encryptedValue: string;
-  address: string;
+  commitment: bigint;
+  encryptedOutput: string;
+  index: bigint;
+}
+
+export interface DecryptedOutput {
+  value: bigint;    
+  bliding: bigint;
 }
 
 export interface ReceiverAccount {

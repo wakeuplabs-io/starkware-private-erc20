@@ -1,13 +1,14 @@
+import { DecryptedOutput } from "@/interfaces";
 import sodium from "libsodium-wrappers";
 class CipherService {
-  static async encryptNote(note: { value: number }, receiverPublicKey: Uint8Array): Promise<string> {
+  static async encryptNote(note: DecryptedOutput, receiverPublicKey: Uint8Array): Promise<string> {
     await sodium.ready;
     const message = sodium.from_string(JSON.stringify(note));
     const encrypted = sodium.crypto_box_seal(message, receiverPublicKey);
     return sodium.to_base64(encrypted);
   }
 
-  static async decryptNote(encryptedString: string, receiverPublicKey: Uint8Array, receiverPrivateKey: Uint8Array): Promise<{ value: number }> {
+  static async decryptNote(encryptedString: string, receiverPublicKey: Uint8Array, receiverPrivateKey: Uint8Array): Promise<DecryptedOutput> {
     await sodium.ready;
     const encrypted = sodium.from_base64(encryptedString);
     const decrypted = sodium.crypto_box_seal_open(encrypted, receiverPublicKey, receiverPrivateKey);
