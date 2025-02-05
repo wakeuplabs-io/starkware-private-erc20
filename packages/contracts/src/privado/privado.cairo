@@ -173,6 +173,7 @@ pub mod Privado {
         self.transfer_verifier_address.write(TRANSFER_VERIFIER_ADDRESS.try_into().unwrap());
 
         self.current_root.write(MERKLE_TREE_INITIAL_ROOT);
+        self.current_commitment_index.write(2); // fill first subtree
 
         // mint initial note with all funds
         let (mint_commitment, mint_output_enc) = GET_MINT_COMMITMENT();
