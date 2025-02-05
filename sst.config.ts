@@ -1,5 +1,7 @@
 /// <reference path="./.sst/platform/config.d.ts" />
 
+import "dotenv/config";
+
 const PROJECT_NAME = "starkware-privado";
 
 export default $config({
@@ -12,9 +14,17 @@ export default $config({
     };
   },
   async run() {
-    const vpc = new sst.aws.Vpc(`${PROJECT_NAME}-vpc`);
 
-    const cluster = new sst.aws.Cluster(`${PROJECT_NAME}-cluster`, { vpc });
+    const cluster = new sst.aws.Cluster(`${PROJECT_NAME}-cluster`, {
+      vpc: {
+        id: process.env.VPC_ID,
+        securityGroups: process.env.SECURITY_GROUPS.split(","),
+        loadBalancerSubnets: process.env.SUBNETS.split(","),
+        containerSubnets: process.env.SUBNETS.split(","),
+        cloudmapNamespaceId: process.env.CLOUDMAP_NAMESPACE_ID,
+        cloudmapNamespaceName: process.env.CLOUDMAP_NAMESPACE_NAME,
+      }
+    });
     const api = cluster.addService(`${PROJECT_NAME}-api`, {
       image: {
         dockerfile: "packages/api/Dockerfile",
@@ -24,7 +34,7 @@ export default $config({
         ports: [{ listen: "80/http" }],
       },
       dev: {
-        command: "node --watch index.mjs",
+        command: "npm run dev",
       },
     });
 
@@ -39,7 +49,7 @@ export default $config({
         directory: "packages/ui",
       },
       environment: {
-        VITE_API_URL: api.url,
+        VITE_API_BASE_URL: api.url,
       },
       indexPage: "index.html",
       errorPage: "index.html",
