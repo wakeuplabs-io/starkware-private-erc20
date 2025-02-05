@@ -14,7 +14,7 @@ dist-ssr
 !.vscode/settings.json
 
 .env*
-!.env.sample
+!.env.example
 
 # web3
 packages/web3/.dist
