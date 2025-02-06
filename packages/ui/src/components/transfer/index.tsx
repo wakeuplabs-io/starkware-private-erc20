@@ -1,6 +1,7 @@
 import { useTransfer } from "@/hooks/useTransfer";
 import "./transfer.css";
 import { useCallback, useState } from "react";
+import { Button } from "../ui/button";
 
 const Transfer = () => {
   const { sendTransfer, loading } = useTransfer();
@@ -20,6 +21,7 @@ const Transfer = () => {
         window.alert("Transfer successful");
       })
       .catch((error) => {
+        console.error(error);
         window.alert("Transfer failed");
       });
   }, [amount, recipientAddress, recipientPublicKey, sendTransfer]);
@@ -52,13 +54,9 @@ const Transfer = () => {
         onChange={(e) => setAmount(parseInt(e.target.value))}
       />
 
-      <button
-        onClick={onTransfer}
-        className="transfer-button"
-        disabled={loading}
-      >
+      <Button className="w-full mt-2" onClick={onTransfer} disabled={loading}>
         {loading ? "Transferring..." : "Transfer "}
-      </button>
+      </Button>
     </div>
   );
 };

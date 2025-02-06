@@ -1,7 +1,8 @@
 import { StarknetkitConnector, useStarknetkitConnectModal } from "starknetkit";
 import { useAccount, useConnect, useDisconnect } from "@starknet-react/core";
-import { add } from "libsodium-wrappers";
 import { Button } from "../ui/button";
+
+
 const ConnectButton = () => {
   const { connect, connectors } = useConnect();
   const { disconnect } = useDisconnect();
