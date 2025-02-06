@@ -78,11 +78,10 @@ export const useTransfer = () => {
 
       const tree = new MerkleTree();
       const orderedNotes = notes.sort((a, b) =>
-        parseInt((b.index! - a.index!).toString())
+        parseInt((a.index! - b.index!).toString())
       );
       for (const note of orderedNotes) {
         await tree.addCommitment(note.commitment);
-        console.log("Added" + note.commitment);
       }
 
       const inRoot = tree.getRoot();
@@ -92,15 +91,21 @@ export const useTransfer = () => {
       if (!inputCommitmentProof) {
         throw new Error("Input commitment doesn't belong to the tree");
       }
-
-      await Promise.all([
-        tree.addCommitment(outSenderNote.commitment),
-        tree.addCommitment(outReceiverNote.commitment),
-      ]);
+      
+      await tree.addCommitment(outSenderNote.commitment);
+      await tree.addCommitment(outReceiverNote.commitment);
 
       const outRoot = tree.getRoot();
       const outPathProof = tree.getProof(outSenderNote.commitment);
-      console.log("outPathProof", (await BarretenbergService.generateHashArray([new Fr(0n),new Fr(0n)])).toString(16));
+      const outPathProof2 = tree.getProof(outReceiverNote.commitment);
+      console.log(
+        "outPathProof",
+        outPathProof?.path.map((e) => formatHex(e)),
+        outPathProof2?.path.map((e) => formatHex(e)),
+        (
+          await BarretenbergService.generateHashArray([new Fr(0n), new Fr(0n)])
+        ).toString(16)
+      );
 
       if (!outPathProof) {
         throw new Error("Couldn't generate output path proof");
@@ -133,11 +138,11 @@ export const useTransfer = () => {
         out_sender_bliding: formatHex(outSenderNote.bliding),
         out_sender_commitment: formatHex(outSenderNote.commitment),
         out_subtree_root_path: outPathProof.path
-          .slice(0, MERKLE_TREE_DEPTH - 1)
+          .slice(1, MERKLE_TREE_DEPTH)
           .map((e) => formatHex(e)),
         out_subtree_root_direction: outPathProof.directionSelector.slice(
-          0,
-          MERKLE_TREE_DEPTH - 1
+          1,
+          MERKLE_TREE_DEPTH
         ),
       });
 
@@ -158,11 +163,11 @@ export const useTransfer = () => {
         out_sender_bliding: formatHex(outSenderNote.bliding),
         out_sender_commitment: formatHex(outSenderNote.commitment),
         out_subtree_root_path: outPathProof.path
-          .slice(0, MERKLE_TREE_DEPTH - 1)
+          .slice(1, MERKLE_TREE_DEPTH)
           .map((e) => formatHex(e)),
         out_subtree_root_direction: outPathProof.directionSelector.slice(
-          0,
-          MERKLE_TREE_DEPTH - 1
+          1,
+          MERKLE_TREE_DEPTH
         ),
       });
 

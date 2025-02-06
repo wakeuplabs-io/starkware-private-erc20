@@ -12,6 +12,18 @@ const Transfer = () => {
   const [amount, setAmount] = useState(0);
 
   const onTransfer = useCallback(async () => {
+    // const tree = new MerkleTree()
+    // await tree.addCommitment(1n)
+    // await tree.addCommitment(2n)
+    // await tree.addCommitment(4n)
+    // await tree.addCommitment(5n)
+    // await tree.addCommitment(6n)
+    // await tree.addCommitment(7n)
+
+    // console.log("tree", tree.getProof(6n))
+    // console.log("tree", tree.getProof(7n))
+
+
     sendTransfer({
       to: {
         address: BigInt(recipientAddress),
