@@ -1,7 +1,7 @@
 import "./home.css";
 import { createFileRoute } from "@tanstack/react-router";
 import AccountManager from "@/components/account-manager";
-import NotesList from "@/components/notes-list";
+import Balance from "@/components/balance";
 import Transfer from "@/components/transfer";
 import ConnectButton from "@/components/connect-button";
 
@@ -12,12 +12,17 @@ export const Route = createFileRoute("/")({
 function Index() {
   return (
     <div className="home-container">
-      <h1 className="home-title">Private-ERC20</h1>
-      <ConnectButton />
+      <h1 className="text-xl font-bold mb-4">Starkware-Private-ERC20</h1>
 
-      <div>
+      <div className="space-y-4">
+        <div className="text-center">
+          <ConnectButton />
+        </div>
+
         <AccountManager />
-        <NotesList />
+        
+        <Balance />
+        
         <Transfer />
       </div>
     </div>

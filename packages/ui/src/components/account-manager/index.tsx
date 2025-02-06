@@ -10,7 +10,6 @@ const AccountManager = () => {
   useEffect(() => {
     async function fetchAccount() {
       const account = await AccountService.getAccount();
-      console.log("account", account)
 
       setPublicKey(account.publicKey.toString(16));
       setPrivateKey(account.privateKey.toString(16));
@@ -21,9 +20,7 @@ const AccountManager = () => {
   }, []);
 
   return (
-    <div className="account-manager-container">
-      <h2 className="account-manager-title">Your account</h2>
-
+    <div className="border rounded-md bg-muted p-4">
       <div className="account-manager-keys">
         {privateKey && (
           <p>

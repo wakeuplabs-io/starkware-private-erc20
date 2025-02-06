@@ -27,9 +27,7 @@ export const useTransfer = () => {
   });
 
   const {
-    send,
-    error: transferError,
-    status: txStatus,
+    sendAsync
   } = useSendTransaction({
     calls: undefined,
   });
@@ -46,15 +44,10 @@ export const useTransfer = () => {
         throw new Error("Contract not initialized");
       }
 
-      console.log("account", account);
-
       const spenderAccount = await AccountService.getAccount();
-
-      console.log("bliding", notes);
 
       // order max to min to select the first note with bigger value that can pay the amount
       const senderNotes = notes.filter((n) => n.value !== undefined);
-      console.log(senderNotes);
       const inputNote = senderNotes
         .sort((a, b) => parseInt((b.value! - a.value!).toString()))
         .find((n) => n.value! > props.amount);
@@ -145,9 +138,8 @@ export const useTransfer = () => {
         outReceiverNote.encOutput,
       ]);
 
-      await send([callData]);
+      await sendAsync([callData]);
     } catch (error) {
-      console.log(error);
       throw error;
     } finally {
       setLoading(false);

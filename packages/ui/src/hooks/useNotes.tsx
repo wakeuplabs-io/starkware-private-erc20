@@ -37,7 +37,6 @@ export const useNotes: () => {
                   account.privateKey
                 )
               );
-              console.log("ok decrypt", decrypted);
 
               const note: Note = {
                 commitment: commitment.commitment,
@@ -48,7 +47,6 @@ export const useNotes: () => {
               };
               return note;
             } catch (error) {
-              console.log("error decrypt", error);
               const note: Note = {
                 commitment: commitment.commitment,
                 encryptedOutput: commitment.encryptedOutput,

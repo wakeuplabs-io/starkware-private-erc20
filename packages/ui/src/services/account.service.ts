@@ -7,7 +7,6 @@ class AccountService {
     try {
       return await this._load();
     } catch (e) {
-      console.log(e);
       return await this._generate();
     }
   }

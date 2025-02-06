@@ -79,9 +79,5 @@ export const useEvents = () => {
   }, [newCommitmentHash, newNullifierHash, provider]);
 
 
-  useEffect(() => {
-    console.log("commitments", commitments)
-  }, [commitments])
-
   return { commitments, nullifierHashes, error, isLoading };
 };

@@ -2,7 +2,7 @@ import { useNotes } from "@/hooks/useNotes";
 import "./notes-list.css";
 import { useMemo } from "react";
 
-const NotesList = () => {
+const Balance = () => {
   const { balance } = useNotes();
 
   const balanceString = useMemo(() => {
@@ -10,11 +10,11 @@ const NotesList = () => {
   }, [balance])
 
   return (
-    <div className="balance-card">
-      <h3 className="balance-title">My Balance</h3>
+    <div className="w-full border bg-muted p-4 rounded-md text-center">
+      <h3 className="text-lg">My Balance</h3>
       <p className="balance-amount">${balance.toString()}</p>
     </div>
   );
 };
 
-export default NotesList;
+export default Balance;
