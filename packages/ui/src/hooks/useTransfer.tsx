@@ -9,9 +9,11 @@ import { MerkleTree } from "@/utils/merkle-tree";
 import { AccountService } from "@/services/account.service";
 import { CallData } from "starknet";
 import { MERKLE_TREE_DEPTH } from "@/shared/config/constants";
+import { useState } from "react";
 
 export const useTransfer = () => {
   const { notes } = useNotes();
+  const [loading, setLoading] = useState(false);
 
   const { contract } = useContract({
     abi: privateTokenAbi,
@@ -33,69 +35,67 @@ export const useTransfer = () => {
     };
     amount: bigint;
   }) => {
-    if (!contract) {
-      throw new Error("Contract not initialized");
-    }
-
-    const spenderAccount = await AccountService.getAccount();
-
-    // order max to min to select the first note with bigger value that can pay the amount
-    const senderNotes = notes.filter((n) => !!n.value);
-    const inputNote = senderNotes
-      .sort((a, b) => parseInt((b.value! - a.value!).toString()))
-      .find((n) => n.value! > props.amount);
-    if (!inputNote) {
-      throw new Error("Insufficient funds in notes");
-    }
-
-    // generate output notes
-
-    const outSenderAmount = inputNote.value! - props.amount;
-
-    const [outSenderNote, outReceiverNote] = await Promise.all([
-      BarretenbergService.generateNote(
-        spenderAccount.address,
-        spenderAccount.publicKey,
-        outSenderAmount
-      ),
-      BarretenbergService.generateNote(
-        props.to.address,
-        props.to.publicKey,
-        props.amount
-      ),
-    ]);
-
-    // generate tree and merkle proofs for input and output
-
-    const tree = new MerkleTree();
-    const orderedNotes = notes.sort((a, b) =>
-      parseInt((b.index! - a.index!).toString())
-    );
-    for (const note of orderedNotes) {
-      tree.addCommitment(note.commitment);
-    }
-    const inRoot = tree.getRoot();
-
-    const inputCommitmentProof = tree.getProof(inputNote.commitment);
-    if (!inputCommitmentProof) {
-      throw new Error("Input commitment doesn't belong to the tree");
-    }
-
-    await Promise.all([
-      tree.addCommitment(outSenderNote.commitment),
-      tree.addCommitment(outReceiverNote.commitment)
-    ]);
-
-    const outRoot = tree.getRoot();
-    const outPathProof = tree.getProof(
-      outSenderNote.commitment
-    );
-
-    if (!outPathProof) {
-      throw new Error("Couldn't generate output path proof");
-    }
-
     try {
+      if (!contract) {
+        throw new Error("Contract not initialized");
+      }
+
+      const spenderAccount = await AccountService.getAccount();
+
+      // order max to min to select the first note with bigger value that can pay the amount
+      const senderNotes = notes.filter((n) => !!n.value);
+      const inputNote = senderNotes
+        .sort((a, b) => parseInt((b.value! - a.value!).toString()))
+        .find((n) => n.value! > props.amount);
+      if (!inputNote) {
+        throw new Error("Insufficient funds in notes");
+      }
+
+      // generate output notes
+
+      const outSenderAmount = inputNote.value! - props.amount;
+
+      const [outSenderNote, outReceiverNote] = await Promise.all([
+        BarretenbergService.generateNote(
+          spenderAccount.address,
+          spenderAccount.publicKey,
+          outSenderAmount
+        ),
+        BarretenbergService.generateNote(
+          props.to.address,
+          props.to.publicKey,
+          props.amount
+        ),
+      ]);
+
+      // generate tree and merkle proofs for input and output
+
+      const tree = new MerkleTree();
+      const orderedNotes = notes.sort((a, b) =>
+        parseInt((b.index! - a.index!).toString())
+      );
+      for (const note of orderedNotes) {
+        tree.addCommitment(note.commitment);
+      }
+      const inRoot = tree.getRoot();
+
+      const inputCommitmentProof = tree.getProof(inputNote.commitment);
+      if (!inputCommitmentProof) {
+        throw new Error("Input commitment doesn't belong to the tree");
+      }
+
+      await Promise.all([
+        tree.addCommitment(outSenderNote.commitment),
+        tree.addCommitment(outReceiverNote.commitment),
+      ]);
+
+      const outRoot = tree.getRoot();
+      const outPathProof = tree.getProof(outSenderNote.commitment);
+
+      if (!outPathProof) {
+        throw new Error("Couldn't generate output path proof");
+      }
+
       const generatedProof = await ProofService.generateProof({
         in_amount: props.amount.toString(16),
         in_bliding: inputNote.bliding!.toString(16),
@@ -114,8 +114,13 @@ export const useTransfer = () => {
         out_sender_amount: outSenderAmount.toString(16),
         out_sender_bliding: outSenderNote.bliding.toString(16),
         out_sender_commitment: outSenderNote.commitment.toString(16),
-        out_subtree_root_path: outPathProof.path.slice(0, MERKLE_TREE_DEPTH).map((e) => e.toString(16)),
-        out_subtree_root_direction: outPathProof.directionSelector.slice(0, MERKLE_TREE_DEPTH),
+        out_subtree_root_path: outPathProof.path
+          .slice(0, MERKLE_TREE_DEPTH)
+          .map((e) => e.toString(16)),
+        out_subtree_root_direction: outPathProof.directionSelector.slice(
+          0,
+          MERKLE_TREE_DEPTH
+        ),
       });
 
       const callData = contract.populate("transfer", [
@@ -126,13 +131,14 @@ export const useTransfer = () => {
 
       await send([callData]);
     } catch (error) {
-      console.error("Error sending transfer:", error);
+      throw error;
+    } finally {
+      setLoading(false);
     }
   };
 
   return {
     sendTransfer,
-    txStatus,
-    transferError,
+    loading,
   };
 };

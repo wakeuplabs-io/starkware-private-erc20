@@ -24,6 +24,8 @@ class AccountService {
     const privateKey = BigInt(sodium.to_hex(keypair.privateKey));
     const address = BarretenbergService.generateHashArray([new Fr(privateKey)]);
 
+    console.log("generate", publicKey, privateKey, address);
+
     localStorage.setItem("PrivateKey", privateKey.toString(16));
     localStorage.setItem("PublicKey", publicKey.toString(16));
     localStorage.setItem("Address", address.toString(16));

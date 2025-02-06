@@ -1,24 +1,22 @@
-import ConnectButton from "@/components/connect-button";
-import { createFileRoute } from "@tanstack/react-router";
 import "./home.css";
-import { useAccount } from "@starknet-react/core";
-import Dashboard from "./dashboard";
+import { createFileRoute } from "@tanstack/react-router";
+import AccountManager from "@/components/account-manager";
+import NotesList from "@/components/notes-list";
+import Transfer from "@/components/transfer";
 
 export const Route = createFileRoute("/")({
   component: Index,
 });
 
 function Index() {
-  const { status } = useAccount();
   return (
     <div className="home-container">
       <h1 className="home-title">Private-ERC20</h1>
-      <div className="home-button">
-        <ConnectButton />
+      <div>
+        <AccountManager />
+        <NotesList />
+        <Transfer />
       </div>
-      {status === "connected" && (
-        <Dashboard />
-      )}
     </div>
   );
 }
