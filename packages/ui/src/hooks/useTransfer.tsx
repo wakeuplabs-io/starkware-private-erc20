@@ -1,13 +1,17 @@
 import { Fr } from "@aztec/bb.js";
 import { useNotes } from "./useNotes";
 import { ProofService } from "@/services/proof.service";
-import { useContract, useSendTransaction } from "@starknet-react/core";
+import {
+  useAccount,
+  useContract,
+  useSendTransaction,
+} from "@starknet-react/core";
 import { BarretenbergService } from "@/services/bb.service";
 import privateTokenAbi from "@/abi/private-erc20.abi";
 import { PRIVATE_ERC20_CONTRACT_ADDRESS } from "@/constants";
 import { MerkleTree } from "@/utils/merkle-tree";
 import { AccountService } from "@/services/account.service";
-import { CallData } from "starknet";
+import { byteArray, CallData } from "starknet";
 import { MERKLE_TREE_DEPTH } from "@/constants";
 import { useState } from "react";
 import { formatHex } from "@/utils/hex";
@@ -15,6 +19,7 @@ import { formatHex } from "@/utils/hex";
 export const useTransfer = () => {
   const { notes } = useNotes();
   const [loading, setLoading] = useState(false);
+  const { account } = useAccount();
 
   const { contract } = useContract({
     abi: privateTokenAbi,
@@ -40,6 +45,8 @@ export const useTransfer = () => {
       if (!contract) {
         throw new Error("Contract not initialized");
       }
+
+      console.log("account", account);
 
       const spenderAccount = await AccountService.getAccount();
 
@@ -91,7 +98,7 @@ export const useTransfer = () => {
       if (!inputCommitmentProof) {
         throw new Error("Input commitment doesn't belong to the tree");
       }
-      
+
       await tree.addCommitment(outSenderNote.commitment);
       await tree.addCommitment(outReceiverNote.commitment);
 
@@ -171,10 +178,19 @@ export const useTransfer = () => {
         ),
       });
 
+
+      console.log(generatedProof);
+
       const callData = contract.populate("transfer", [
         generatedProof,
-        CallData.compile([outSenderNote.encOutput]),
-        CallData.compile([outReceiverNote.encOutput]),
+        outSenderNote.encOutput,
+        outReceiverNote.encOutput,
+        // CallData.compile([
+        //   byteArray.byteArrayFromString(outSenderNote.encOutput),
+        // ]),
+        // CallData.compile([
+        //   byteArray.byteArrayFromString(outReceiverNote.encOutput),
+        // ]),
       ]);
 
       await send([callData]);
