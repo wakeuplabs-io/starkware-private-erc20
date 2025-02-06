@@ -3,14 +3,16 @@
   "version": "0.0.0",
   "type": "module",
   "scripts": {
-    "lint": "eslint . --ext ts,tsx --report-unused-disable-directives --max-warnings 0",
+    "build": "esbuild-wasm src/index.ts --bundle --outfile=dist/app.js",
     "dev": "concurrently --kill-others \"pnpm --filter api run dev\" \"pnpm --filter ui run dev\"",
-    "build": "pnpm -r run build"
+    "lint": "eslint . --ext ts,tsx --report-unused-disable-directives --max-warnings 0"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
   "devDependencies": {
+    "@types/aws-lambda": "8.10.147",
+    "@types/libsodium-wrappers": "^0.7.14",
     "@typescript-eslint/eslint-plugin": "7.6.0",
     "@typescript-eslint/parser": "7.6.0",
     "concurrently": "8.2.2",
@@ -25,6 +27,8 @@
   },
   "dependencies": {
     "dotenv": "16.4.5",
+    "libsodium-wrappers": "^0.7.15",
+    "sst": "3.7.8",
     "zod": "3.22.4"
   }
 }

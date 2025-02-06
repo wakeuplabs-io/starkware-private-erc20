@@ -3,10 +3,14 @@ name = "contracts"
 version = "0.1.0"
 edition = "2024_07"
 
+[lib]
+name = "contracts"
+
 # See more keys and their definitions at https://docs.swmansion.com/scarb/docs/reference/manifest.html
 
 [dependencies]
 starknet = "2.9.2"
+sncast_std = { git = "https://github.com/foundry-rs/starknet-foundry", tag = "v0.36.0" }
 alexandria_math = { git = "https://github.com/keep-starknet-strange/alexandria.git" }
 
 [dev-dependencies]

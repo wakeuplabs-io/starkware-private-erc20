@@ -1,0 +1,67 @@
+in_amount = "0x174876e800"
+in_bliding = "0xc87c78ad8a509a532b761404065873cf"
+in_commitment_nullifier_hash = "0x24d234fee00c16d0e2b32b1cc5451b61d83d3a57027068e757315b07528fe247"
+in_direction_selector = [
+  false,
+  false,
+  false,
+  false,
+  false,
+  false,
+  false,
+  false,
+  false,
+  false,
+  false,
+  false
+]
+in_path = [
+  "0x0",
+  "0xb63a53787021a4a962a452c2921b3663aff1ffd8d5510540f8e659e782956f1",
+  "0xe34ac2c09f45a503d2908bcb12f1cbae5fa4065759c88d501c097506a8b2290",
+  "0x21f9172d72fdcdafc312eee05cf5092980dda821da5b760a9fb8dbdf607c8a20",
+  "0x2373ea368857ec7af97e7b470d705848e2bf93ed7bef142a490f2119bcf82d8e",
+  "0x120157cfaaa49ce3da30f8b47879114977c24b266d58b0ac18b325d878aafddf",
+  "0x1c28fe1059ae0237b72334700697bdf465e03df03986fe05200cadeda66bd76",
+  "0x2d78ed82f93b61ba718b17c2dfe5b52375b4d37cbbed6f1fc98b47614b0cf21b",
+  "0x67243231eddf4222f3911defbba7705aff06ed45960b27f6f91319196ef97e1",
+  "0x1849b85f3c693693e732dfc4577217acc18295193bede09ce8b97ad910310972",
+  "0x2a775ea761d20435b31fa2c33ff07663e24542ffb9e7b293dfce3042eb104686",
+  "0xf320b0703439a8114f81593de99cd0b8f3b9bf854601abb5b2ea0e8a3dda4a7"
+]
+in_private_key = "0x2efe4d50e62d08f1335a7d8b6e8cb0a1b92d68e9bc34fcab1f547b2588d36ff1"
+in_root = "0x2f3263cd8488a893cc8d2b48d874723b599027e91fa355ed050bf23d49020310"
+out_receiver_account = "0x19e48a83625e5d14d1bf575875e9c371df2ca39a4ba5becc507bb7f2ad7f57c"
+out_receiver_amount = "0xa"
+out_receiver_bliding = "0xc87c78ad8a509a532b761404065873cf"
+out_receiver_commitment = "0x13d227526b4fb98225d49822e7858fc06d259b60d9a47ebc85703b930cddeeba"
+out_root = "0x1a55f84d65df3af3ce01cc86e1f4a9159bf551d3a5dce667c2c911c2a4c040a5"
+out_sender_amount = "0x174876e7f6"
+out_sender_bliding = "0xc87c78ad8a509a532b761404065873cf"
+out_sender_commitment = "0x2d9b39a76566174c6b0b5ea46e2bf78fc3b4efdce023a0bc4398db414eb7a433"
+out_subtree_root_path = [
+  "0x13d227526b4fb98225d49822e7858fc06d259b60d9a47ebc85703b930cddeeba",
+  "0x122dadde4a9c5f7649288edad3accbc90ed9b851022e059a82a18dfc9c2065dd",
+  "0x7f50126917f1f98df660d7d2993d1c824d7da0d799c48b35d2f4e98e9fe96e7",
+  "0xe34ac2c09f45a503d2908bcb12f1cbae5fa4065759c88d501c097506a8b2290",
+  "0xe34ac2c09f45a503d2908bcb12f1cbae5fa4065759c88d501c097506a8b2290",
+  "0x21f9172d72fdcdafc312eee05cf5092980dda821da5b760a9fb8dbdf607c8a20",
+  "0x21f9172d72fdcdafc312eee05cf5092980dda821da5b760a9fb8dbdf607c8a20",
+  "0x2373ea368857ec7af97e7b470d705848e2bf93ed7bef142a490f2119bcf82d8e",
+  "0x2373ea368857ec7af97e7b470d705848e2bf93ed7bef142a490f2119bcf82d8e",
+  "0x120157cfaaa49ce3da30f8b47879114977c24b266d58b0ac18b325d878aafddf",
+  "0x120157cfaaa49ce3da30f8b47879114977c24b266d58b0ac18b325d878aafddf"
+]
+out_subtree_root_direction = [
+  false,
+  true,
+  false,
+  false,
+  false,
+  false,
+  false,
+  false,
+  false,
+  false,
+  false
+]

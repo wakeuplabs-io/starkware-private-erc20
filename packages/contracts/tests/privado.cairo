@@ -1,49 +1,15 @@
-use starknet::storage::StoragePointerReadAccess;
-use starknet::storage::StoragePathEntry;
-use snforge_std::EventSpyTrait;
-use contracts::merkle_tree::merkle_tree::IMerkleTreeWithHistory;
-use contracts::privado::privado::IPrivado;
-use starknet::storage::StoragePointerWriteAccess;
-use starknet::ContractAddress;
+use starknet::{
+    storage::{StoragePointerWriteAccess, StoragePathEntry, StoragePointerReadAccess},
+    ContractAddress,
+};
 use snforge_std::{
     spy_events, EventSpyAssertionsTrait, declare, ContractClassTrait, DeclareResultTrait,
-    test_address,
+    test_address, EventSpyTrait,
 };
 use contracts::privado::{
-    Privado, Privado::InternalTrait, IPrivadoDispatcher, IPrivadoDispatcherTrait,
+    Privado, IPrivadoDispatcher, IPrivadoDispatcherTrait, IPrivado,
+    constants::{TOKEN_NAME, TOKEN_SYMBOL, TOKEN_DECIMALS, GET_MINT_COMMITMENT, MERKLE_TREE_INITIAL_ROOT},
 };
-use core::poseidon::PoseidonTrait;
-use core::hash::{HashStateTrait, HashStateExTrait};
-
-const TOKEN_NAME: felt252 = 'Token Name';
-const TOKEN_SYMBOL: felt252 = 'SYM';
-const TOKEN_DECIMALS: u8 = 6;
-const LEVELS: usize = 2;
-
-fn generate_commitment(
-    secret: felt252, nullifier: felt252, amount: felt252,
-) -> (felt252, felt252, felt252) {
-    // just a mock
-    (
-        PoseidonTrait::new().update_with([nullifier, secret, amount]).finalize(),
-        amount,
-        PoseidonTrait::new().update_with([nullifier]).finalize(),
-    )
-}
-
-fn get_contract_state_for_testing() -> (Privado::ContractState, ContractAddress) {
-    let mut dispatcher = Privado::contract_state_for_testing();
-
-    // initialize metadata
-    dispatcher.name.write(TOKEN_NAME);
-    dispatcher.symbol.write(TOKEN_SYMBOL);
-    dispatcher.decimals.write(TOKEN_DECIMALS);
-
-    // initialize merkle tree without minting
-    dispatcher.merkle_tree.initialize(2);
-
-    (dispatcher, test_address())
-}
 
 #[test]
 fn test_constructor() {
@@ -51,19 +17,7 @@ fn test_constructor() {
 
     let mut spy = spy_events();
 
-    let (mint_commitment, mint_commitment_amount, _) = generate_commitment(1, 2, 3);
-    let (contract_address, _) = contract
-        .deploy(
-            @array![
-                TOKEN_NAME,
-                TOKEN_SYMBOL,
-                TOKEN_DECIMALS.into(),
-                LEVELS.into(),
-                mint_commitment,
-                mint_commitment_amount,
-            ],
-        )
-        .unwrap();
+    let (contract_address, _) = contract.deploy(@array![]).unwrap();
     let dispatcher = IPrivadoDispatcher { contract_address };
 
     // metadata
@@ -71,17 +25,21 @@ fn test_constructor() {
     assert(dispatcher.symbol() == TOKEN_SYMBOL, 'Invalid symbol');
     assert(dispatcher.decimals() == TOKEN_DECIMALS, 'Invalid decimals');
 
+    assert(dispatcher.current_root() == MERKLE_TREE_INITIAL_ROOT, '');
+    assert(dispatcher.current_commitment_index() == 1, '');
+
     // minted commitment
+    let (mint_commitment, mint_output_enc) = GET_MINT_COMMITMENT();
     spy
         .assert_emitted(
             @array![
                 (
                     contract_address,
-                    Privado::Event::NewNote(
-                        Privado::NewNote {
+                    Privado::Event::NewCommitment(
+                        Privado::NewCommitment {
                             commitment: mint_commitment,
-                            amount_enc: mint_commitment_amount,
-                            index: 1 // next_index
+                            output_enc: mint_output_enc,
+                            index: 0 // next_index
                         },
                     ),
                 ),
@@ -96,39 +54,33 @@ fn test_constructor() {
 fn test_transfer() {
     let (mut contract, contract_address) = get_contract_state_for_testing();
 
-    // generate the minted note and the
-    let (secret, nullifier, amount) = (1, 2, 3);
-    let (sender_in_commitment, sender_in_amount, sender_in_nullifier_hash) = generate_commitment(
-        secret, nullifier, amount,
+    let root = 0;
+    let new_root = 1;
+    let sender_in_nullifier_hash = 2;
+    let sender_out_commitment = 3;
+    let receiver_out_commitment = 4;
+    let proof = generate_mock_proof(
+        root,
+        new_root,
+        sender_in_nullifier_hash,
+        sender_out_commitment,
+        receiver_out_commitment
     );
-    contract._create_note(sender_in_commitment, sender_in_amount);
-
-    // generate the outcome commitments
-    let (secret, nullifier, amount) = (4, 5, 6);
-    let (sender_out_commitment, sender_out_amount, _) = generate_commitment(
-        secret, nullifier, amount,
-    );
-    let (secret, nullifier, amount) = (4, 5, 6);
-    let (receiver_out_commitment, receiver_out_amount, _) = generate_commitment(
-        secret, nullifier, amount,
-    );
+    let current_commitment_index = contract.current_commitment_index.read();
 
     let mut spy = spy_events();
 
     // call transfer
     contract
         .transfer(
-            contract.merkle_tree.get_last_root(),
-            sender_in_nullifier_hash,
-            sender_out_commitment,
-            sender_out_amount,
-            receiver_out_commitment,
-            receiver_out_amount,
+            proof,
+            "sender_enc_output",
+            "receiver_enc_output",
         );
 
     // should nullify the sender_in_nullifier_hash
     assert(
-        contract.nullified_notes.entry(sender_in_nullifier_hash).read() == true,
+        contract.nullified_notes.entry(sender_in_nullifier_hash.into()).read() == true,
         'Sender commitment not nullified',
     );
 
@@ -138,21 +90,21 @@ fn test_transfer() {
             @array![
                 (
                     contract_address,
-                    Privado::Event::NewNote(
-                        Privado::NewNote {
-                            commitment: sender_out_commitment,
-                            amount_enc: sender_out_amount,
-                            index: 2,
+                    Privado::Event::NewCommitment(
+                        Privado::NewCommitment {
+                            commitment: sender_out_commitment.into(),
+                            output_enc: "sender_enc_output",
+                            index: current_commitment_index,
                         },
                     ),
                 ),
                 (
                     contract_address,
-                    Privado::Event::NewNote(
-                        Privado::NewNote {
-                            commitment: receiver_out_commitment,
-                            amount_enc: receiver_out_amount,
-                            index: 3,
+                    Privado::Event::NewCommitment(
+                        Privado::NewCommitment {
+                            commitment: receiver_out_commitment.into(),
+                            output_enc: "receiver_enc_output",
+                            index: current_commitment_index + 1,
                         },
                     ),
                 ),
@@ -166,32 +118,25 @@ fn test_transfer() {
 fn test_transfer_unknown_root() {
     let (mut contract, _) = get_contract_state_for_testing();
 
-    // generate the minted note and the
-    let (secret, nullifier, amount) = (1, 2, 3);
-    let (sender_in_commitment, sender_in_amount, sender_in_nullifier_hash) = generate_commitment(
-        secret, nullifier, amount,
-    );
-    contract._create_note(sender_in_commitment, sender_in_amount);
-
-    // generate the outcome commitments
-    let (secret, nullifier, amount) = (4, 5, 6);
-    let (sender_out_commitment, sender_out_amount, _) = generate_commitment(
-        secret, nullifier, amount,
-    );
-    let (secret, nullifier, amount) = (4, 5, 6);
-    let (receiver_out_commitment, receiver_out_amount, _) = generate_commitment(
-        secret, nullifier, amount,
+    let root = 1234; // unknown root
+    let new_root = 1;
+    let sender_in_nullifier_hash = 2;
+    let sender_out_commitment = 3;
+    let receiver_out_commitment = 4;
+    let proof = generate_mock_proof(
+        root,
+        new_root,
+        sender_in_nullifier_hash,
+        sender_out_commitment,
+        receiver_out_commitment
     );
 
     // call transfer
     contract
         .transfer(
-            contract.merkle_tree.get_last_root() + 10,
-            sender_in_nullifier_hash,
-            sender_out_commitment,
-            sender_out_amount,
-            receiver_out_commitment,
-            receiver_out_amount,
+            proof,
+            "sender_enc_output",
+            "receiver_enc_output",
         );
 }
 
@@ -201,41 +146,60 @@ fn test_transfer_unknown_root() {
 fn test_transfer_double_spent() {
     let (mut contract, _) = get_contract_state_for_testing();
 
-    // generate the minted note and the
-    let (secret, nullifier, amount) = (1, 2, 3);
-    let (sender_in_commitment, sender_in_amount, sender_in_nullifier_hash) = generate_commitment(
-        secret, nullifier, amount,
+    let root = 0; 
+    let new_root = 1;
+    let sender_in_nullifier_hash = 2;
+    let sender_out_commitment = 3;
+    let receiver_out_commitment = 4;
+    let proof = generate_mock_proof(
+        root,
+        new_root,
+        sender_in_nullifier_hash,
+        sender_out_commitment,
+        receiver_out_commitment
     );
-    contract._create_note(sender_in_commitment, sender_in_amount);
 
-    // generate the outcome commitments
-    let (secret, nullifier, amount) = (4, 5, 6);
-    let (sender_out_commitment, sender_out_amount, _) = generate_commitment(
-        secret, nullifier, amount,
-    );
-    let (secret, nullifier, amount) = (4, 5, 6);
-    let (receiver_out_commitment, receiver_out_amount, _) = generate_commitment(
-        secret, nullifier, amount,
-    );
+    // mark the commitment as already spent
+    contract.nullified_notes.entry(sender_in_nullifier_hash.into()).write(true);
 
     // call transfer
     contract
         .transfer(
-            contract.merkle_tree.get_last_root(),
-            sender_in_nullifier_hash,
-            sender_out_commitment,
-            sender_out_amount,
-            receiver_out_commitment,
-            receiver_out_amount,
-        );
-    contract
-        .transfer(
-            contract.merkle_tree.get_last_root(),
-            sender_in_nullifier_hash,
-            sender_out_commitment,
-            sender_out_amount,
-            receiver_out_commitment,
-            receiver_out_amount,
+            proof,
+            "sender_enc_output",
+            "receiver_enc_output",
         );
 }
 
+//
+// utilities
+//
+
+fn generate_mock_proof(root: felt252, new_root: felt252, nullifier_hash: felt252, sender_commitment: felt252, receiver_commitment: felt252) -> Span<felt252> {
+    array![root, nullifier_hash, new_root, sender_commitment, receiver_commitment].span()
+}
+
+fn deploy_transfer_verifier() -> ContractAddress {
+    let contract = declare("TransferVerifierMock").unwrap().contract_class();
+    let (contract_address, _) = contract.deploy(@array![]).unwrap();
+
+    contract_address
+}
+
+fn get_contract_state_for_testing() -> (Privado::ContractState, ContractAddress) {
+    let mut dispatcher = Privado::contract_state_for_testing();
+    let transfer_verifier_address = deploy_transfer_verifier();
+
+    // initialize metadata
+    dispatcher.name.write(TOKEN_NAME);
+    dispatcher.symbol.write(TOKEN_SYMBOL);
+    dispatcher.decimals.write(TOKEN_DECIMALS);
+
+    // initialize merkle tree without minting
+    dispatcher.current_root.write(MERKLE_TREE_INITIAL_ROOT);
+
+    // set the verifier address
+    dispatcher.transfer_verifier_address.write(transfer_verifier_address);
+
+    (dispatcher, test_address())
+}

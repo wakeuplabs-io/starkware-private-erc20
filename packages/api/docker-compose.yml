@@ -1,0 +1,9 @@
+version: "3.9"
+
+services:
+  app:
+    image: private-erc20-api:latest
+    build: .
+    ports:
+      - "5001:80"
+
