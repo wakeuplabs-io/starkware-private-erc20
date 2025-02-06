@@ -27,6 +27,7 @@ export default $config({
     });
     const api = cluster.addService(`${PROJECT_NAME}-api`, {
       cpu: "1 vCPU",
+      memory: "2 GB",
       image: {
         dockerfile: "packages/api/Dockerfile",
         context: "packages/api",

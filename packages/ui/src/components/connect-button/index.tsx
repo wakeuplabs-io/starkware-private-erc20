@@ -3,7 +3,7 @@ import { useAccount, useConnect, useDisconnect } from "@starknet-react/core";
 import { Button } from "../ui/button";
 
 
-const ConnectButton = () => {
+const ConnectButton: React.FC<{ className?: string }> = ({ className }) => {
   const { connect, connectors } = useConnect();
   const { disconnect } = useDisconnect();
   const { address } = useAccount();
@@ -28,7 +28,7 @@ const ConnectButton = () => {
   };
 
   return (
-    <div>
+    <div className={className}>
       {address ? (
         <Button onClick={disconnectWallet}>
           Disconnect ({shortenAddress(address)})

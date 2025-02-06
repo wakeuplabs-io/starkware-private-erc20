@@ -5,15 +5,6 @@
 
 declare module "sst" {
   export interface Resource {
-    "starkware-privado-erc20-api": {
-      "service": string
-      "type": "sst.aws.Service"
-      "url": string
-    }
-    "starkware-privado-erc20-ui": {
-      "type": "sst.aws.StaticSite"
-      "url": string
-    }
   }
 }
 /// <reference path="sst-env.d.ts" />
