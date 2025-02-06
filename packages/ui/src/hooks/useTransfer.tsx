@@ -62,8 +62,6 @@ export const useTransfer = () => {
         throw new Error("Insufficient funds in notes");
       }
 
-      console.log("funds ok", inputNote);
-
       // generate output notes
 
       const outSenderAmount = inputNote.value! - props.amount;
@@ -92,8 +90,6 @@ export const useTransfer = () => {
       }
 
       const inRoot = tree.getRoot();
-      console.log("inRoot", inRoot);
-
       const inputCommitmentProof = tree.getProof(inputNote.commitment);
       if (!inputCommitmentProof) {
         throw new Error("Input commitment doesn't belong to the tree");
@@ -104,15 +100,6 @@ export const useTransfer = () => {
 
       const outRoot = tree.getRoot();
       const outPathProof = tree.getProof(outSenderNote.commitment);
-      const outPathProof2 = tree.getProof(outReceiverNote.commitment);
-      console.log(
-        "outPathProof",
-        outPathProof?.path.map((e) => formatHex(e)),
-        outPathProof2?.path.map((e) => formatHex(e)),
-        (
-          await BarretenbergService.generateHashArray([new Fr(0n), new Fr(0n)])
-        ).toString(16)
-      );
 
       if (!outPathProof) {
         throw new Error("Couldn't generate output path proof");
@@ -126,32 +113,6 @@ export const useTransfer = () => {
       const nullifierHash = await BarretenbergService.generateHashArray([
         new Fr(nullifier),
       ]);
-
-      console.log(inputNote.bliding);
-      console.log({
-        in_amount: formatHex(inputNote.value!),
-        in_bliding: formatHex(inputNote.bliding!),
-        in_commitment_nullifier_hash: formatHex(nullifierHash),
-        in_direction_selector: inputCommitmentProof.directionSelector,
-        in_path: inputCommitmentProof.path.map((e) => formatHex(e)),
-        in_private_key: formatHex(spenderAccount.privateKey % Fr.MODULUS),
-        in_root: formatHex(inRoot),
-        out_receiver_account: formatHex(props.to.address),
-        out_receiver_amount: formatHex(props.amount),
-        out_receiver_bliding: formatHex(outReceiverNote.bliding),
-        out_receiver_commitment: formatHex(outReceiverNote.commitment),
-        out_root: formatHex(outRoot),
-        out_sender_amount: formatHex(outSenderAmount),
-        out_sender_bliding: formatHex(outSenderNote.bliding),
-        out_sender_commitment: formatHex(outSenderNote.commitment),
-        out_subtree_root_path: outPathProof.path
-          .slice(1, MERKLE_TREE_DEPTH)
-          .map((e) => formatHex(e)),
-        out_subtree_root_direction: outPathProof.directionSelector.slice(
-          1,
-          MERKLE_TREE_DEPTH
-        ),
-      });
 
       const generatedProof = await ProofService.generateProof({
         in_amount: formatHex(inputNote.value!),
@@ -178,23 +139,15 @@ export const useTransfer = () => {
         ),
       });
 
-
-      console.log(generatedProof);
-
       const callData = contract.populate("transfer", [
         generatedProof,
         outSenderNote.encOutput,
         outReceiverNote.encOutput,
-        // CallData.compile([
-        //   byteArray.byteArrayFromString(outSenderNote.encOutput),
-        // ]),
-        // CallData.compile([
-        //   byteArray.byteArrayFromString(outReceiverNote.encOutput),
-        // ]),
       ]);
 
       await send([callData]);
     } catch (error) {
+      console.log(error);
       throw error;
     } finally {
       setLoading(false);
