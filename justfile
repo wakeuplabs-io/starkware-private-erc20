@@ -3,11 +3,17 @@ RPC_URL := "https://starknet-sepolia.public.blastapi.io/rpc/v0_7"
 TRANSFER_CIRCUIT_ROOT := "packages/circuits/transfer"
 CONTRACTS_ROOT := "packages/contracts"
 UI_ROOT := "packages/ui"
+API_ROOT := "packages/api"
 
 # ui
 
 ui-run:
     (cd {{UI_ROOT}} && npm run dev)
+
+# api
+
+api-run:
+    (cd {{API_ROOT}} && docker-compose up)
 
 # circuits
 

@@ -3,7 +3,6 @@ export interface Note {
   bliding?: bigint;
   encryptedOutput: string;
   value?: bigint;
-  nullifier?: bigint;
   index: bigint;
 }
 

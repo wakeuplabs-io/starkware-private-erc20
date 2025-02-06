@@ -2,14 +2,13 @@ import { Fr } from "@aztec/bb.js";
 import { BarretenbergService } from "./bb.service";
 import sodium from "libsodium-wrappers";
 
-const FIELD_SIZE = 100;
-
 class AccountService {
-  static getAccount() {
+  static async getAccount() {
     try {
-      return this._load();
-    } catch {
-      return this._generate();
+      return await this._load();
+    } catch (e) {
+      console.log(e);
+      return await this._generate();
     }
   }
 
@@ -20,15 +19,15 @@ class AccountService {
   }> {
     await sodium.ready;
     const keypair = await sodium.crypto_box_keypair();
-    const publicKey = BigInt(sodium.to_hex(keypair.publicKey));
-    const privateKey = BigInt(sodium.to_hex(keypair.privateKey));
-    const address = BarretenbergService.generateHashArray([new Fr(privateKey)]);
+    const publicKey = BigInt("0x" + sodium.to_hex(keypair.publicKey));
+    const privateKey = BigInt("0x" + sodium.to_hex(keypair.privateKey));
+    const address = await BarretenbergService.generateHashArray([
+      new Fr(privateKey % Fr.MODULUS),
+    ]);
 
-    console.log("generate", publicKey, privateKey, address);
-
-    localStorage.setItem("PrivateKey", privateKey.toString(16));
-    localStorage.setItem("PublicKey", publicKey.toString(16));
-    localStorage.setItem("Address", address.toString(16));
+    localStorage.setItem("PrivateKey", "0x" + privateKey.toString(16));
+    localStorage.setItem("PublicKey", "0x" + publicKey.toString(16));
+    localStorage.setItem("Address", "0x" + address.toString(16));
 
     return { publicKey, privateKey, address };
   }
@@ -38,8 +37,6 @@ class AccountService {
     privateKey: bigint;
     address: bigint;
   }> {
-    await sodium.ready;
-
     const privateKeyString = localStorage.getItem("PrivateKey");
     const publicKeyString = localStorage.getItem("PublicKey");
     const addressString = localStorage.getItem("Address");

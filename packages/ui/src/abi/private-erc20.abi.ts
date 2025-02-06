@@ -255,7 +255,7 @@ const privateTokenAbi: Abi = [
       },
       {
         "kind": "data",
-        "name": "amount_enc",
+        "name": "output_enc",
         "type": "core::byte_array::ByteArray"
       },
       {

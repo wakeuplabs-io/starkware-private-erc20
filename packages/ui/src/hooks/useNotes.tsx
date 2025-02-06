@@ -34,35 +34,38 @@ export const useNotes: () => {
                 await CipherService.decrypt(
                   commitment.encryptedOutput,
                   account.publicKey,
-                  account.publicKey
+                  account.privateKey
                 )
               );
+              console.log("ok decrypt", decrypted);
 
-              return {
+              const note: Note = {
                 commitment: commitment.commitment,
                 encryptedOutput: commitment.encryptedOutput,
                 index: commitment.index,
-                value: decrypted.value,
-                blinding: decrypted.bliding,
+                value: BigInt("0x" + decrypted.value),
+                bliding: BigInt("0x" + decrypted.bliding),
               };
+              return note;
             } catch (error) {
-              return {
+              console.log("error decrypt", error);
+              const note: Note = {
                 commitment: commitment.commitment,
                 encryptedOutput: commitment.encryptedOutput,
                 index: commitment.index,
               };
+              return note;
             }
           })
         );
 
+        const balanceBigInt = notesExpanded
+          .filter((note: Note) => note.value)
+          .reduce((acc, note) => acc + note.value!, ZERO_BIG_INT);
+
         setNotes(notesExpanded);
-        setBalance(
-          notesExpanded
-            .filter((note: Note) => note.value)
-            .reduce((acc, note) => acc + note.value!, ZERO_BIG_INT)
-        );
+        setBalance(balanceBigInt);
       } catch (error) {
-        console.error("Error decrypting notes:", error);
         setNotes([]);
         setBalance(ZERO_BIG_INT);
       } finally {

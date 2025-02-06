@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { selector, events as Events, CallData } from "starknet";
-import { useNetwork, useAccount, useProvider } from "@starknet-react/core";
+import { useProvider } from "@starknet-react/core";
 import { CommitmentEvent } from "@/interfaces";
 import { PRIVATE_ERC20_CONTRACT_ADDRESS } from "@/constants";
 import privateTokenAbi from "@/abi/private-erc20.abi";
@@ -10,8 +10,6 @@ const abiStructs = CallData.getAbiStruct(privateTokenAbi);
 const abiEnums = CallData.getAbiEnum(privateTokenAbi);
 
 export const useEvents = () => {
-  const { chain } = useNetwork();
-  const { address } = useAccount();
   const [commitments, setCommitments] = useState<CommitmentEvent[]>([]);
   const [nullifierHashes, setNullifierHashes] = useState<string[]>([]);
   const [error, setError] = useState<string | null>(null);
@@ -21,8 +19,6 @@ export const useEvents = () => {
   const newNullifierHash = selector.getSelectorFromName("NewNullifier");
 
   useEffect(() => {
-    if (!chain || !address) return;
-
     setIsLoading(true);
 
     const fetchEvents = async () => {
@@ -48,11 +44,11 @@ export const useEvents = () => {
               event["contracts::privado::privado::Privado::NewCommitment"]
           )
           .map((event) => {
-            const { commitment, enc_output, index } =
+            const { commitment, output_enc, index } =
               event["contracts::privado::privado::Privado::NewCommitment"];
             return {
               commitment: BigInt(commitment.toString()),
-              encryptedOutput: enc_output.toString(),
+              encryptedOutput: output_enc.toString(),
               index: BigInt(index.toString()),
             };
           });
@@ -80,7 +76,12 @@ export const useEvents = () => {
     };
 
     fetchEvents();
-  }, [chain, address, newCommitmentHash, newNullifierHash, provider]);
+  }, [newCommitmentHash, newNullifierHash, provider]);
+
+
+  useEffect(() => {
+    console.log("commitments", commitments)
+  }, [commitments])
 
   return { commitments, nullifierHashes, error, isLoading };
 };
