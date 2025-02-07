@@ -75,12 +75,7 @@ pub fn generate_nullifier(
     private_key: Field,
     index: Field,
 ) -> Field {
-    let mut params: [Field; DEPTH + 2] = [0; DEPTH + 2];
-    params[0] = commitment;
-    params[1] = private_key;
-    params[2] = index;
-
-    hash(params, 3)
+    hash([commitment, private_key, index], 3)
 }
 
 pub fn generate_account(private_key: Field) -> Field {

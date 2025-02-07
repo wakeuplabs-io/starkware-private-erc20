@@ -43,10 +43,10 @@ export const useNotes: () => {
               );
               const nullifierHash =
                 await BarretenbergService.generateHash(nullifier);
-              const isSpendable = nullifierHashes.includes(
+              const isNotSpendable = nullifierHashes.includes(
                 nullifierHash.toString(10)
               );
-              if (!isSpendable) {
+              if (isNotSpendable) {
                 const note: Note = {
                   commitment: commitment,
                   encryptedOutput: encryptedOutput,
