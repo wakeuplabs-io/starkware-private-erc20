@@ -1,10 +1,7 @@
 import { Fr } from "@aztec/bb.js";
 import { useNotes } from "./useNotes";
 import { ProofService } from "@/services/proof.service";
-import {
-  useContract,
-  useSendTransaction,
-} from "@starknet-react/core";
+import { useContract, useSendTransaction } from "@starknet-react/core";
 import { BarretenbergService } from "@/services/bb.service";
 import privateTokenAbi from "@/abi/private-erc20.abi";
 import { PRIVATE_ERC20_CONTRACT_ADDRESS } from "@/constants";
@@ -23,9 +20,7 @@ export const useTransfer = () => {
     address: PRIVATE_ERC20_CONTRACT_ADDRESS,
   });
 
-  const {
-    sendAsync
-  } = useSendTransaction({
+  const { sendAsync } = useSendTransaction({
     calls: undefined,
   });
 
@@ -43,7 +38,6 @@ export const useTransfer = () => {
 
       const spenderAccount = await AccountService.getAccount();
 
-      // order max to min to select the first note with bigger value that can pay the amount
       const senderNotes = notes.filter((n) => n.value !== undefined);
       const inputNote = senderNotes
         .sort((a, b) => parseInt((b.value! - a.value!).toString()))
@@ -51,8 +45,6 @@ export const useTransfer = () => {
       if (!inputNote) {
         throw new Error("Insufficient funds in notes");
       }
-
-      // generate output notes
 
       const outSenderAmount = inputNote.value! - props.amount;
 
@@ -68,8 +60,6 @@ export const useTransfer = () => {
           props.amount
         ),
       ]);
-
-      // generate tree and merkle proofs for input and output
 
       const tree = new MerkleTree();
       const orderedNotes = notes.sort((a, b) =>
@@ -94,15 +84,12 @@ export const useTransfer = () => {
       if (!outPathProof) {
         throw new Error("Couldn't generate output path proof");
       }
-
-      const nullifier = await BarretenbergService.generateHashArray([
-        new Fr(inputNote.commitment),
-        new Fr(spenderAccount.privateKey % Fr.MODULUS),
-        ...inputCommitmentProof.path.map((e) => new Fr(e)),
-      ]);
-      const nullifierHash = await BarretenbergService.generateHashArray([
-        new Fr(nullifier),
-      ]);
+      const nullifier = await BarretenbergService.generateNullifier(
+        inputNote.commitment,
+        spenderAccount.privateKey,
+        inputNote.index
+      );
+      const nullifierHash = await BarretenbergService.generateHash(nullifier);
 
       const generatedProof = await ProofService.generateProof({
         in_amount: formatHex(inputNote.value!),
