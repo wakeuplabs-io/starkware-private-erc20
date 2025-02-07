@@ -1,0 +1,6 @@
+[package]
+name = "transfer_from"
+type = "bin"
+authors = [""]
+
+[dependencies]
