@@ -43,7 +43,6 @@ export const useTransfer = () => {
 
       const spenderAccount = await AccountService.getAccount();
 
-      // order max to min to select the first note with bigger value that can pay the amount
       const senderNotes = notes.filter((n) => n.value !== undefined);
       const inputNote = senderNotes
         .sort((a, b) => parseInt((b.value! - a.value!).toString()))
@@ -51,8 +50,6 @@ export const useTransfer = () => {
       if (!inputNote) {
         throw new Error("Insufficient funds in notes");
       }
-
-      // generate output notes
 
       const outSenderAmount = inputNote.value! - props.amount;
 
@@ -68,8 +65,6 @@ export const useTransfer = () => {
           props.amount
         ),
       ]);
-
-      // generate tree and merkle proofs for input and output
 
       const tree = new MerkleTree();
       const orderedNotes = notes.sort((a, b) =>

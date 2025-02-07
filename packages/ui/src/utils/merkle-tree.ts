@@ -62,9 +62,9 @@ export class MerkleTree {
   }
 
   
-  getProof(commitment: bigint): { path: bigint[]; directionSelector: boolean[] } | null {
+  getProof(commitment: bigint): { path: bigint[]; directionSelector: boolean[] } {
     const index = this.leaves.indexOf(commitment);
-    if (index === -1) return null;
+    if (index === -1) return { path: [], directionSelector: [] };
 
     const path: bigint[] = [];
     const directionSelector: boolean[] = [];

@@ -11,9 +11,9 @@ class BarretenbergService {
     return this.instance;
   }
 
-  static async generateHash(input: string): Promise<string> {
+  static async generateHash(input: bigint): Promise<bigint> {
     const bb = await this.getInstance();
-    return bb.poseidon2Hash([new Fr(BigInt(input))]).toString();
+    return BigInt(bb.poseidon2Hash([new Fr(input)]).toString());
   }
 
   static async generateHashArray(inputs: Fr[]): Promise<bigint> {
@@ -36,7 +36,7 @@ class BarretenbergService {
     const bb = await this.getInstance();
 
     const randomBytes = crypto.getRandomValues(new Uint8Array(16)); // 16 bytes for up to 128-bit range
-    const bliding = BigInt('0x' + [...randomBytes].map(b => b.toString(16).padStart(2, '0')).join(''));
+    const bliding = BigInt("0x" + [...randomBytes].map(b => b.toString(16).padStart(2, "0")).join(""));
 
     return {
       commitment: BigInt(
@@ -53,6 +53,20 @@ class BarretenbergService {
       value,
     };
   }
+
+
+  static async generateNullifier(commitment: bigint, privateKey: bigint, commitmentPath: bigint[]): Promise<bigint> {
+    const nullifier = await BarretenbergService.generateHashArray([
+      new Fr(commitment),
+      new Fr(privateKey % Fr.MODULUS),
+      ...commitmentPath.map((e) => new Fr(e)),
+    ]);
+    return nullifier;
+  }
+
+
+
+
 }
 
 export { BarretenbergService };

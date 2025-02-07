@@ -25,19 +25,17 @@ export const useEvents = () => {
       try {
         const eventsResponse = await provider.channel.getEvents({
           address: PRIVATE_ERC20_CONTRACT_ADDRESS,
-          keys: [[newCommitmentHash]],
+          keys: [[newCommitmentHash, newNullifierHash]],
           from_block: { block_number: 500000 },
           to_block: "latest",
           chunk_size: 100,
         });
-
         const eventsParsed = Events.parseEvents(
           eventsResponse.events,
           abiEvents,
           abiStructs,
           abiEnums
         );
-
         const commitmentsParsed: CommitmentEvent[] = eventsParsed
           .filter(
             (event) =>
@@ -64,7 +62,6 @@ export const useEvents = () => {
                 "contracts::privado::privado::Privado::NewNullifier"
               ]?.nullifier_hash?.toString() || ""
           );
-
         setCommitments(commitmentsParsed);
         setNullifierHashes(nullifiersParsed);
       } catch (err) {
