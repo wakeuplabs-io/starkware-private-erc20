@@ -1,5 +1,4 @@
 use std::hash::poseidon2::Poseidon2::hash;
-global DEPTH: u32 = 2;
 
 pub fn assert_merkle_inclusion(
     root: Field,
@@ -22,6 +21,22 @@ pub fn assert_merkle_inclusion(
 
     assert(digest == root);
 }
+
+pub fn generate_index(direction_selector: [bool]) -> Field {
+    let mut index: u32 = 0;
+    let depth = direction_selector.len();
+
+    for i in 0..depth {
+        let pos = depth - 1 - i;
+        index = index * 2;
+        if direction_selector[pos] {
+            index = index + 1;
+        }
+    }
+    index as Field
+}
+
+// assert merkle inclusion tests
 
 #[test]
 fn should_included() {
@@ -48,19 +63,7 @@ fn should_not_included() {
     assert_merkle_inclusion(root, path, direction_selector, hash([100], 1));
 }
 
-pub fn generate_index(direction_selector: [bool; DEPTH]) -> Field {
-    let mut index: u32 = 0;
-    let depth = DEPTH;
-
-    for i in 0..depth {
-        let pos = depth - 1 - i;
-        index = index * 2;
-        if direction_selector[pos] {
-            index = index + 1;
-        }
-    }
-    index as Field
-}
+// generate index tests
 
 #[test]
 fn test_generate_index_case1() {
