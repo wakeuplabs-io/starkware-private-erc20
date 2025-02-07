@@ -42,7 +42,7 @@ pub trait IPrivado<TContractState> {
     /// allowed to spend on behalf of `owner` through `transfer_from`.
     /// This is zero by default.
     /// This value changes when `approve` or `transfer_from` are called.
-    fn allowance(self: @TContractState, owner: ContractAddress, spender: ContractAddress) -> u256;
+    fn allowance(self: @TContractState, allowance_hash: u256) -> u256;
 
     /// Moves `amount` tokens from the caller's token balance to `to`.
     ///
@@ -60,7 +60,9 @@ pub trait IPrivado<TContractState> {
     /// - `spender` is not the zero address.
     ///
     /// Emits an `Approval` event.
-    fn approve(ref self: TContractState, spender: ContractAddress, amount: u256) -> bool;
+    fn approve(
+        ref self: TContractState, proof: Span<felt252>, enc_outputs: Span<ByteArray>,
+    ) -> bool;
 
 
     /// Reads current_root from contract
@@ -78,27 +80,34 @@ pub mod Privado {
     use core::starknet::storage::{
         Map, StoragePathEntry, StoragePointerReadAccess, StoragePointerWriteAccess,
     };
-    use contracts::privado::verifier::{
+    use contracts::verifiers::{
         ITransferVerifierContractDispatcherTrait, ITransferVerifierContractDispatcher,
+        IApproveVerifierContractDispatcherTrait, IApproveVerifierContractDispatcher,
     };
     use contracts::privado::constants::{
         TOKEN_NAME, TOKEN_SYMBOL, TOKEN_DECIMALS, MERKLE_TREE_INITIAL_ROOT,
-        TRANSFER_VERIFIER_ADDRESS, GET_MINT_COMMITMENT,
+        TRANSFER_VERIFIER_ADDRESS, APPROVE_VERIFIER_ADDRESS, GET_MINT_COMMITMENT,
     };
+    use starknet::get_block_timestamp;
 
-    // 
+    //
     // Storage
-    // 
+    //
 
     #[storage]
     struct Storage {
         pub name: felt252,
         pub symbol: felt252,
         pub decimals: u8,
-        pub transfer_verifier_address: ContractAddress,
-        pub nullified_notes: Map<u256, bool>,
+        // commitments tree
         pub current_root: u256,
-        pub current_commitment_index: u256
+        pub current_commitment_index: u256,
+        pub nullified_notes: Map<u256, bool>,
+        // allowances
+        pub allowances: Map<u256, u256>,
+        // verifier addresses
+        pub transfer_verifier_address: ContractAddress,
+        pub approve_verifier_address: ContractAddress,
     }
 
     //
@@ -110,6 +119,7 @@ pub mod Privado {
     pub enum Event {
         NewCommitment: NewCommitment,
         NewNullifier: NewNullifier,
+        Approval: Approval,
     }
 
     /// Emitted when a transfer happens, we'll create 2 entries, one for the sender as a utxo
@@ -131,6 +141,16 @@ pub mod Privado {
         pub nullifier_hash: u256,
     }
 
+    /// Emitted when a a note is nullified
+    /// - `nullifier_hash` hash of the nullifier used
+    #[derive(Drop, starknet::Event)]
+    pub struct Approval {
+        pub timestamp: u64,
+        pub approve_hash: u256,
+        pub relationship_hash: u256,
+        pub output_enc: ByteArray,
+    }
+
     //
     // Errors
     //
@@ -147,16 +167,23 @@ pub mod Privado {
         pub const INSUFFICIENT_ALLOWANCE: felt252 = 'ERC20: insufficient allowance';
     }
 
-    // 
+    //
     // Structs
-    // 
+    //
 
-    pub struct ProofPublicInputs {
+    #[derive(Drop)]
+    pub struct TransferProofPublicInputs {
         root: u256,
         new_root: u256,
         nullifier_hash: u256,
         sender_commitment: u256,
-        receiver_commitment: u256
+        receiver_commitment: u256,
+    }
+
+    #[derive(Drop)]
+    pub struct ApproveProofPublicInputs {
+        approve_hash: u256,
+        relationship_hash: u256,
     }
 
     //
@@ -171,6 +198,7 @@ pub mod Privado {
 
         // set transfer verifier address
         self.transfer_verifier_address.write(TRANSFER_VERIFIER_ADDRESS.try_into().unwrap());
+        self.approve_verifier_address.write(APPROVE_VERIFIER_ADDRESS.try_into().unwrap());
 
         // current root already includes initial mint
         self.current_root.write(MERKLE_TREE_INITIAL_ROOT);
@@ -217,12 +245,12 @@ pub mod Privado {
             receiver_enc_output: ByteArray,
         ) -> bool {
             // verify proof and that public inputs match
-            let public_inputs = self._verify_proof(proof);
+            let public_inputs = self._verify_transfer_proof(proof);
+            assert(public_inputs.root == self.current_root.read(), Errors::UNKNOWN_ROOT);
             assert(
-                public_inputs.root == self.current_root.read(),
-                Errors::UNKNOWN_ROOT,
+                !self.nullified_notes.entry(public_inputs.nullifier_hash).read(),
+                Errors::SPENT_NOTE,
             );
-            assert(!self.nullified_notes.entry(public_inputs.nullifier_hash).read(), Errors::SPENT_NOTE);
 
             // assign new_root
             self.current_root.write(public_inputs.new_root);
@@ -237,11 +265,35 @@ pub mod Privado {
             true
         }
 
+        fn approve(
+            ref self: ContractState, proof: Span<felt252>, enc_outputs: Span<ByteArray>,
+        ) -> bool {
+            let public_inputs = self._verify_approve_proof(proof);
 
-        fn allowance(
-            self: @ContractState, owner: ContractAddress, spender: ContractAddress,
-        ) -> u256 {
-            0
+            // store new approve hash overwriting the previous one
+            self
+                .allowances
+                .entry(public_inputs.relationship_hash)
+                .write(public_inputs.approve_hash);
+
+            // emit approval event for each encryption provided
+            for output_enc in enc_outputs {
+                self
+                    .emit(
+                        Approval {
+                            relationship_hash: public_inputs.relationship_hash,
+                            approve_hash: public_inputs.approve_hash,
+                            timestamp: get_block_timestamp(),
+                            output_enc: output_enc.clone(),
+                        },
+                    )
+            };
+
+            true
+        }
+
+        fn allowance(self: @ContractState, allowance_hash: u256) -> u256 {
+            self.allowances.entry(allowance_hash).read()
         }
 
 
@@ -251,10 +303,6 @@ pub mod Privado {
             recipient: ContractAddress,
             amount: u256,
         ) -> bool {
-            true
-        }
-
-        fn approve(ref self: ContractState, spender: ContractAddress, amount: u256) -> bool {
             true
         }
 
@@ -285,7 +333,12 @@ pub mod Privado {
         /// Emits a `NewCommitment` event.
         fn _create_note(ref self: ContractState, commitment: u256, output_enc: ByteArray) {
             let current_index = self.current_commitment_index.read();
-            self.emit(NewCommitment { commitment, output_enc: output_enc.clone(), index: current_index });
+            self
+                .emit(
+                    NewCommitment {
+                        commitment, output_enc: output_enc.clone(), index: current_index,
+                    },
+                );
             self.current_commitment_index.write(current_index + 1);
         }
 
@@ -303,22 +356,15 @@ pub mod Privado {
 
 
         /// Internal method that verifies proof and returns formatted public inputs
-        ///
-        /// Requirements:
-        ///
-        /// - `commitment` is the commitment that will be created
-        /// - `output_enc` is amount encrypted with the receiver public key
-        ///
-        /// Emits a `NewCommitment` event.
-        fn _verify_proof(ref self: ContractState, proof: Span<felt252>) -> ProofPublicInputs {
+        fn _verify_transfer_proof(
+            ref self: ContractState, proof: Span<felt252>,
+        ) -> TransferProofPublicInputs {
             let verifier = ITransferVerifierContractDispatcher {
                 contract_address: self.transfer_verifier_address.read(),
             };
-            let public_inputs = verifier
-                .verify_ultra_keccak_honk_proof(proof)
-                .unwrap();
+            let public_inputs = verifier.verify_ultra_keccak_honk_proof(proof).unwrap();
 
-                ProofPublicInputs {
+            TransferProofPublicInputs {
                 root: (*public_inputs.at(0)),
                 nullifier_hash: (*public_inputs.at(1)),
                 receiver_commitment: (*public_inputs.at(2)),
@@ -326,7 +372,20 @@ pub mod Privado {
                 new_root: (*public_inputs.at(4)),
             }
         }
+
+        /// Internal method that verifies approve proof and returns formatted public inputs
+        fn _verify_approve_proof(
+            ref self: ContractState, proof: Span<felt252>,
+        ) -> ApproveProofPublicInputs {
+            let verifier = IApproveVerifierContractDispatcher {
+                contract_address: self.approve_verifier_address.read(),
+            };
+            let public_inputs = verifier.verify_ultra_keccak_honk_proof(proof).unwrap();
+
+            ApproveProofPublicInputs {
+                approve_hash: (*public_inputs.at(0)), relationship_hash: (*public_inputs.at(1)),
+            }
+        }
     }
 }
-
 
