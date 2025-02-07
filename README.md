@@ -4,8 +4,7 @@
 
 Design is inspired in privacy pools like [tornado nova](https://github.com/tornadocash/tornado-core/tree/master) and [zcash](https://github.com/zcash/orchard)
 
-
-## Contracts deployment
+## Deployments setup
 
 Create the deployer account
 
@@ -23,31 +22,9 @@ Prefund generated address with at least <max_fee> STRK tokens or an equivalent a
 just contracts-deployer-account-deploy
 ```
 
-Deployment with just command (Same for verifier if needed). First go to `src/privado/constants` and update properly.
-
-```bash
-just contracts-declare-privado
-
-# class_hash: 0x038f9ef5809a58b6a3ecc981cca9b6cdb0244405f34c7ea48267684d17534218
-# transaction_hash: 0x077f8977e780fa6d79e8d925d9c06a1cbc4595939ec811f47b38a547e9e8306c
-
-# To see declaration details, visit:
-# class: https://sepolia.starkscan.co/class/0x038f9ef5809a58b6a3ecc981cca9b6cdb0244405f34c7ea48267684d17534218
-# transaction: https://sepolia.starkscan.co/tx/0x077f8977e780fa6d79e8d925d9c06a1cbc4595939ec811f47b38a547e9e8306c
-
-just contracts-deploy-privado 0x038f9ef5809a58b6a3ecc981cca9b6cdb0244405f34c7ea48267684d17534218
-
-# contract_address: 0x00aca5509ad2876b2711f399c07469b956f4ba2d82a56d40ac4ffbf7e9dfee35
-# transaction_hash: 0x03c635db61f86ab3f9bc6fa84ccbc50b54cb962555223cc1314b956e26718d31
-
-# To see deployment details, visit:
-# contract: https://sepolia.starkscan.co/contract/0x00aca5509ad2876b2711f399c07469b956f4ba2d82a56d40ac4ffbf7e9dfee35
-# transaction: https://sepolia.starkscan.co/tx/0x03c635db61f86ab3f9bc6fa84ccbc50b54cb962555223cc1314b956e26718d31
-```
-
 ## Circuits deployment
 
-Generate the cairo contracts with:
+First make sure to update DEPTH accordingly in your circuit. Then generate the cairo contracts with:
 
 ```bash
 just circuits-generate-verifier
@@ -83,23 +60,47 @@ Declare and deploy the contract with
 ```bash
 just circuits-declare-verifier
 
-# class_hash: 0x0350eef8835d0ae74dee85d66d83120a2b18d74b0cb0e8a8ca84ea740aa8284d
-# transaction_hash: 0x05d3f6307d2bb7fedea9270e2b13b92adb4438d9342badc9616bf10dd36b5800
+# class_hash: 0x07e3ff93fe0b912ff4b5deb7eb214abebcd4080106ef9f17d2be8700adffe96d
+# transaction_hash: 0x060920be73003bae3bd3a339c43c172eb3f0b6612fd19ffb02c456d1fca751d7
 
 # To see declaration details, visit:
-# class: https://sepolia.starkscan.co/class/0x0350eef8835d0ae74dee85d66d83120a2b18d74b0cb0e8a8ca84ea740aa8284d
-# transaction: https://sepolia.starkscan.co/tx/0x05d3f6307d2bb7fedea9270e2b13b92adb4438d9342badc9616bf10dd36b5800
+# class: https://sepolia.starkscan.co/class/0x07e3ff93fe0b912ff4b5deb7eb214abebcd4080106ef9f17d2be8700adffe96d
+# transaction: https://sepolia.starkscan.co/tx/0x060920be73003bae3bd3a339c43c172eb3f0b6612fd19ffb02c456d1fca751d7
 
+just circuits-deploy-verifier 0x07e3ff93fe0b912ff4b5deb7eb214abebcd4080106ef9f17d2be8700adffe96d
 
-just circuits-deploy-verifier 0x0350eef8835d0ae74dee85d66d83120a2b18d74b0cb0e8a8ca84ea740aa8284d
-
-# contract_address: 0x03c14b798cb4ee3d0b045f3877eb1ade1e13929b32051e976947ef72b8344f09
-# transaction_hash: 0x061bdea3398af9296330eae1d8792ab37d27cfd551dbc2945b03ed88c28426ab
+# contract_address: 0x0633b15d7dca420570bdff9f4444e1e25e3d7db287e453b407ea9c5c9d9ea33c
+# transaction_hash: 0x06706bf32c0ce7473b73f2fbd072b454cc1196bdfc364ca87d789fd2a1db9440
 
 # To see deployment details, visit:
-# contract: https://sepolia.starkscan.co/contract/0x03c14b798cb4ee3d0b045f3877eb1ade1e13929b32051e976947ef72b8344f09
-# transaction: https://sepolia.starkscan.co/tx/0x061bdea3398af9296330eae1d8792ab37d27cfd551dbc2945b03ed88c28426ab
+# contract: https://sepolia.starkscan.co/contract/0x0633b15d7dca420570bdff9f4444e1e25e3d7db287e453b407ea9c5c9d9ea33c
+# transaction: https://sepolia.starkscan.co/tx/0x06706bf32c0ce7473b73f2fbd072b454cc1196bdfc364ca87d789fd2a1db9440
 ```
+
+## Contracts deployment
+
+Deployment with just command (Same for verifier if needed). First go to `src/privado/constants` and update properly.
+
+```bash
+just contracts-declare-privado
+
+# class_hash: 0x00942929f24f118c1cbee2d7d4971867702360b746cf48700f50c54a42518bcd
+# transaction_hash: 0x0640f7ba45ba257f59c08e7a60fbb860b5e7be504fd437ea00759c95192728a0
+
+# To see declaration details, visit:
+# class: https://sepolia.starkscan.co/class/0x00942929f24f118c1cbee2d7d4971867702360b746cf48700f50c54a42518bcd
+# transaction: https://sepolia.starkscan.co/tx/0x0640f7ba45ba257f59c08e7a60fbb860b5e7be504fd437ea00759c95192728a0
+
+just contracts-deploy-privado 0x00942929f24f118c1cbee2d7d4971867702360b746cf48700f50c54a42518bcd
+
+# contract_address: 0x046549bba3b8fa8aec9119f2ded1be234ac02696d75e2911cf65f4cedf8e32dd
+# transaction_hash: 0x00d4178f23e3f50efa3d6be86b3a9d430c80f1f965eb5115f7dc2f1b7703ca3b
+
+# To see deployment details, visit:
+# contract: https://sepolia.starkscan.co/contract/0x046549bba3b8fa8aec9119f2ded1be234ac02696d75e2911cf65f4cedf8e32dd
+# transaction: https://sepolia.starkscan.co/tx/0x00d4178f23e3f50efa3d6be86b3a9d430c80f1f965eb5115f7dc2f1b7703ca3b
+```
+
 
 ## Infra deployment
 
