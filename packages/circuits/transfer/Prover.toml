@@ -31,6 +31,7 @@ in_path = [
 ]
 in_private_key = "0x2efe4d50e62d08f1335a7d8b6e8cb0a1b92d68e9bc34fcab1f547b2588d36ff1"
 in_root = "0x2f3263cd8488a893cc8d2b48d874723b599027e91fa355ed050bf23d49020310"
+in_commitment_index = "0"
 out_receiver_account = "0x19e48a83625e5d14d1bf575875e9c371df2ca39a4ba5becc507bb7f2ad7f57c"
 out_receiver_amount = "0xa"
 out_receiver_bliding = "0xc87c78ad8a509a532b761404065873cf"
