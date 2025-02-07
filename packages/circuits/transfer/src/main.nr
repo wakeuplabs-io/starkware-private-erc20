@@ -18,7 +18,6 @@ pub fn main(
     in_commitment_nullifier_hash: pub Field,
     in_private_key: Field,
     in_bliding: Field,
-    in_commitment_index: Field,
     // utxo outputs
     out_receiver_account: Field,
     out_receiver_amount: Field,
@@ -37,6 +36,7 @@ pub fn main(
     assert_merkle_inclusion(in_root, in_path, in_direction_selector, in_commitment);
 
     // check nullifier_hash belongs to nullifier, tied with previous check nullifier derives in commitment
+    let in_commitment_index = generate_index(in_direction_selector);
     let nullifier = generate_nullifier(in_commitment, in_private_key, in_commitment_index);
     assert(hash([nullifier], 1) == in_commitment_nullifier_hash);
 
@@ -87,6 +87,20 @@ pub fn generate_account(private_key: Field) -> Field {
     hash([private_key], 1)
 }
 
+pub fn generate_index(direction_selector: [bool; DEPTH]) -> Field {
+    let mut index: u32 = 0;
+    let depth = DEPTH;
+
+    for i in 0..depth {
+        let pos = depth - 1 - i;
+        index = index * 2;
+        if direction_selector[pos] {
+            index = index + 1;
+        }
+    }
+    index as Field
+}
+
 #[test]
 fn test_allowed_transfer() {
     // generate amounts
@@ -134,7 +148,6 @@ fn test_allowed_transfer() {
         in_commitment_nullifier_hash,
         in_private_key,
         in_bliding,
-        in_commitment_index,
         receiver_account,
         out_receiver_amount,
         out_receiver_bliding,
@@ -195,7 +208,6 @@ fn test_invalid_utxo_amounts() {
         in_commitment_nullifier_hash,
         in_private_key,
         in_bliding,
-        in_commitment_index,
         receiver_account,
         out_receiver_amount,
         out_receiver_bliding,
@@ -256,7 +268,6 @@ fn test_unlinked_root() {
         in_commitment_nullifier_hash,
         in_private_key,
         in_bliding,
-        in_commitment_index,
         receiver_account,
         out_receiver_amount,
         out_receiver_bliding,
@@ -316,7 +327,6 @@ fn test_missing_new_commits() {
         in_commitment_nullifier_hash,
         in_private_key,
         in_bliding,
-        in_commitment_index,
         receiver_account,
         out_receiver_amount,
         out_receiver_bliding,
@@ -328,4 +338,20 @@ fn test_missing_new_commits() {
         [new_first_level_l],
         [true]
     );
+}
+
+
+
+#[test]
+fn test_generate_index_case1() {
+    let directions: [bool; 2] = [true, false];
+    let index = generate_index(directions);
+    assert(index == 1);
+}
+
+#[test]
+fn test_generate_index_case2() {
+    let directions: [bool; 2] = [false, true];
+    let index = generate_index(directions);
+    assert(index == 2);
 }
