@@ -1,5 +1,5 @@
 mod merkle_tree;
-use crate::merkle_tree::assert_merkle_inclusion;
+use crate::merkle_tree::{assert_merkle_inclusion, generate_index};
 use std::hash::poseidon2::Poseidon2::hash;
 
 // TODO: update before deploying. So far haven't found way to override for testing
@@ -85,20 +85,6 @@ pub fn generate_nullifier(
 
 pub fn generate_account(private_key: Field) -> Field {
     hash([private_key], 1)
-}
-
-pub fn generate_index(direction_selector: [bool; DEPTH]) -> Field {
-    let mut index: u32 = 0;
-    let depth = DEPTH;
-
-    for i in 0..depth {
-        let pos = depth - 1 - i;
-        index = index * 2;
-        if direction_selector[pos] {
-            index = index + 1;
-        }
-    }
-    index as Field
 }
 
 #[test]
@@ -338,18 +324,4 @@ fn test_missing_new_commits() {
         [new_first_level_l],
         [true]
     );
-}
-
-#[test]
-fn test_generate_index_case1() {
-    let directions: [bool; 2] = [true, false];
-    let index = generate_index(directions);
-    assert(index == 1);
-}
-
-#[test]
-fn test_generate_index_case2() {
-    let directions: [bool; 2] = [false, true];
-    let index = generate_index(directions);
-    assert(index == 2);
 }
