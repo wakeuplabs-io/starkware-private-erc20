@@ -340,8 +340,6 @@ fn test_missing_new_commits() {
     );
 }
 
-
-
 #[test]
 fn test_generate_index_case1() {
     let directions: [bool; 2] = [true, false];

@@ -5,7 +5,6 @@ in_direction_selector = ["", ""]
 in_path = ["", ""]
 in_private_key = ""
 in_root = ""
-in_commitment_index = ""
 out_receiver_account = ""
 out_receiver_amount = ""
 out_receiver_bliding = ""
