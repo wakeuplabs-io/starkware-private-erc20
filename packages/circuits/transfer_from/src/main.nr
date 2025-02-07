@@ -65,6 +65,10 @@ pub fn main(
     );
 }
 
+pub fn allowance_hash_builder(address: Field, spender: Field, amount: Field) -> Field {
+    hash([address, spender, amount], 3)
+}
+
 pub fn generate_commitment(account: Field, value: Field, bliding: Field) -> Field {
     hash([account, value, bliding], 3)
 }
