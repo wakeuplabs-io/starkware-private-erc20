@@ -34,8 +34,8 @@ pub trait IPrivado<TContractState> {
     fn transfer(
         ref self: TContractState,
         proof: Span<felt252>,
-        sender_enc_output: ByteArray,
-        receiver_enc_output: ByteArray,
+        sender_enc_output: Span<ByteArray>,
+        receiver_enc_output: Span<ByteArray>,
     ) -> bool;
 
     /// Returns the remaining number of tokens that `spender` is
@@ -154,7 +154,7 @@ pub mod Privado {
     pub struct ProofPublicInputs {
         root: u256,
         new_root: u256,
-        nullifier_hash: u256,
+        nullifier_hashes: Span<u256>,
         sender_commitment: u256,
         receiver_commitment: u256
     }
@@ -178,7 +178,7 @@ pub mod Privado {
         // mint initial note with all funds
         let (mint_commitment, mint_output_enc) = GET_MINT_COMMITMENT();
         self._create_note(mint_commitment, mint_output_enc);
-        self._create_note(0, "0"); // fill the first subtree
+        self._create_note(0, array!["0", "0"].span()); // fill the first subtree
     }
 
     //
@@ -213,26 +213,23 @@ pub mod Privado {
         fn transfer(
             ref self: ContractState,
             proof: Span<felt252>,
-            sender_enc_output: ByteArray,
-            receiver_enc_output: ByteArray,
+            sender_enc_output: Span<ByteArray>,
+            receiver_enc_output: Span<ByteArray>,
         ) -> bool {
             // verify proof and that public inputs match
             let public_inputs = self._verify_proof(proof);
-            assert(
-                public_inputs.root == self.current_root.read(),
-                Errors::UNKNOWN_ROOT,
-            );
-            assert(!self.nullified_notes.entry(public_inputs.nullifier_hash).read(), Errors::SPENT_NOTE);
-
-            // assign new_root
-            self.current_root.write(public_inputs.new_root);
-
+            
             // spend the notes
-            self._spend_note(public_inputs.nullifier_hash);
+            for nullifier_hash in public_inputs.nullifier_hashes {
+                self._spend_note(nullifier_hash);
+            };
+            
+            // assign new_root
+            self._update_root(public_inputs.root, public_inputs.new_root);
 
             // create new notes for receiver and sender
-            self._create_note(public_inputs.sender_commitment, sender_enc_output);
-            self._create_note(public_inputs.receiver_commitment, receiver_enc_output);
+            self._create_note(@public_inputs.sender_commitment, sender_enc_output);
+            self._create_note(@public_inputs.receiver_commitment, receiver_enc_output);
 
             true
         }
@@ -275,6 +272,15 @@ pub mod Privado {
 
     #[generate_trait]
     pub impl InternalImpl of InternalTrait {
+        /// TODO:
+        fn _update_root(ref self: ContractState, old_root: u256, new_root: u256) {
+            assert(
+                old_root == self.current_root.read(),
+                Errors::UNKNOWN_ROOT,
+            );
+            self.current_root.write(new_root);
+        }
+
         /// Internal method that creates notes
         ///
         /// Requirements:
@@ -283,20 +289,22 @@ pub mod Privado {
         /// - `output_enc` is amount encrypted with the receiver public key
         ///
         /// Emits a `NewCommitment` event.
-        fn _create_note(ref self: ContractState, commitment: u256, output_enc: ByteArray) {
+        fn _create_note(ref self: ContractState, commitment: u256, output_enc: Span<ByteArray>) {
             let current_index = self.current_commitment_index.read();
-            self.emit(NewCommitment { commitment, output_enc: output_enc.clone(), index: current_index });
+            self.emit(NewCommitment { commitment, output_enc: output_enc.at(0).clone(), index: current_index });
             self.current_commitment_index.write(current_index + 1);
         }
 
-        /// Internal method that spends notes
+        /// Internal method that checks weather note is already spent and if not spends it
         ///
         /// Requirements:
         ///
         /// - `nullifier_hash` is the commitment that will be created
         ///
         /// Emits a `NewNullifier` event.
-        fn _spend_note(ref self: ContractState, nullifier_hash: u256) {
+        fn _spend_note(ref self: ContractState, nullifier_hash: @u256) {
+            assert(!self.nullified_notes.entry(nullifier_hash).read(), Errors::SPENT_NOTE);
+
             self.nullified_notes.entry(nullifier_hash).write(true);
             self.emit(NewNullifier { nullifier_hash });
         }
@@ -318,7 +326,7 @@ pub mod Privado {
                 .verify_ultra_keccak_honk_proof(proof)
                 .unwrap();
 
-                ProofPublicInputs {
+            ProofPublicInputs {
                 root: (*public_inputs.at(0)),
                 nullifier_hash: (*public_inputs.at(1)),
                 receiver_commitment: (*public_inputs.at(2)),

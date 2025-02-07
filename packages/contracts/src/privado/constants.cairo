@@ -13,10 +13,10 @@ pub const TRANSFER_VERIFIER_ADDRESS: felt252 = 0x03c14b798cb4ee3d0b045f3877eb1ad
 // const address = BigInt("0xf4280fa36dd274233822111013be2d770e02332ac2766ae093aa25ee33a2d31")
 
 pub const MERKLE_TREE_INITIAL_ROOT: u256 = 0x2f3263cd8488a893cc8d2b48d874723b599027e91fa355ed050bf23d49020310;  // should already include the first commitment
-pub fn GET_MINT_COMMITMENT() -> (u256, ByteArray) {
+pub fn GET_MINT_COMMITMENT() -> (u256, Span<ByteArray>) {
     (
         0x1c19b4e2cde7662f125ca488852bf75cd26049bb4027c19847f04b8d9abe747b,
-        "Bp_RXfUSztR04BFmuvvZGUKZyiKPRoAmNWbMJnWlQWeCBBHYaN89O7foXaG4rxGR6maX6PLsNEjYgqf-0liDl6FRlx_DkAbX-lsvBBE1k1p3RVhVBrRRnZ4lrel65LZJL_POTwqs38iZnaxzRS-Z_9RPlQ",
+        array!["Bp_RXfUSztR04BFmuvvZGUKZyiKPRoAmNWbMJnWlQWeCBBHYaN89O7foXaG4rxGR6maX6PLsNEjYgqf-0liDl6FRlx_DkAbX-lsvBBE1k1p3RVhVBrRRnZ4lrel65LZJL_POTwqs38iZnaxzRS-Z_9RPlQ"].span(),
     )
 }
 

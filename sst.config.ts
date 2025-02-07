@@ -4,6 +4,12 @@ import "dotenv/config";
 
 const PROJECT_NAME = "starkware-privado-erc20";
 
+const VPC_ID="vpc-052399c6758e34ed7"
+const SUBNETS=["subnet-07b124263b35ed980", "subnet-03f70fcf113aba9ec"]
+const SECURITY_GROUPS=["sg-0332127c082be783a"]
+const CLOUDMAP_NAMESPACE_ID="ns-7srnyibfqdcwxlsk"
+const CLOUDMAP_NAMESPACE_NAME="staging"
+
 export default $config({
   app(input) {
     return {
@@ -17,12 +23,12 @@ export default $config({
 
     const cluster = new sst.aws.Cluster(`${PROJECT_NAME}-cluster`, {
       vpc: {
-        id: process.env.VPC_ID,
-        securityGroups: process.env.SECURITY_GROUPS.split(","),
-        loadBalancerSubnets: process.env.SUBNETS.split(","),
-        containerSubnets: process.env.SUBNETS.split(","),
-        cloudmapNamespaceId: process.env.CLOUDMAP_NAMESPACE_ID,
-        cloudmapNamespaceName: process.env.CLOUDMAP_NAMESPACE_NAME,
+        id: VPC_ID,
+        securityGroups: SECURITY_GROUPS,
+        loadBalancerSubnets: SUBNETS,
+        containerSubnets: SUBNETS,
+        cloudmapNamespaceId: CLOUDMAP_NAMESPACE_ID,
+        cloudmapNamespaceName: CLOUDMAP_NAMESPACE_NAME,
       }
     });
     const api = cluster.addService(`${PROJECT_NAME}-api`, {
