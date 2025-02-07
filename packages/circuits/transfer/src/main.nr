@@ -1,5 +1,5 @@
 mod merkle_tree;
-use crate::merkle_tree::assert_merkle_inclusion;
+use crate::merkle_tree::{assert_merkle_inclusion, generate_index};
 use std::hash::poseidon2::Poseidon2::hash;
 
 // TODO: update before deploying. So far haven't found way to override for testing
@@ -36,7 +36,8 @@ pub fn main(
     assert_merkle_inclusion(in_root, in_path, in_direction_selector, in_commitment);
 
     // check nullifier_hash belongs to nullifier, tied with previous check nullifier derives in commitment
-    let nullifier = generate_nullifier(in_commitment, in_private_key, in_path);
+    let in_commitment_index = generate_index(in_direction_selector);
+    let nullifier = generate_nullifier(in_commitment, in_private_key, in_commitment_index);
     assert(hash([nullifier], 1) == in_commitment_nullifier_hash);
 
     // check utxo
@@ -72,17 +73,14 @@ pub fn generate_commitment(account: Field, value: Field, bliding: Field) -> Fiel
 pub fn generate_nullifier(
     commitment: Field,
     private_key: Field,
-    commitment_path: [Field; DEPTH],
+    index: Field,
 ) -> Field {
     let mut params: [Field; DEPTH + 2] = [0; DEPTH + 2];
     params[0] = commitment;
     params[1] = private_key;
+    params[2] = index;
 
-    for i in 0..DEPTH {
-        params[i + 2] = commitment_path[i];
-    }
-
-    hash(params, DEPTH + 2)
+    hash(params, 3)
 }
 
 pub fn generate_account(private_key: Field) -> Field {
@@ -103,6 +101,7 @@ fn test_allowed_transfer() {
     // generate commitment
     let in_bliding = 2;
     let in_commitment = generate_commitment(sender_account, in_amount, in_bliding);
+    let in_commitment_index = 0;
 
     // output commitment generation
     let receiver_account = generate_account(100);
@@ -124,7 +123,7 @@ fn test_allowed_transfer() {
     // nullifier
     let in_commitment_path = [ 1, old_first_level_r ];
     let in_commitment_direction = [false, false];
-    let in_commitment_nullifier = generate_nullifier(in_commitment, in_private_key, in_commitment_path);
+    let in_commitment_nullifier = generate_nullifier(in_commitment, in_private_key, in_commitment_index);
     let in_commitment_nullifier_hash = hash([in_commitment_nullifier], 1);
 
     main(
@@ -162,7 +161,8 @@ fn test_invalid_utxo_amounts() {
     // generate commitment
     let in_bliding = 2;
     let in_commitment = generate_commitment(sender_account, in_amount, in_bliding);
-
+    let in_commitment_index = 0;
+  
     // output commitment generation
     let receiver_account = generate_account(100);
     let out_sender_bliding = 3;
@@ -183,7 +183,7 @@ fn test_invalid_utxo_amounts() {
     // nullifier
     let in_commitment_path = [ 1, old_first_level_r ];
     let in_commitment_direction = [false, false];
-    let in_commitment_nullifier = generate_nullifier(in_commitment, in_private_key, in_commitment_path);
+    let in_commitment_nullifier = generate_nullifier(in_commitment, in_private_key, in_commitment_index);
     let in_commitment_nullifier_hash = hash([in_commitment_nullifier], 1);
 
     main(
@@ -221,7 +221,8 @@ fn test_unlinked_root() {
     // generate commitment
     let in_bliding = 2;
     let in_commitment = generate_commitment(sender_account, in_amount, in_bliding);
-
+    let in_commitment_index = 0;
+  
     // output commitment generation
     let receiver_account = generate_account(100);
     let out_sender_bliding = 3;
@@ -242,7 +243,7 @@ fn test_unlinked_root() {
     // nullifier
     let in_commitment_path = [ 1, old_first_level_r ];
     let in_commitment_direction = [false, false];
-    let in_commitment_nullifier = generate_nullifier(in_commitment, in_private_key, in_commitment_path);
+    let in_commitment_nullifier = generate_nullifier(in_commitment, in_private_key, in_commitment_index);
     let in_commitment_nullifier_hash = hash([in_commitment_nullifier], 1);
 
     main(
@@ -279,7 +280,8 @@ fn test_missing_new_commits() {
     // generate commitment
     let in_bliding = 2;
     let in_commitment = generate_commitment(sender_account, in_amount, in_bliding);
-
+    let in_commitment_index = 0;
+  
     // output commitment generation
     let receiver_account = generate_account(100);
     let out_sender_bliding = 3;
@@ -300,7 +302,7 @@ fn test_missing_new_commits() {
     // nullifier
     let in_commitment_path = [ 1, old_first_level_r ];
     let in_commitment_direction = [false, false];
-    let in_commitment_nullifier = generate_nullifier(in_commitment, in_private_key, in_commitment_path);
+    let in_commitment_nullifier = generate_nullifier(in_commitment, in_private_key, in_commitment_index);
     let in_commitment_nullifier_hash = hash([in_commitment_nullifier], 1);
 
     main(

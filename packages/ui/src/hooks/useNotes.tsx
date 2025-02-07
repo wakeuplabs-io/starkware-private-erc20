@@ -4,13 +4,18 @@ import { DecryptedOutput, Note } from "@/interfaces";
 import { CipherService } from "@/services/cipher.service";
 import { ZERO_BIG_INT } from "@/constants";
 import { AccountService } from "@/services/account.service";
+import { BarretenbergService } from "@/services/bb.service";
 
 export const useNotes: () => {
   notes: Note[];
   balance: bigint;
   loading: boolean;
 } = () => {
-  const { commitments, isLoading: eventsLoading } = useEvents();
+  const {
+    commitments: commitmentEvents,
+    nullifierHashes,
+    isLoading: eventsLoading,
+  } = useEvents();
 
   const [notes, setNotes] = useState<Note[]>([]);
   const [balance, setBalance] = useState<bigint>(ZERO_BIG_INT);
@@ -18,7 +23,7 @@ export const useNotes: () => {
 
   useEffect(() => {
     const decryptNotes = async () => {
-      if (!commitments.length) {
+      if (!commitmentEvents.length) {
         setNotes([]);
         setBalance(ZERO_BIG_INT);
         setLoading(false);
@@ -26,31 +31,51 @@ export const useNotes: () => {
       }
 
       try {
+        const account = await AccountService.getAccount();
         const notesExpanded: Note[] = await Promise.all(
-          commitments.map(async (commitment) => {
+          commitmentEvents.map(async (commitmentEvent) => {
             try {
-              const account = await AccountService.getAccount();
+              const { commitment, encryptedOutput, index } = commitmentEvent;
+              const nullifier = await BarretenbergService.generateNullifier(
+                commitment,
+                account.privateKey,
+                index
+              );
+              const nullifierHash =
+                await BarretenbergService.generateHash(nullifier);
+              const isSpendable = nullifierHashes.includes(
+                nullifierHash.toString(10)
+              );
+              if (!isSpendable) {
+                const note: Note = {
+                  commitment: commitment,
+                  encryptedOutput: encryptedOutput,
+                  index: index,
+                };
+                return note;
+              }
               const decrypted: DecryptedOutput = JSON.parse(
                 await CipherService.decrypt(
-                  commitment.encryptedOutput,
+                  encryptedOutput,
                   account.publicKey,
                   account.privateKey
                 )
               );
 
               const note: Note = {
-                commitment: commitment.commitment,
-                encryptedOutput: commitment.encryptedOutput,
-                index: commitment.index,
+                commitment: commitment,
+                encryptedOutput: encryptedOutput,
+                index: index,
                 value: BigInt("0x" + decrypted.value),
                 bliding: BigInt("0x" + decrypted.bliding),
               };
               return note;
             } catch (error) {
+              const { commitment, encryptedOutput, index } = commitmentEvent;
               const note: Note = {
-                commitment: commitment.commitment,
-                encryptedOutput: commitment.encryptedOutput,
-                index: commitment.index,
+                commitment,
+                encryptedOutput,
+                index,
               };
               return note;
             }
@@ -72,7 +97,7 @@ export const useNotes: () => {
     };
 
     decryptNotes();
-  }, [commitments]);
+  }, [commitmentEvents, nullifierHashes]);
 
   return { notes, balance, loading: eventsLoading || loading };
 };
