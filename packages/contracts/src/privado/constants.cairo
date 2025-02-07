@@ -12,11 +12,11 @@ pub const TRANSFER_VERIFIER_ADDRESS: felt252 = 0x0633b15d7dca420570bdff9f4444e1e
 // const publicKey = BigInt("0x9fe40de6a38adf7cb7ed7afbd20a65d068682ab1090fd6274a44b10be0cfad10");
 // const address = BigInt("0xf4280fa36dd274233822111013be2d770e02332ac2766ae093aa25ee33a2d31")
 
-pub const MERKLE_TREE_INITIAL_ROOT: u256 = 0x2f3263cd8488a893cc8d2b48d874723b599027e91fa355ed050bf23d49020310;  // should already include the first commitment
+pub const MERKLE_TREE_INITIAL_ROOT: u256 = 0x1fd5b00bb3d7e979fad782f4f1309c0d649eafaabcad99d2bf976d90efc52ff9;  // should already include the first commitment
 pub fn GET_MINT_COMMITMENT() -> (u256, ByteArray) {
     (
-        0x1c19b4e2cde7662f125ca488852bf75cd26049bb4027c19847f04b8d9abe747b,
-        "Bp_RXfUSztR04BFmuvvZGUKZyiKPRoAmNWbMJnWlQWeCBBHYaN89O7foXaG4rxGR6maX6PLsNEjYgqf-0liDl6FRlx_DkAbX-lsvBBE1k1p3RVhVBrRRnZ4lrel65LZJL_POTwqs38iZnaxzRS-Z_9RPlQ",
+        0xD8BF9DAA6A48439A3EE467CBCD7084BF4A5CE590839E9C9F63DFC91BEFE614E,
+        "wPmqd6w0l3nOdAPjLyy-nEUIGy-x_9R1zlxyyyqKlAO9eNkAEZK8nIm7Eko74rqTC74gYG7iwmYP2x-PJPbc0dNt3hKyU8SPYGHrASGzT7RDKtRaTK7pk8oJ8w3xSrSUUR3I4YsbfA4UnpC95gg",
     )
 }
 
