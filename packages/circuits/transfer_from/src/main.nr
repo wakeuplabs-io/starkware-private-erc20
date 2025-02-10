@@ -269,7 +269,7 @@ fn test_invalid_utxo_amounts() {
     );
 }
 
-#[test(should_fail_with = "Cannot remove existing commitment")]
+#[test(should_fail_with = "Missing commitments from old tree in new tree")]
 fn test_remove_existing_commitments() {
     // generate input amounts
     let in_commitment_value = 10;
