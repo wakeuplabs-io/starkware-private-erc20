@@ -1,14 +1,14 @@
-.transfer-container {
+.approve-container {
   margin-bottom: 2rem;
 }
 
-.transfer-title {
+.approve-title {
   font-size: 1.5rem;
   font-weight: bold;
   text-align: center;
 }
 
-.transfer-input {
+.approve-input {
   width: 100%;
   margin: 0.5rem 0;
   padding: 0.5rem;
@@ -19,7 +19,7 @@
   color: #000;
 }
 
-.transfer-button {
+.approve-button {
   width: 100%;
   padding: 0.7rem;
   font-size: 1rem;
@@ -31,6 +31,6 @@
   cursor: pointer;
 }
 
-.transfer-button:hover {
+.approve-button:hover {
   background-color: #45a049;
 }

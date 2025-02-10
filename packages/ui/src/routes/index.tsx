@@ -1,8 +1,8 @@
 import { createFileRoute } from "@tanstack/react-router";
 import AccountManager from "@/components/account-manager";
 import Balance from "@/components/balance";
-import Transfer from "@/components/transfer";
 import ConnectButton from "@/components/connect-button";
+import ActionBar from "@/components/action-bar/action-bar";
 
 export const Route = createFileRoute("/")({
   component: Index,
@@ -19,7 +19,7 @@ function Index() {
         <div className="space-y-4">
           <AccountManager />
           <Balance />
-          <Transfer />
+          <ActionBar />
         </div>
       </div>
     </div>
