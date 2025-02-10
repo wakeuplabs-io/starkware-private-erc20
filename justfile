@@ -26,6 +26,9 @@ circuits-check circuit:
 circuits-build circuit:
     (cd {{CIRCUIT_ROOT}}/{{circuit}} && nargo build)
 
+circuits-fmt circuit:
+    (cd {{CIRCUIT_ROOT}}/{{circuit}} && nargo fmt)
+
 circuits-proof circuit:
     (cd {{CIRCUIT_ROOT}}/{{circuit}} && nargo execute witness && bb prove_ultra_keccak_honk -b target/{{circuit}}.json -w target/witness.gz -o target/proof.bin && garaga calldata --system ultra_keccak_honk --vk target/vk.bin --proof target/proof.bin --format array > calldata.txt)
 
