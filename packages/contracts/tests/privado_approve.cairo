@@ -14,9 +14,9 @@ use contracts::privado::{Privado, IPrivado, constants::{TOKEN_NAME, TOKEN_SYMBOL
 fn test_approve() {
     let (mut contract, contract_address) = get_contract_state_for_testing();
 
-    let approve_hash = 1;
-    let relationship_hash = 2;
-    let proof = generate_approve_mock_proof(approve_hash, relationship_hash);
+    let allowance_hash = 1;
+    let allowance_relationship = 2;
+    let proof = generate_approve_mock_proof(allowance_hash, allowance_relationship);
     let enc_outputs = array!["spender_enc_output", "owner_enc_output"].span();
 
     let mut spy = spy_events();
@@ -26,9 +26,9 @@ fn test_approve() {
     // call transfer
     contract.approve(proof, enc_outputs);
 
-    // should nullify the sender_in_nullifier_hash
+    // should update the allowance_hash
     assert(
-        contract.allowances.entry(relationship_hash.into()).read() == approve_hash.into(),
+        contract.allowances.entry(allowance_relationship.into()).read() == allowance_hash.into(),
         'Incorrect approval hash stored',
     );
 
@@ -41,8 +41,8 @@ fn test_approve() {
                     Privado::Event::Approval(
                         Privado::Approval {
                             timestamp: cheap_timestamp,
-                            approve_hash: approve_hash.into(),
-                            relationship_hash: relationship_hash.into(),
+                            allowance_hash: allowance_hash.into(),
+                            allowance_relationship: allowance_relationship.into(),
                             output_enc: "spender_enc_output",
                         },
                     ),
@@ -52,8 +52,8 @@ fn test_approve() {
                     Privado::Event::Approval(
                         Privado::Approval {
                             timestamp: cheap_timestamp,
-                            approve_hash: approve_hash.into(),
-                            relationship_hash: relationship_hash.into(),
+                            allowance_hash: allowance_hash.into(),
+                            allowance_relationship: allowance_relationship.into(),
                             output_enc: "owner_enc_output",
                         },
                     ),
@@ -67,8 +67,8 @@ fn test_approve() {
 // utilities
 //
 
-fn generate_approve_mock_proof(approve_hash: felt252, relationship_hash: felt252) -> Span<felt252> {
-    array![approve_hash, relationship_hash].span()
+fn generate_approve_mock_proof(allowance_hash: felt252, allowance_relationship: felt252) -> Span<felt252> {
+    array![allowance_hash, allowance_relationship].span()
 }
 
 fn get_contract_state_for_testing() -> (Privado::ContractState, ContractAddress) {
