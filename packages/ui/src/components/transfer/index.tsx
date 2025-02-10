@@ -2,8 +2,10 @@ import { useTransfer } from "@/hooks/useTransfer";
 import "./transfer.css";
 import { useCallback, useState } from "react";
 import { Button } from "../ui/button";
+import { useAccount } from "@starknet-react/core";
 
 const Transfer = () => {
+  const { account } = useAccount();
   const { sendTransfer, loading } = useTransfer();
   const [recipientAddress, setRecipientAddress] = useState("");
   const [recipientPublicKey, setRecipientPublicKey] = useState("");
@@ -54,8 +56,12 @@ const Transfer = () => {
         onChange={(e) => setAmount(parseInt(e.target.value))}
       />
 
-      <Button className="w-full mt-2" onClick={onTransfer} disabled={loading}>
-        {loading ? "Transferring..." : "Transfer "}
+      <Button
+        className="w-full mt-2"
+        onClick={onTransfer}
+        disabled={loading || !account}
+      >
+        {!account ? "Connect Wallet" : loading ? "Loading..." : "Transfer "}
       </Button>
     </div>
   );
