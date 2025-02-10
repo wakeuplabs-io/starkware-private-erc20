@@ -42,7 +42,7 @@ pub trait IPrivado<TContractState> {
     /// allowed to spend on behalf of `owner` through `transfer_from`.
     /// This is zero by default.
     /// This value changes when `approve` or `transfer_from` are called.
-    fn allowance(self: @TContractState, owner: ContractAddress, spender: ContractAddress) -> u256;
+    fn allowance(self: @TContractState, allowance_hash: u256) -> u256;
 
     /// Moves `amount` tokens from the caller's token balance to `to`.
     ///
@@ -292,10 +292,8 @@ pub mod Privado {
             true
         }
 
-        fn allowance(
-            self: @ContractState, owner: ContractAddress, spender: ContractAddress,
-        ) -> u256 {
-            0
+        fn allowance(self: @ContractState, allowance_hash: u256) -> u256 {
+            self.allowances.entry(allowance_hash).read()
         }
 
 

@@ -126,8 +126,6 @@ export const useTransfer = () => {
 
       window.alert("Please approve transaction in your wallet");
       await sendAsync([callData]);
-    } catch (error) {
-      throw error;
     } finally {
       setLoading(false);
     }
