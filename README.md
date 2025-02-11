@@ -84,6 +84,7 @@ Circuit checks
 
 Some clarifications:
 - At the moment we limited input notes to just one, we can easily grow this number by just iterating checks and nullifications.
+- Unlike `tornado-core` where the contract maintains and updates the merkle root with all the commitments, in this case we delegate that work to the circuits for cost efficiency and better compatibility of types and hashing functions.
 
 ### Application
 

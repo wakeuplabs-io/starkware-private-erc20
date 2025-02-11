@@ -23,6 +23,7 @@ pub fn main(
     out_sender_commitment_value: Field,
     out_sender_commitment_bliding: Field,
     out_sender_commitment: pub Field,
+    // updated root
     out_root: pub Field,
     out_subtree_root_path: [Field; DEPTH - 1], // path of hash(out_sender_commitment, out_receiver_commitment)
     out_subtree_root_direction_selector: [bool; DEPTH - 1], // path direction of hash(out_sender_commitment, out_receiver_commitment)
