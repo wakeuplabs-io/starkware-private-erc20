@@ -124,6 +124,32 @@ Some clarifications:
 - The API is ideally not necessary and serves merely as a workaround of current garaga version 0.15.3 not supporting honk vk/proof calldata encoding. This seems to have been introduced in this pr https://github.com/keep-starknet-strange/garaga/pull/288 recently. Not yet published but we can try incorporating it.
 
 
+## Demo
+
+Current ux goes like this:
+
+A new wallet is generated for the user per browser or one is recovered from local storage
+
+![wallet generations](./assets/demo-1.png)
+
+User connects argent wallet to pay for transaction gas
+
+![user connects wallet](./assets/demo-2.png)
+
+Sender inputs receiver address and public key. Also fills amount
+
+![Fill transfer inputs](./assets/demo-3.png)
+
+Confirm transaction in wallet. (Example transaction https://sepolia.voyager.online/tx/0x6c6b73fd34c45c05dc9ebdf168c99a0fe1d44fd5e983d7c2bc8187baec87b78?mtm_campaign=argent-redirect&mtm_source=argent&mtm_medium=referral)
+
+![confirm transaction](./assets/demo-4.png)
+
+Receiver discovers new note and sums up balance
+
+![receiver balance](./assets/demo-5.png)
+
+# Deployments
+
 ## Deployments setup
 
 Create the deployer account
