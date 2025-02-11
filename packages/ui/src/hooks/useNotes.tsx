@@ -35,6 +35,14 @@ export const useNotes: () => {
               account.privateKey,
               index
             );
+            const decrypted: DecryptedOutput = JSON.parse(
+              await CipherService.decrypt(
+                encryptedOutput,
+                account.publicKey,
+                account.privateKey
+              )
+            );
+
             const nullifierHash =
               await BarretenbergService.generateHash(nullifier);
             const isNotSpendable = nullifierHashes.includes(
@@ -45,13 +53,6 @@ export const useNotes: () => {
               return { commitment, encryptedOutput, index };
             }
 
-            const decrypted: DecryptedOutput = JSON.parse(
-              await CipherService.decrypt(
-                encryptedOutput,
-                account.publicKey,
-                account.privateKey
-              )
-            );
             return {
               commitment,
               encryptedOutput,

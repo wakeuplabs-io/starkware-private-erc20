@@ -55,6 +55,7 @@ export const useEvents = () => {
       const fromBlock = lastScannedBlock || 500_000;
       const newCommitments: CommitmentEvent[] = [];
       const newNullifierHashes: string[] = [];
+      const currentBlock = await provider.getBlock("latest");
 
       do {
         console.log("GET EVENTS");
@@ -62,7 +63,7 @@ export const useEvents = () => {
           address: PRIVATE_ERC20_CONTRACT_ADDRESS,
           keys: [[newCommitmentHash, newNullifierHash]],
           from_block: { block_number: fromBlock },
-          to_block: "latest",
+          to_block: currentBlock,
           chunk_size: 100,
           continuation_token: continuationToken,
         });
@@ -112,9 +113,8 @@ export const useEvents = () => {
         isLoading: false,
       });
 
-      const latestBlock = await provider.getBlock("latest");
-      localStorage.setItem(LOCAL_STORAGE_KEY, latestBlock.block_number.toString());
-      setLastScannedBlock(latestBlock.block_number);
+      localStorage.setItem(LOCAL_STORAGE_KEY, currentBlock.block_number.toString());
+      setLastScannedBlock(currentBlock.block_number);
     } catch (err) {
       console.error("Error fetching events:", err);
       setState((prev) => ({
