@@ -1,7 +1,7 @@
 import { useTransfer } from "@/hooks/useTransfer";
-import "./transfer.css";
 import { useCallback, useState } from "react";
-import { Button } from "../ui/button";
+import { Button } from "./ui/button";
+import { Input } from "./ui/input";
 
 const Transfer = () => {
   const { sendTransfer, loading } = useTransfer();
@@ -27,34 +27,33 @@ const Transfer = () => {
   }, [amount, recipientAddress, recipientPublicKey, sendTransfer]);
 
   return (
-    <div className="transfer-container">
-      <h2 className="text-lg text-center">Transfer</h2>
+    <div className="flex flex-col p-6 bg-white rounded-3xl border border-primary">
+      <h1 className="mb-8 font-semibold">Transfer</h1>
 
-      <input
-        className="transfer-input"
-        type="text"
-        placeholder="Recipient Address"
-        value={recipientAddress}
-        onChange={(e) => setRecipientAddress(e.target.value)}
-      />
+      <div className="space-y-4 mb-12">
+        <Input
+          type="text"
+          placeholder="Recipient Address"
+          value={recipientAddress}
+          onChange={(e) => setRecipientAddress(e.target.value)}
+        />
 
-      <input
-        className="transfer-input"
-        type="text"
-        placeholder="Recipient Public Key"
-        value={recipientPublicKey}
-        onChange={(e) => setRecipientPublicKey(e.target.value)}
-      />
+        <Input
+          type="text"
+          placeholder="Recipient Public Key"
+          value={recipientPublicKey}
+          onChange={(e) => setRecipientPublicKey(e.target.value)}
+        />
 
-      <input
-        className="transfer-input"
-        type="number"
-        placeholder="Amount"
-        value={amount}
-        onChange={(e) => setAmount(parseInt(e.target.value))}
-      />
+        <Input
+          type="number"
+          placeholder="Amount"
+          value={amount}
+          onChange={(e) => setAmount(parseInt(e.target.value))}
+        />
+      </div>
 
-      <Button className="w-full mt-2" onClick={onTransfer} disabled={loading}>
+      <Button className="w-full" onClick={onTransfer} disabled={loading}>
         {loading ? "Transferring..." : "Transfer "}
       </Button>
     </div>
