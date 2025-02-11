@@ -58,12 +58,11 @@ export const useEvents = () => {
       const currentBlock = await provider.getBlock("latest");
 
       do {
-        console.log("GET EVENTS");
         const eventsResponse: EVENTS_CHUNK = await provider.channel.getEvents({
           address: PRIVATE_ERC20_CONTRACT_ADDRESS,
           keys: [[newCommitmentHash, newNullifierHash]],
           from_block: { block_number: fromBlock },
-          to_block: currentBlock,
+          to_block: "latest",
           chunk_size: 100,
           continuation_token: continuationToken,
         });
@@ -99,7 +98,7 @@ export const useEvents = () => {
 
         continuationToken = eventsResponse.continuation_token;
       } while (continuationToken);
-      console.log({newCommitments: newCommitments.length});
+      
       await NoteCacheService.setCommitments(newCommitments);
       await NoteCacheService.setNullifierHashes(newNullifierHashes);
 

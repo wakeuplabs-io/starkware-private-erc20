@@ -204,23 +204,23 @@ You can now test the main endpoint of the verifier using a proof and `garaga cal
 Declare and deploy the contract with 
 
 ```bash
-just circuits-declare-verifier
+just circuits-declare-verifier transfer
 
-# class_hash: 0x04b79e0576a08cc059342f6d61cb95abf087734e17f953513103c16017c0deda
-# transaction_hash: 0x036ab105f830c9c2c5ffa48d98206073a8a6054e32bf7d8da0c3d04177068fd0
+# class_hash: 0x0521d13e079f65ee353914317bc1731213766906f1131ee68ed53ec9bb017cbf
+# transaction_hash: 0x0382fa1ad47d36c8e1e1c2bb68884c497f177a246bad06e80d7dedb2c1e0a8c0
 
 # To see declaration details, visit:
-# class: https://sepolia.starkscan.co/class/0x04b79e0576a08cc059342f6d61cb95abf087734e17f953513103c16017c0deda
-# transaction: https://sepolia.starkscan.co/tx/0x036ab105f830c9c2c5ffa48d98206073a8a6054e32bf7d8da0c3d04177068fd0
+# class: https://sepolia.starkscan.co/class/0x0521d13e079f65ee353914317bc1731213766906f1131ee68ed53ec9bb017cbf
+# transaction: https://sepolia.starkscan.co/tx/0x0382fa1ad47d36c8e1e1c2bb68884c497f177a246bad06e80d7dedb2c1e0a8c0
 
-just circuits-deploy-verifier 0x04b79e0576a08cc059342f6d61cb95abf087734e17f953513103c16017c0deda
+just circuits-deploy-verifier transfer 0x0521d13e079f65ee353914317bc1731213766906f1131ee68ed53ec9bb017cbf
 
-# contract_address: 0x05de08a903058f97d2a9d8576730ef602eee53f143ecc4affd2f9167d4b92651
-# transaction_hash: 0x01d0233e7fe4ef737f6c38a97c0935525aab51416128c1b5c465bd00355d6425
+# contract_address: 0x073a29b78d1aa45a9c3fab87f93d682134a6ffe1a010214a493c7edc16587143
+# transaction_hash: 0x05d62d45892eeb50aaf194af843b00ae79c20e5a6592485ff9badb318f79a024
 
 # To see deployment details, visit:
-# contract: https://sepolia.starkscan.co/contract/0x05de08a903058f97d2a9d8576730ef602eee53f143ecc4affd2f9167d4b92651
-# transaction: https://sepolia.starkscan.co/tx/0x01d0233e7fe4ef737f6c38a97c0935525aab51416128c1b5c465bd00355d6425
+# contract: https://sepolia.starkscan.co/contract/0x073a29b78d1aa45a9c3fab87f93d682134a6ffe1a010214a493c7edc16587143
+# transaction: https://sepolia.starkscan.co/tx/0x05d62d45892eeb50aaf194af843b00ae79c20e5a6592485ff9badb318f79a024
 ```
 
 ## Contracts deployment
@@ -230,21 +230,21 @@ Deployment with just command (Same for verifier if needed). First go to `src/pri
 ```bash
 just contracts-declare-privado
 
-# class_hash: 0x07772745252c5592d8dd18b1e075ef608a756c6c7d59acc4bda0719a101e745c
-# transaction_hash: 0x010352daab6df926680ccca0b46d4cb54d52ccf4ea591be3d29e261d03e3b748
+# class_hash: 0x008ccb72ab0cc84a8afd2644a5c1d55b13d9e91b05ef0c721aacd9ee2e3d5028
+# transaction_hash: 0x02132e8d9d7285fc9dfc65ae5fe8a4c28863de846e530f571ac8af3b8245fa9c
 
 # To see declaration details, visit:
-# class: https://sepolia.starkscan.co/class/0x07772745252c5592d8dd18b1e075ef608a756c6c7d59acc4bda0719a101e745c
-# transaction: https://sepolia.starkscan.co/tx/0x010352daab6df926680ccca0b46d4cb54d52ccf4ea591be3d29e261d03e3b748
+# class: https://sepolia.starkscan.co/class/0x008ccb72ab0cc84a8afd2644a5c1d55b13d9e91b05ef0c721aacd9ee2e3d5028
+# transaction: https://sepolia.starkscan.co/tx/0x02132e8d9d7285fc9dfc65ae5fe8a4c28863de846e530f571ac8af3b8245fa9c
 
-just contracts-deploy-privado 0x07772745252c5592d8dd18b1e075ef608a756c6c7d59acc4bda0719a101e745c
+just contracts-deploy-privado 0x008ccb72ab0cc84a8afd2644a5c1d55b13d9e91b05ef0c721aacd9ee2e3d5028
 
-# contract_address: 0x01ec8e34c1b0c35b59ed9743f2ba50b5d295910c0478ca221aff6cfdae155dff
-# transaction_hash: 0x03a366e805eadaea18b4336d6343a5976871b7633116827ec44056b02ec1ff3e
+# contract_address: 0x0259a6a2b5e664b71518462d9857944982b76f1e49d57abf14b6c64dd5b5894e
+# transaction_hash: 0x01c471bc2156aa73c7cad8a91d910a0cc72f3954300d28ab3e7baa8d9ff213d2
 
 # To see deployment details, visit:
-# contract: https://sepolia.starkscan.co/contract/0x01ec8e34c1b0c35b59ed9743f2ba50b5d295910c0478ca221aff6cfdae155dff
-# transaction: https://sepolia.starkscan.co/tx/0x03a366e805eadaea18b4336d6343a5976871b7633116827ec44056b02ec1ff3e
+# contract: https://sepolia.starkscan.co/contract/0x0259a6a2b5e664b71518462d9857944982b76f1e49d57abf14b6c64dd5b5894e
+# transaction: https://sepolia.starkscan.co/tx/0x01c471bc2156aa73c7cad8a91d910a0cc72f3954300d28ab3e7baa8d9ff213d2
 ```
 
 
