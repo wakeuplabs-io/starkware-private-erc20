@@ -10,4 +10,6 @@ pub mod verifiers {
     pub use approve::*;
     pub mod transfer;
     pub use transfer::*;
+    pub mod transfer_from;
+    pub use transfer_from::*;
 }

@@ -1,5 +1,5 @@
-use common::definitions::{account, commitment, nullifier, commitment_tracker};
-use common::merkle_tree::{assert_merkle_inclusion, generate_index};
+use common::definitions::{account, commitment, commitment_tracker};
+use common::merkle_tree::{assert_merkle_inclusion};
 use std::hash::poseidon2::Poseidon2::hash;
 
 // TODO: update before deploying. So far haven't found way to override for testing
@@ -14,9 +14,8 @@ pub fn main(
     in_commitment_path: [Field; DEPTH],
     in_commitment_direction_selector: [bool; DEPTH],
     in_commitment_value: Field,
-    in_commitment_nullifier_hash: pub Field,
     in_commitment_bliding: Field,
-    in_commitment_tracker: Field,
+    in_commitment_spending_tracker: pub Field,
     // utxo outputs
     out_receiver_value: Field,
     out_receiver_bliding: Field,
@@ -38,12 +37,7 @@ pub fn main(
         in_commitment,
         "Input commitment doesn't belong to tree",
     );
-    assert_eq(in_commitment_tracker, commitment_tracker(in_commitment, in_commitment_bliding), "Invalid commitment tracker");
-
-    // check nullifier_hash belongs to nullifier, tied with previous check nullifier derives in commitment
-    let in_commitment_index = generate_index(in_commitment_direction_selector);
-    let nullifier = nullifier(in_commitment, owner_private_key, in_commitment_index);
-    assert_eq(hash([nullifier], 1), in_commitment_nullifier_hash);
+    assert_eq(in_commitment_spending_tracker, commitment_tracker(in_commitment, in_commitment_bliding), "Invalid commitment tracker");
 
     // check utxo
     assert_eq(
@@ -97,8 +91,7 @@ fn test_allowed_transfer() {
     // generate commitment
     let in_commitment_bliding = 2;
     let in_commitment = commitment(sender_account, in_commitment_value, in_commitment_bliding);
-    let in_commitment_tracker = commitment_tracker(in_commitment, in_commitment_bliding);
-    let in_commitment_index = 0;
+    let in_commitment_spending_tracker = commitment_tracker(in_commitment, in_commitment_bliding);
 
     // output commitment generation
     let receiver_account = account(100);
@@ -121,8 +114,6 @@ fn test_allowed_transfer() {
     // nullifier
     let in_commitment_path = [1, old_first_level_r];
     let in_commitment_direction_selector = [false, false];
-    let in_commitment_nullifier = nullifier(in_commitment, owner_private_key, in_commitment_index);
-    let in_commitment_nullifier_hash = hash([in_commitment_nullifier], 1);
 
     main(
         owner_private_key,
@@ -131,9 +122,8 @@ fn test_allowed_transfer() {
         in_commitment_path,
         in_commitment_direction_selector,
         in_commitment_value,
-        in_commitment_nullifier_hash,
         in_commitment_bliding,
-        in_commitment_tracker,
+        in_commitment_spending_tracker,
         out_receiver_value,
         out_receiver_bliding,
         out_receiver_commitment,
@@ -160,8 +150,7 @@ fn test_invalid_utxo_amounts() {
     // generate commitment
     let in_commitment_bliding = 2;
     let in_commitment = commitment(sender_account, in_commitment_value, in_commitment_bliding);
-    let in_commitment_tracker = commitment_tracker(in_commitment, in_commitment_bliding);
-    let in_commitment_index = 0;
+    let in_commitment_spending_tracker = commitment_tracker(in_commitment, in_commitment_bliding);
 
     // output commitment generation
     let receiver_account = account(100);
@@ -184,8 +173,6 @@ fn test_invalid_utxo_amounts() {
     // nullifier
     let in_commitment_path = [1, old_first_level_r];
     let in_commitment_direction_selector = [false, false];
-    let in_commitment_nullifier = nullifier(in_commitment, owner_private_key, in_commitment_index);
-    let in_commitment_nullifier_hash = hash([in_commitment_nullifier], 1);
 
     main(
         owner_private_key,
@@ -194,9 +181,8 @@ fn test_invalid_utxo_amounts() {
         in_commitment_path,
         in_commitment_direction_selector,
         in_commitment_value,
-        in_commitment_nullifier_hash,
         in_commitment_bliding,
-        in_commitment_tracker,
+        in_commitment_spending_tracker,
         out_receiver_value,
         out_receiver_bliding,
         out_receiver_commitment,
@@ -223,8 +209,7 @@ fn test_unlinked_root() {
     // generate commitment
     let in_commitment_bliding = 2;
     let in_commitment = commitment(sender_account, in_commitment_value, in_commitment_bliding);
-    let in_commitment_tracker = commitment_tracker(in_commitment, in_commitment_bliding);
-    let in_commitment_index = 0;
+    let in_commitment_spending_tracker = commitment_tracker(in_commitment, in_commitment_bliding);
 
     // output commitment generation
     let receiver_account = account(100);
@@ -247,8 +232,6 @@ fn test_unlinked_root() {
     // nullifier
     let in_commitment_path = [1, old_first_level_r];
     let in_commitment_direction_selector = [false, false];
-    let in_commitment_nullifier = nullifier(in_commitment, owner_private_key, in_commitment_index);
-    let in_commitment_nullifier_hash = hash([in_commitment_nullifier], 1);
 
     main(
         owner_private_key,
@@ -257,9 +240,8 @@ fn test_unlinked_root() {
         in_commitment_path,
         in_commitment_direction_selector,
         in_commitment_value,
-        in_commitment_nullifier_hash,
         in_commitment_bliding,
-        in_commitment_tracker,
+        in_commitment_spending_tracker,
         out_receiver_value,
         out_receiver_bliding,
         out_receiver_commitment,
@@ -285,8 +267,7 @@ fn test_missing_new_commits() {
     // generate commitment
     let in_commitment_bliding = 2;
     let in_commitment = commitment(sender_account, in_commitment_value, in_commitment_bliding);
-    let in_commitment_tracker = commitment_tracker(in_commitment, in_commitment_bliding);
-    let in_commitment_index = 0;
+    let in_commitment_spending_tracker = commitment_tracker(in_commitment, in_commitment_bliding);
 
     // output commitment generation
     let receiver_account = account(100);
@@ -309,8 +290,6 @@ fn test_missing_new_commits() {
     // nullifier
     let in_commitment_path = [1, old_first_level_r];
     let in_commitment_direction_selector = [false, false];
-    let in_commitment_nullifier = nullifier(in_commitment, owner_private_key, in_commitment_index);
-    let in_commitment_nullifier_hash = hash([in_commitment_nullifier], 1);
 
     main(
         owner_private_key,
@@ -319,9 +298,8 @@ fn test_missing_new_commits() {
         in_commitment_path,
         in_commitment_direction_selector,
         in_commitment_value,
-        in_commitment_nullifier_hash,
         in_commitment_bliding,
-        in_commitment_tracker,
+        in_commitment_spending_tracker,
         out_receiver_value,
         out_receiver_bliding,
         out_receiver_commitment,
