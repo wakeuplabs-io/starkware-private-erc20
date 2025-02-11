@@ -2,30 +2,34 @@
 
 ## Overview
 
-Design is inspired in privacy pools like [tornado nova](https://github.com/tornadocash/tornado-core/tree/master) and [zcash](https://github.com/zcash/orchard)
+Design is inspired in privacy pools like [tornado nova](https://github.com/tornadocash/tornado-nova/tree/b085ab398eaeefff98771f5dad893cb804d98e70) and [zcash](https://github.com/zcash/orchard)
 
-### Definitions
+## Definitions
 
-**Note**:
+### Note
+
 A "note" represents ownership information over a certain amount of tokens. The hash of this information is called the commitment and is stored in the contract's Merkle tree. The user balance is the sum of these notes.
 
-**Nullifier**
+### Nullifier
+
 The nullifier is a unique value derived from a note to prevent double-spending. It is significant because it can only be created by the owner and is unequivocally linked to a single note. This is achieved by using the hash of the note to prevent any attempt at double-spending.
 
-**Keypair**
+### Keypairs
+
 The user's wallet consists of an RSA keypair used for asymmetric encryption. Certain relevant information required to use a note is encrypted with the owner's public key and published in the `NewCommitment` event. This ensures that only the user with the corresponding private key can access it. The public and private keys follow standard RSA conventions. For the address, we currently define it as `hash(private_key)` to quickly validate ownership in circuits, as there is no support for RSA key derivation in Noir. One alternative being explored is using [signatures](https://noir-lang.org/docs/reference/NoirJS/noir_js/functions/ecdsa_secp256k1_verify), though this feature is not yet implemented.
 
-**Relayer**
+### Relayer
+
 A relayer is a service that can further enhance user privacy. While blockchain calldata does not expose any data about amounts or zk addresses, submitting transactions directly reveals the user's Starknet wallet address, potentially leaving a trace of their participation. To address this, a relayer can submit transactions on behalf of users, effectively obscuring their wallet address and improving privacy.
 
 
-### How it all works
+## How it all works
 
-**Initial Minting Process**
+### Initial Minting Process
 
 Currently, the deployer is responsible for creating the first commitment by specifying the `MERKLE_TREE_INITIAL_ROOT` and emitting the first two notes. This sets the initial supply, and it is then up to the deployer to distribute the tokens. There is no minting process in place at this time.
 
-**Balance discovery**
+### Balance discovery
 
 To rediscover a user's commitment, the process works as follows:
 1. Fetch all NewCommitment { commitment, enc_output, index } events (preferably already cached, so only the latest ones are fetched).
@@ -34,9 +38,9 @@ To rediscover a user's commitment, the process works as follows:
    - Attempt decryption. If successful, derive the nullifier_hash and check whether it has already been used.
    - If the nullifier_hash hasn't been used, add the commitment to the pool of usable commitments and sum up the value.
 
-**Transfer**
+### Transfer
 
-Overall 
+On transfer one note is burned and 2 new notes are created, one for the sender change and one for the receiver.
 
 ```mermaid
 sequenceDiagram
@@ -78,7 +82,10 @@ Circuit checks
 - The new root does not remove any elements from the tree.
 - The new root contains both the new commitments.
 
-**Application**
+Some clarifications:
+- At the moment we limited input notes to just one, we can easily grow this number by just iterating checks and nullifications.
+
+### Application
 
 There're several packages in the overall app and they interact this way:
 
