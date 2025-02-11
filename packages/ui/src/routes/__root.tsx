@@ -41,7 +41,7 @@ function RootLayout() {
     return (
       <div className="min-h-screen flex flex-col">
         <header className=" shadow-md">
-          <div className="flex items-center justify-between p-8 max-w-xl mx-auto w-full">
+          <div className="flex items-center justify-between p-8 lg:px-0 max-w-xl mx-auto w-full">
             <img
               src="/wakeup-powered.png"
               alt=""
@@ -55,7 +55,9 @@ function RootLayout() {
         </header>
 
         <main className="px-8 flex flex-col justify-between items-center bg-muted flex-1 pb-12">
-          <Outlet />
+          <div className="max-w-xl mx-auto w-full pt-8">
+            <Outlet />
+          </div>
 
           <img
             src="/wakeup-powered.png"
