@@ -1,6 +1,6 @@
-import { useEffect, useState, useCallback, useRef } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { useEvents } from "@/hooks/useEvents";
-import { DecryptedOutput, Note } from "@/interfaces";
+import { CommitmentEvent, DecryptedOutput, Note } from "@/interfaces";
 import { CipherService } from "@/services/cipher.service";
 import { ZERO_BIG_INT } from "@/constants";
 import { AccountService } from "@/services/account.service";
@@ -21,20 +21,12 @@ export const useNotes: () => {
   const [notes, setNotes] = useState<Note[]>([]);
   const [balance, setBalance] = useState<bigint>(ZERO_BIG_INT);
   const [loading, setLoading] = useState<boolean>(true);
-  const lastCommitmentCountRef = useRef<number>(0);
 
-  const fetchNotes = useCallback(async () => {
+  const fetchNotes = useCallback(async (newCommitments: CommitmentEvent[]) => {
     try {
-      if (!commitmentEvents.length) {
-        setNotes([]);
-        setBalance(ZERO_BIG_INT);
-        setLoading(false);
-        return;
-      }
-      console.log("COMMIEMTNE LEGNTH",commitmentEvents);
       const account = await AccountService.getAccount();
       const notesExpanded: Note[] = await Promise.all(
-        commitmentEvents.map(async (commitmentEvent) => {
+        newCommitments.map(async (commitmentEvent) => {
           try {
             const { commitment, encryptedOutput, index }: Note =
               commitmentEvent;
@@ -66,6 +58,7 @@ export const useNotes: () => {
               index,
               value: BigInt("0x" + decrypted.value),
               bliding: BigInt("0x" + decrypted.bliding),
+              nullifierHash
             };
           } catch (error) {
             const { commitment, encryptedOutput, index }: Note =
@@ -74,12 +67,14 @@ export const useNotes: () => {
           }
         })
       );
-
       const balanceBigInt = notesExpanded
         .filter((note) => note.value)
         .reduce((acc, note) => acc + note.value!, ZERO_BIG_INT);
       await NoteCacheService.setMyNotes(
         notesExpanded.filter((note) => note.value)
+      );
+      await NoteCacheService.setNotes(
+        notesExpanded
       );
 
       setNotes(notesExpanded);
@@ -90,35 +85,41 @@ export const useNotes: () => {
     } finally {
       setLoading(false);
     }
-  }, [commitmentEvents, nullifierHashes]);
+  }, [nullifierHashes]);
 
   useEffect(() => {
     const loadCachedNotes = async () => {
       try {
-        const cachedNotes = await NoteCacheService.getMyNotes();
-        const cachedCommitments = await NoteCacheService.getCommitments();
-        console.log({cachedCommitments});
+        const myNotes = await NoteCacheService.getMyNotes();
+        const cachedNotes = await NoteCacheService.getNotes();
+        const newCommitments = commitmentEvents.filter(
+          (commitmentEvent) => !cachedNotes.some((note) => commitmentEvent.commitment === note.commitment)
+        );
 
-        if (cachedNotes && cachedCommitments.length === commitmentEvents.length) {
-          setNotes(cachedNotes);
+        console.log({myNotes});
+        console.log({newCommitments});
+        console.log({commitmentEvents});
+        console.log({cachedNotes});
+        console.log("------");
+
+        if (myNotes && newCommitments.length === 0) {
+          const spendableNotes = myNotes.filter(note=> !nullifierHashes.includes(note.nullifierHash?.toString(16)|| ""));
+          setNotes(myNotes);
           setBalance(
-            cachedNotes
-              .filter((note) => note.value)
+            spendableNotes 
               .reduce((acc, note) => acc + note.value!, ZERO_BIG_INT)
           );
           setLoading(false);
-        } else if (commitmentEvents.length !== lastCommitmentCountRef.current) {
-          lastCommitmentCountRef.current = commitmentEvents.length;
-          fetchNotes();
+        } else {
+          fetchNotes(newCommitments);
         }
       } catch (error) {
         console.error("Error loading cached notes:", error);
-        fetchNotes();
       }
     };
 
     loadCachedNotes();
-  }, [commitmentEvents, fetchNotes]);
+  }, [nullifierHashes, commitmentEvents, fetchNotes]);
 
   return { notes, balance, loading: eventsLoading || loading };
 };

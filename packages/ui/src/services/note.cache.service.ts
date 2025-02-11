@@ -3,32 +3,55 @@ import { CommitmentEvent, Note } from "@/interfaces";
 
 class NoteDatabase extends Dexie {
   notes: Dexie.Table<Note, number>;
+  myNotes: Dexie.Table<Note, number>;
   commitments: Dexie.Table<CommitmentEvent, number>;
   merkleRoots: Dexie.Table<{ id: string; root: string }, string>;
+  nullifierHashes: Dexie.Table<{ id: number; hash: string }, number>;
 
   constructor() {
     super("NoteDatabase");
     this.version(1).stores({
-      notes: "++id, &commitment, encryptedOutput, index, value, bliding",
+      myNotes: "++id, &commitment, encryptedOutput, index, value, bliding, nullifierHash",
+      notes: "++id, &commitment, encryptedOutput, index, value, bliding, nullifierHash",
       commitments: "++id, &commitment, encryptedOutput, index",
+      nullifierHashes: "++id, &hash",
       merkleRoots: "&id, root",
     });
 
     this.notes = this.table("notes");
+    this.myNotes = this.table("myNotes");
     this.commitments = this.table("commitments");
     this.merkleRoots = this.table("merkleRoots");
+    this.nullifierHashes = this.table("nullifierHashes");
   }
 }
 
 const db = new NoteDatabase();
 
 class NoteCacheService {
-  // Notes
+  // My Notes
   static async getMyNotes(): Promise<Note[]> {
-    return await db.notes.toArray();
+    return await db.myNotes.toArray();
   }
 
   static async setMyNotes(notes: Note[]): Promise<void> {
+    const notesInDb = await db.myNotes.toArray();
+    const newNotes = notes.filter(
+      (note) => !notesInDb.some((dbNote) => dbNote.commitment === note.commitment)
+    );
+    await db.myNotes.bulkPut(newNotes);
+  }
+
+  static async clearMyNotes(): Promise<void> {
+    await db.myNotes.clear();
+  }
+
+  // Notes
+  static async getNotes(): Promise<Note[]> {
+    return await db.notes.toArray();
+  }
+
+  static async setNotes(notes: Note[]): Promise<void> {
     const notesInDb = await db.notes.toArray();
     const newNotes = notes.filter(
       (note) => !notesInDb.some((dbNote) => dbNote.commitment === note.commitment)
@@ -36,11 +59,11 @@ class NoteCacheService {
     await db.notes.bulkPut(newNotes);
   }
 
-  static async clearMyNotes(): Promise<void> {
+  static async clearNotes(): Promise<void> {
     await db.notes.clear();
   }
 
-  // Commitments Count
+  // Commitments
   static async getCommitments(): Promise<CommitmentEvent[]> {
     return await db.commitments.toArray();
   }
@@ -69,6 +92,23 @@ class NoteCacheService {
 
   static async clearMerkleRoot(): Promise<void> {
     await db.merkleRoots.delete("merkleRoot");
+  }
+
+  // Nullifier Hashes
+  static async getNullifierHashes(): Promise<{ id: number; hash: string }[]> {
+    return await db.nullifierHashes.toArray();
+  }
+
+  static async setNullifierHashes(nullifiers: { id: number; hash: string }[]): Promise<void> {
+    const existingNullifiers = await db.nullifierHashes.toArray();
+    const newNullifiers = nullifiers.filter(
+      (nullifier) => !existingNullifiers.some((dbNullifier) => dbNullifier.hash === nullifier.hash)
+    );
+    await db.nullifierHashes.bulkPut(newNullifiers);
+  }
+
+  static async clearNullifierHashes(): Promise<void> {
+    await db.nullifierHashes.clear();
   }
 }
 
