@@ -1,10 +1,11 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { useEvents } from "@/hooks/useEvents";
-import { DecryptedOutput, Note } from "@/interfaces";
+import { CommitmentEvent, DecryptedOutput, Note } from "@/interfaces";
 import { CipherService } from "@/services/cipher.service";
 import { ZERO_BIG_INT } from "@/constants";
 import { AccountService } from "@/services/account.service";
 import { BarretenbergService } from "@/services/bb.service";
+import NoteCacheService from "@/services/note.cache.service";
 
 export const useNotes: () => {
   notes: Note[];
@@ -21,83 +22,99 @@ export const useNotes: () => {
   const [balance, setBalance] = useState<bigint>(ZERO_BIG_INT);
   const [loading, setLoading] = useState<boolean>(true);
 
-  useEffect(() => {
-    const decryptNotes = async () => {
-      if (!commitmentEvents.length) {
-        setNotes([]);
-        setBalance(ZERO_BIG_INT);
-        setLoading(false);
-        return;
-      }
-
-      try {
-        const account = await AccountService.getAccount();
-        const notesExpanded: Note[] = await Promise.all(
-          commitmentEvents.map(async (commitmentEvent) => {
-            try {
-              const { commitment, encryptedOutput, index } = commitmentEvent;
-              const nullifier = await BarretenbergService.generateNullifier(
-                commitment,
-                account.privateKey,
-                index
-              );
-              const nullifierHash =
-                await BarretenbergService.generateHash(nullifier);
-              const isNotSpendable = nullifierHashes.includes(
-                nullifierHash.toString(10)
-              );
-              if (isNotSpendable) {
-                const note: Note = {
-                  commitment: commitment,
-                  encryptedOutput: encryptedOutput,
-                  index: index,
-                };
-                return note;
-              }
-              const decrypted: DecryptedOutput = JSON.parse(
-                await CipherService.decrypt(
-                  encryptedOutput,
-                  account.publicKey,
-                  account.privateKey
-                )
-              );
-
-              const note: Note = {
-                commitment: commitment,
-                encryptedOutput: encryptedOutput,
-                index: index,
-                value: BigInt("0x" + decrypted.value),
-                bliding: BigInt("0x" + decrypted.bliding),
-              };
-              return note;
-            } catch (error) {
-              const { commitment, encryptedOutput, index } = commitmentEvent;
-              const note: Note = {
-                commitment,
+  const fetchNotes = useCallback(async (newCommitments: CommitmentEvent[]) => {
+    try {
+      const account = await AccountService.getAccount();
+      const notesExpanded: Note[] = await Promise.all(
+        newCommitments.map(async (commitmentEvent) => {
+          try {
+            const { commitment, encryptedOutput, index }: Note =
+              commitmentEvent;
+            const nullifier = await BarretenbergService.generateNullifier(
+              commitment,
+              account.privateKey,
+              index
+            );
+            const decrypted: DecryptedOutput = JSON.parse(
+              await CipherService.decrypt(
                 encryptedOutput,
-                index,
-              };
-              return note;
+                account.publicKey,
+                account.privateKey
+              )
+            );
+
+            const nullifierHash =
+              await BarretenbergService.generateHash(nullifier);
+            const isNotSpendable = nullifierHashes.includes(
+              nullifierHash.toString(10)
+            );
+
+            if (isNotSpendable) {
+              return { commitment, encryptedOutput, index };
             }
-          })
+
+            return {
+              commitment,
+              encryptedOutput,
+              index,
+              value: BigInt("0x" + decrypted.value),
+              bliding: BigInt("0x" + decrypted.bliding),
+              nullifierHash
+            };
+          } catch (error) {
+            const { commitment, encryptedOutput, index }: Note =
+              commitmentEvent;
+            return { commitment, encryptedOutput, index };
+          }
+        })
+      );
+      const balanceBigInt = notesExpanded
+        .filter((note) => note.value)
+        .reduce((acc, note) => acc + note.value!, ZERO_BIG_INT);
+      await NoteCacheService.setMyNotes(
+        notesExpanded.filter((note) => note.value)
+      );
+      await NoteCacheService.setNotes(
+        notesExpanded
+      );
+
+      setNotes(notesExpanded);
+      setBalance(balanceBigInt);
+    } catch (error) {
+      setNotes([]);
+      setBalance(ZERO_BIG_INT);
+    } finally {
+      setLoading(false);
+    }
+  }, [nullifierHashes]);
+
+  useEffect(() => {
+    const loadCachedNotes = async () => {
+      try {
+        const myNotes = await NoteCacheService.getMyNotes();
+        const cachedNotes = await NoteCacheService.getNotes();
+        const newCommitments = commitmentEvents.filter(
+          (commitmentEvent) => !cachedNotes.some((note) => commitmentEvent.commitment === note.commitment)
         );
 
-        const balanceBigInt = notesExpanded
-          .filter((note: Note) => note.value)
-          .reduce((acc, note) => acc + note.value!, ZERO_BIG_INT);
-
-        setNotes(notesExpanded);
-        setBalance(balanceBigInt);
+        if (myNotes && newCommitments.length === 0) {
+          const spendableNotes = myNotes.filter(note=> !nullifierHashes.includes(note.nullifierHash?.toString(16)|| ""));
+          setNotes(cachedNotes);
+          setBalance(
+            spendableNotes 
+              .reduce((acc, note) => acc + note.value!, ZERO_BIG_INT)
+          );
+          setLoading(false);
+        } else {
+          fetchNotes(newCommitments);
+        }
       } catch (error) {
-        setNotes([]);
-        setBalance(ZERO_BIG_INT);
-      } finally {
-        setLoading(false);
+        console.error("Error loading cached notes:", error);
       }
     };
 
-    decryptNotes();
-  }, [commitmentEvents, nullifierHashes]);
+    loadCachedNotes();
+  }, [nullifierHashes, commitmentEvents, fetchNotes]);
 
   return { notes, balance, loading: eventsLoading || loading };
 };

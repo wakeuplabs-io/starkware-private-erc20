@@ -10,9 +10,11 @@ import { AccountService } from "@/services/account.service";
 import { MERKLE_TREE_DEPTH } from "@/constants";
 import { useState } from "react";
 import { formatHex } from "@/utils/hex";
+import { useEvents } from "./useEvents";
 
 export const useTransfer = () => {
   const { notes } = useNotes();
+  const { refetchEvents } = useEvents();
   const [loading, setLoading] = useState(false);
 
   const { contract } = useContract({
@@ -32,6 +34,7 @@ export const useTransfer = () => {
     amount: bigint;
   }) => {
     try {
+      await refetchEvents();
       if (!contract) {
         throw new Error("Contract not initialized");
       }
@@ -126,8 +129,7 @@ export const useTransfer = () => {
       ]);
 
       await sendAsync([callData]);
-    } catch (error) {
-      throw error;
+      await refetchEvents();
     } finally {
       setLoading(false);
     }

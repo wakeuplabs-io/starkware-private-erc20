@@ -4,6 +4,7 @@ export interface Note {
   encryptedOutput: string;
   value?: bigint;
   index: bigint;
+  nullifierHash?: bigint;
 }
 
 export interface CommitmentEvent {
