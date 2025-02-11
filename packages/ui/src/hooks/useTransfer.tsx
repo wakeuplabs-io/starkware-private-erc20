@@ -95,28 +95,31 @@ export const useTransfer = () => {
       const nullifierHash = await BarretenbergService.generateHash(nullifier);
 
       const generatedProof = await ProofService.generateProof({
-        in_amount: formatHex(inputNote.value!),
-        in_bliding: formatHex(inputNote.bliding!),
+        // accounts details
+        sender_private_key: formatHex(spenderAccount.privateKey % Fr.MODULUS),
+        receiver_account: formatHex(props.to.address),
+        // utxo inputs
+        in_commitment_root: formatHex(inRoot),
+        in_commitment_path: inputCommitmentProof.path.map((e) => formatHex(e)),
+        in_commitment_direction_selector:
+          inputCommitmentProof.directionSelector,
+        in_commitment_value: formatHex(inputNote.value!),
+        in_commitment_bliding: formatHex(inputNote.bliding!),
         in_commitment_nullifier_hash: formatHex(nullifierHash),
-        in_direction_selector: inputCommitmentProof.directionSelector,
-        in_path: inputCommitmentProof.path.map((e) => formatHex(e)),
-        in_private_key: formatHex(spenderAccount.privateKey % Fr.MODULUS),
-        in_root: formatHex(inRoot),
-        out_receiver_account: formatHex(props.to.address),
-        out_receiver_amount: formatHex(props.amount),
-        out_receiver_bliding: formatHex(outReceiverNote.bliding),
+        // utxo outputs
+        out_receiver_commitment_value: formatHex(props.amount),
+        out_receiver_commitment_bliding: formatHex(outReceiverNote.bliding),
         out_receiver_commitment: formatHex(outReceiverNote.commitment),
-        out_root: formatHex(outRoot),
-        out_sender_amount: formatHex(outSenderAmount),
-        out_sender_bliding: formatHex(outSenderNote.bliding),
+        out_sender_commitment_value: formatHex(outSenderAmount),
+        out_sender_commitment_bliding: formatHex(outSenderNote.bliding),
         out_sender_commitment: formatHex(outSenderNote.commitment),
+        // updated root
+        out_root: formatHex(outRoot),
         out_subtree_root_path: outPathProof.path
           .slice(1, MERKLE_TREE_DEPTH)
           .map((e) => formatHex(e)),
-        out_subtree_root_direction: outPathProof.directionSelector.slice(
-          1,
-          MERKLE_TREE_DEPTH
-        ),
+        out_subtree_root_direction_selector:
+          outPathProof.directionSelector.slice(1, MERKLE_TREE_DEPTH),
       });
 
       const callData = contract.populate("transfer", [
