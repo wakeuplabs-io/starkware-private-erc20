@@ -16,7 +16,7 @@ The nullifier is a unique value derived from a note to prevent double-spending. 
 
 ### Keypairs
 
-The user's wallet consists of an RSA keypair used for asymmetric encryption. Certain relevant information required to use a note is encrypted with the owner's public key and published in the `NewCommitment` event. This ensures that only the user with the corresponding private key can access it. The public and private keys follow standard RSA conventions. For the address, we currently define it as `hash(private_key)` to quickly validate ownership in circuits, as there is no support for RSA key derivation in Noir. One alternative being explored is using [signatures](https://noir-lang.org/docs/reference/NoirJS/noir_js/functions/ecdsa_secp256k1_verify), though this feature is not yet implemented.
+The user's wallet consists of an asymetric keypair build with sodium Curve25519. Certain relevant information required to use a note is encrypted with the owner's public key and published in the `NewCommitment` event. This ensures that only the user with the corresponding private key can access it. The public and private keys follow standard RSA conventions. For the address, we currently define it as `hash(private_key)` to quickly validate ownership in circuits, as there is no support for RSA key derivation in Noir. One alternative being explored is using [signatures](https://noir-lang.org/docs/reference/NoirJS/noir_js/functions/ecdsa_secp256k1_verify), though this feature is not yet implemented.
 
 ### Relayer
 
@@ -77,7 +77,7 @@ sequenceDiagram
 Circuit checks
 - The input commitment is included in the root and belongs to the sender.
 - The nullifierHash is effectively the hash of the nullifier and is attached to the input commitment.
-- The UTXO is correct, ensuring no balance is mined or burned.
+- Ensure no balance is mined or burned and so sum of value of input commitments is equal to sum of output commitments values.
 - The output commitments are correct, including the amount and owner of each.
 - The new root does not remove any elements from the tree.
 - The new root contains both the new commitments.
@@ -121,7 +121,7 @@ sequenceDiagram
 
 Some clarifications:
 - In this context, "circuits" refers to the deployed verifier generated using Garaga.
-- The API is not ideally necessary and serves merely as a workaround due to Garaga lacking a frontend package for Noir16.
+- The API is ideally not necessary and serves merely as a workaround of current garaga version 0.15.3 not supporting honk vk/proof calldata encoding. This seems to have been introduced in this pr https://github.com/keep-starknet-strange/garaga/pull/288 recently. Not yet published but we can try incorporating it.
 
 
 ## Deployments setup
