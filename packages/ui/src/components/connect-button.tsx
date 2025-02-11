@@ -1,9 +1,9 @@
 import { StarknetkitConnector, useStarknetkitConnectModal } from "starknetkit";
 import { useAccount, useConnect, useDisconnect } from "@starknet-react/core";
-import { Button } from "../ui/button";
+import { Button } from "./ui/button";
 
 
-const ConnectButton: React.FC<{ className?: string }> = ({ className }) => {
+export const ConnectButton: React.FC<{ className?: string }> = ({ className }) => {
   const { connect, connectors } = useConnect();
   const { disconnect } = useDisconnect();
   const { address } = useAccount();
@@ -39,4 +39,4 @@ const ConnectButton: React.FC<{ className?: string }> = ({ className }) => {
     </div>
   );
 };
-export default ConnectButton;
+
