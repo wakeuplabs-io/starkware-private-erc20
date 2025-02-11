@@ -1,5 +1,5 @@
-import { useEffect, useState } from "react";
-import { selector, events as Events, CallData } from "starknet";
+import { useEffect, useState, useCallback, useRef } from "react";
+import { selector, events as Events, CallData, Provider } from "starknet";
 import { useProvider } from "@starknet-react/core";
 import { CommitmentEvent } from "@/interfaces";
 import { PRIVATE_ERC20_CONTRACT_ADDRESS } from "@/constants";
@@ -15,96 +15,119 @@ const LOCAL_STORAGE_KEY = "lastScannedBlock";
 const newCommitmentHash = selector.getSelectorFromName("NewCommitment");
 const newNullifierHash = selector.getSelectorFromName("NewNullifier");
 
-export const useEvents = () => {
-  const [commitments, setCommitments] = useState<CommitmentEvent[]>([]);
-  const [nullifierHashes, setNullifierHashes] = useState<string[]>([]);
-  const [error, setError] = useState<string | null>(null);
-  const [isLoading, setIsLoading] = useState<boolean>(false);
-  const { provider } = useProvider();
+interface EventsState {
+  commitments: CommitmentEvent[];
+  nullifierHashes: string[];
+  error: string | null;
+  isLoading: boolean;
+}
 
-  const [lastScannedBlock, setLastScannedBlock] = useState<number | null>(() => {
+export const useEvents = () => {
+  const [state, setState] = useState<EventsState>({
+    commitments: [],
+    nullifierHashes: [],
+    error: null,
+    isLoading: false,
+  });
+
+  const { provider } = useProvider() as { provider: Provider };
+
+  const [lastScannedBlock, setLastScannedBlock] = useState<number>(() => {
     const storedBlock = localStorage.getItem(LOCAL_STORAGE_KEY);
     return storedBlock ? parseInt(storedBlock, 10) : 500_000;
   });
 
-  useEffect(() => {
-    setIsLoading(true);
+  const isFetchingRef = useRef(false);
 
-    const fetchEvents = async () => {
-      try {
-        let continuationToken: string | undefined = undefined;
-        const latestBlock = lastScannedBlock || 500_000;
-        const newCommitments: CommitmentEvent[] = [];
-        let allNullifiers: string[] = [];
+  const fetchEvents = useCallback(async () => {
+    if (isFetchingRef.current) return;
+    isFetchingRef.current = true;
 
-        let partialNewCommitments : CommitmentEvent[] = [];
+    setState((prev) => ({
+      ...prev,
+      isLoading: true,
+      error: null,
+    }));
 
-        do {
-          const eventsResponse: EVENTS_CHUNK = await provider.channel.getEvents({
-            address: PRIVATE_ERC20_CONTRACT_ADDRESS,
-            keys: [[newCommitmentHash, newNullifierHash]],
-            from_block: { block_number: latestBlock },
-            to_block: "latest",
-            chunk_size: 100,
-            continuation_token: continuationToken,
+    try {
+      let continuationToken: string | undefined = undefined;
+      const fromBlock = lastScannedBlock || 500_000;
+      const newCommitments: CommitmentEvent[] = [];
+      const newNullifierHashes: string[] = [];
+
+      do {
+        const eventsResponse: EVENTS_CHUNK = await provider.channel.getEvents({
+          address: PRIVATE_ERC20_CONTRACT_ADDRESS,
+          keys: [[newCommitmentHash, newNullifierHash]],
+          from_block: { block_number: fromBlock },
+          to_block: "latest",
+          chunk_size: 100,
+          continuation_token: continuationToken,
+        });
+
+        const eventsParsed = Events.parseEvents(
+          eventsResponse.events,
+          abiEvents,
+          abiStructs,
+          abiEnums
+        );
+
+        const partialNewCommitments = eventsParsed
+          .filter((event) => event["contracts::privado::privado::Privado::NewCommitment"])
+          .map((event) => {
+            const { commitment, output_enc, index } =
+              event["contracts::privado::privado::Privado::NewCommitment"];
+            return {
+              commitment: BigInt(commitment.toString()),
+              encryptedOutput: output_enc.toString(),
+              index: BigInt(index.toString()),
+            };
           });
 
-          const eventsParsed = Events.parseEvents(
-            eventsResponse.events,
-            abiEvents,
-            abiStructs,
-            abiEnums
-          );
+        const partialNullifierHashes = eventsParsed
+          .filter((event) => event["contracts::privado::privado::Privado::NewNullifier"])
+          .map((event) => {
+            const x = event["contracts::privado::privado::Privado::NewNullifier"];
+            return x.nullifier_hash?.toString() || "";
+          });
 
-          partialNewCommitments = eventsParsed
-            .filter((event) =>
-              event["contracts::privado::privado::Privado::NewCommitment"]
-            )
-            .map((event) => {
-              const { commitment, output_enc, index } =
-                event["contracts::privado::privado::Privado::NewCommitment"];
-              return {
-                commitment: BigInt(commitment.toString()),
-                encryptedOutput: output_enc.toString(),
-                index: BigInt(index.toString()),
-              };
-            });
+        newCommitments.push(...partialNewCommitments);
+        newNullifierHashes.push(...partialNullifierHashes);
 
-          const nullifiersParsed: string[] = eventsParsed
-            .filter((event) =>
-              event["contracts::privado::privado::Privado::NewNullifier"]
-            )
-            .map(
-              (event) =>
-                event["contracts::privado::privado::Privado::NewNullifier"]
-                  ?.nullifier_hash?.toString() || ""
-            );
+        continuationToken = eventsResponse.continuation_token;
+      } while (continuationToken);
 
-          newCommitments.push(...partialNewCommitments);
-          allNullifiers = [...allNullifiers, ...nullifiersParsed];
-          continuationToken = eventsResponse.continuation_token;
-        } while (continuationToken);
+      await NoteCacheService.setCommitments(newCommitments);
+      await NoteCacheService.setNullifierHashes(newNullifierHashes);
 
-        await NoteCacheService.setCommitments(newCommitments);
-        const commitments = await NoteCacheService.getCommitments();
+      const allSavedCommitments = await NoteCacheService.getCommitments();
+      const allSavedNullifierHashes = await NoteCacheService.getNullifierHashes();
 
-        setCommitments(commitments);
-        setNullifierHashes(allNullifiers);
-        const latestScannedBlock = await provider.getBlock("latest");
-        localStorage.setItem(LOCAL_STORAGE_KEY, latestScannedBlock.block_number.toString());
-        setLastScannedBlock(latestScannedBlock.block_number);
-      } catch (err) {
-        console.error("Error fetching events:", err);
-        setError("Failed to fetch events");
-      } finally {
-        setIsLoading(false);
-      }
-    };
+      setState({
+        commitments: allSavedCommitments,
+        nullifierHashes: allSavedNullifierHashes,
+        error: null,
+        isLoading: false,
+      });
 
-    fetchEvents();
-
-    return;
+      const latestBlock = await provider.getBlock("latest");
+      localStorage.setItem(LOCAL_STORAGE_KEY, latestBlock.block_number.toString());
+      setLastScannedBlock(latestBlock.block_number);
+    } catch (err) {
+      console.error("Error fetching events:", err);
+      setState((prev) => ({
+        ...prev,
+        error: "Failed to fetch events",
+        isLoading: false,
+      }));
+    } finally {
+      isFetchingRef.current = false;
+    }
   }, [provider, lastScannedBlock]);
 
-  return { commitments, nullifierHashes, error, isLoading };
+  useEffect(() => {
+    fetchEvents();
+  }, [fetchEvents]);
+
+  return { ...state, lastScannedBlock };
 };

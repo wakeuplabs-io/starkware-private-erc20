@@ -6,7 +6,7 @@ class NoteDatabase extends Dexie {
   myNotes: Dexie.Table<Note, number>;
   commitments: Dexie.Table<CommitmentEvent, number>;
   merkleRoots: Dexie.Table<{ id: string; root: string }, string>;
-  nullifierHashes: Dexie.Table<{ id: number; hash: string }, number>;
+  nullifierHashes: Dexie.Table<string, number>;
 
   constructor() {
     super("NoteDatabase");
@@ -95,14 +95,14 @@ class NoteCacheService {
   }
 
   // Nullifier Hashes
-  static async getNullifierHashes(): Promise<{ id: number; hash: string }[]> {
-    return await db.nullifierHashes.toArray();
+  static async getNullifierHashes(): Promise<string[]> {
+    return (await db.nullifierHashes.toArray());
   }
 
-  static async setNullifierHashes(nullifiers: { id: number; hash: string }[]): Promise<void> {
+  static async setNullifierHashes(nullifiers: string[]): Promise<void> {
     const existingNullifiers = await db.nullifierHashes.toArray();
     const newNullifiers = nullifiers.filter(
-      (nullifier) => !existingNullifiers.some((dbNullifier) => dbNullifier.hash === nullifier.hash)
+      (nullifier) => !existingNullifiers.some((dbNullifier) => dbNullifier === nullifier)
     );
     await db.nullifierHashes.bulkPut(newNullifiers);
   }

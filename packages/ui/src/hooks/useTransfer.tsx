@@ -10,7 +10,6 @@ import { AccountService } from "@/services/account.service";
 import { MERKLE_TREE_DEPTH } from "@/constants";
 import { useState } from "react";
 import { formatHex } from "@/utils/hex";
-import NoteCacheService from "@/services/note.cache.service";
 
 export const useTransfer = () => {
   const { notes } = useNotes();
@@ -33,10 +32,6 @@ export const useTransfer = () => {
     amount: bigint;
   }) => {
     try {
-      await  NoteCacheService.clearMyNotes();
-      await  NoteCacheService.clearNotes();
-      await NoteCacheService.clearMerkleRoot();
-      await NoteCacheService.clearCommitments();
       localStorage.removeItem("lastScannedBlock");
       if (!contract) {
         throw new Error("Contract not initialized");

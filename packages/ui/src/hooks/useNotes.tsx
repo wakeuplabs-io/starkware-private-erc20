@@ -96,12 +96,6 @@ export const useNotes: () => {
           (commitmentEvent) => !cachedNotes.some((note) => commitmentEvent.commitment === note.commitment)
         );
 
-        console.log({myNotes});
-        console.log({newCommitments});
-        console.log({commitmentEvents});
-        console.log({cachedNotes});
-        console.log("------");
-
         if (myNotes && newCommitments.length === 0) {
           const spendableNotes = myNotes.filter(note=> !nullifierHashes.includes(note.nullifierHash?.toString(16)|| ""));
           setNotes(myNotes);
