@@ -99,7 +99,7 @@ export const useNotes: () => {
 
         if (myNotes && newCommitments.length === 0) {
           const spendableNotes = myNotes.filter(note=> !nullifierHashes.includes(note.nullifierHash?.toString(16)|| ""));
-          setNotes(myNotes);
+          setNotes(cachedNotes);
           setBalance(
             spendableNotes 
               .reduce((acc, note) => acc + note.value!, ZERO_BIG_INT)
