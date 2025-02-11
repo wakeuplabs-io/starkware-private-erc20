@@ -7,31 +7,32 @@ Design is inspired in privacy pools like [tornado nova](https://github.com/torna
 ### Definitions
 
 **Note**:
-A note represents ownership information over certain amount of tokens. The hash of the information is called `commitment` and is stored in the merkle tree of the contract. The user balance is the sum of these Notes.
+A "note" represents ownership information over a certain amount of tokens. The hash of this information is called the commitment and is stored in the contract's Merkle tree. The user balance is the sum of these notes.
 
 **Nullifier**
-The nullifier is a unique value derived from a note used to prevent double spending. What interests us about it is that only owner can crete it and that it's linked unequivocally with one single note as we use the hash of it to prevent double spending.
+The nullifier is a unique value derived from a note to prevent double-spending. It is significant because it can only be created by the owner and is unequivocally linked to a single note. This is achieved by using the hash of the note to prevent any attempt at double-spending.
 
 **Keypair**
-User wallet is composed of an RSA keypair used for asymmetric encryption. Some relevant information required to use a note will be encrypted with the owner public key and published in the `NewCommitment` event. This way only user with private key can get access to it. So public and private key are just standard rsa keys. As per the address we're currently defining it as `hash(private_key)`. This is for quickly validating ownership in circuits as there's currently no support for rsa key derivation in noir. One alternative being explored is through [signatures](https://noir-lang.org/docs/reference/NoirJS/noir_js/functions/ecdsa_secp256k1_verify) but that's not implemented yet. 
+The user's wallet consists of an RSA keypair used for asymmetric encryption. Certain relevant information required to use a note is encrypted with the owner's public key and published in the `NewCommitment` event. This ensures that only the user with the corresponding private key can access it. The public and private keys follow standard RSA conventions. For the address, we currently define it as `hash(private_key)` to quickly validate ownership in circuits, as there is no support for RSA key derivation in Noir. One alternative being explored is using [signatures](https://noir-lang.org/docs/reference/NoirJS/noir_js/functions/ecdsa_secp256k1_verify), though this feature is not yet implemented.
 
 **Relayer**
-The relayer is a service that can be used to further protect user privacy. Although blockchain calldata doesn't reveal any data about amounts nor zk addresses about the user, submitting the transactions exposes user starknet wallet address leaving trace of his participation. In case this factor is to be removed the relayer can be of help by submiting transactions for the users.
+A relayer is a service that can further enhance user privacy. While blockchain calldata does not expose any data about amounts or zk addresses, submitting transactions directly reveals the user's Starknet wallet address, potentially leaving a trace of their participation. To address this, a relayer can submit transactions on behalf of users, effectively obscuring their wallet address and improving privacy.
 
 
 ### How it all works
 
 **Initial Minting Process**
 
-At the moment we're letting the deployer create the first commitment by specifyng the `MERKLE_TREE_INITIAL_ROOT` and emiting the first 2 Notes. With this initial supply is set and is up to the deployer to distribute these tokens. There's currently no minting so 
+Currently, the deployer is responsible for creating the first commitment by specifying the `MERKLE_TREE_INITIAL_ROOT` and emitting the first two notes. This sets the initial supply, and it is then up to the deployer to distribute the tokens. There is no minting process in place at this time.
 
 **Balance discovery**
 
-To rediscover user commitment the process is as follows:
-- Fetch all `NewCommitment { commitment, enc_output, index }` events (ideally already cached so we just fetch the last ones)
-- Fetch all `NewNullifier { nullifier_hash }` events (ideally already cached so we just fetch the last ones)
-- Iterate over commitments
-   - Attempt decryption. If successful, build nullifier_hash and check weather or not it has already been used. If not add it to our usable commitments and sum up the value
+To rediscover a user's commitment, the process works as follows:
+1. Fetch all NewCommitment { commitment, enc_output, index } events (preferably already cached, so only the latest ones are fetched).
+2. Fetch all NewNullifier { nullifier_hash } events (again, ideally cached, so only the most recent ones are fetched).
+3. Iterate over the commitments:
+   - Attempt decryption. If successful, derive the nullifier_hash and check whether it has already been used.
+   - If the nullifier_hash hasn't been used, add the commitment to the pool of usable commitments and sum up the value.
 
 **Transfer**
 
@@ -70,12 +71,12 @@ sequenceDiagram
 ```
 
 Circuit checks
-- Input commitment is included in the root and belongs to sender.
-- NullifierHash is effectivly the hash of the nullifier and it's attached to the input commitment.
-- The utxo is correct, meaning we're not mining or burning any balance.
-- Output commitments are correct, regarding amount and owner of each.
-- New root doesn't remove any element from the tree
-- New root contains both new commitments
+- The input commitment is included in the root and belongs to the sender.
+- The nullifierHash is effectively the hash of the nullifier and is attached to the input commitment.
+- The UTXO is correct, ensuring no balance is mined or burned.
+- The output commitments are correct, including the amount and owner of each.
+- The new root does not remove any elements from the tree.
+- The new root contains both the new commitments.
 
 **Application**
 
@@ -111,8 +112,8 @@ sequenceDiagram
 ```
 
 Some clarifications:
-- With circuits in this case we refer to the deployed verifier generated with garaga.
-- Api ideally is not needed and just a quick workaround over garaga not having a frontend package for noir16.
+- In this context, "circuits" refers to the deployed verifier generated using Garaga.
+- The API is not ideally necessary and serves merely as a workaround due to Garaga lacking a frontend package for Noir16.
 
 
 ## Deployments setup
