@@ -1,3 +1,4 @@
+// useEvents.ts
 import { useEffect, useState, useCallback, useRef } from "react";
 import { selector, events as Events, CallData, Provider } from "starknet";
 import { useProvider } from "@starknet-react/core";
@@ -39,7 +40,7 @@ export const useEvents = () => {
 
   const isFetchingRef = useRef(false);
 
-  const fetchEvents = useCallback(async () => {
+  const refetchEvents = useCallback(async () => {
     if (isFetchingRef.current) return;
     isFetchingRef.current = true;
 
@@ -56,6 +57,7 @@ export const useEvents = () => {
       const newNullifierHashes: string[] = [];
 
       do {
+        console.log("GET EVENTS");
         const eventsResponse: EVENTS_CHUNK = await provider.channel.getEvents({
           address: PRIVATE_ERC20_CONTRACT_ADDRESS,
           keys: [[newCommitmentHash, newNullifierHash]],
@@ -87,8 +89,8 @@ export const useEvents = () => {
         const partialNullifierHashes = eventsParsed
           .filter((event) => event["contracts::privado::privado::Privado::NewNullifier"])
           .map((event) => {
-            const x = event["contracts::privado::privado::Privado::NewNullifier"];
-            return x.nullifier_hash?.toString() || "";
+            const data = event["contracts::privado::privado::Privado::NewNullifier"];
+            return data.nullifier_hash?.toString() || "";
           });
 
         newCommitments.push(...partialNewCommitments);
@@ -96,7 +98,7 @@ export const useEvents = () => {
 
         continuationToken = eventsResponse.continuation_token;
       } while (continuationToken);
-
+      console.log({newCommitments: newCommitments.length});
       await NoteCacheService.setCommitments(newCommitments);
       await NoteCacheService.setNullifierHashes(newNullifierHashes);
 
@@ -126,8 +128,12 @@ export const useEvents = () => {
   }, [provider, lastScannedBlock]);
 
   useEffect(() => {
-    fetchEvents();
-  }, [fetchEvents]);
+    refetchEvents();
+  }, [refetchEvents]);
 
-  return { ...state, lastScannedBlock };
+  return {
+    ...state,
+    lastScannedBlock,
+    refetchEvents,
+  };
 };
