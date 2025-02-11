@@ -20,15 +20,13 @@ pub trait IPrivado<TContractState> {
     /// Moves `amount` tokens from the caller's token balance to `to`.
     /// It does so secretly without reveling amounts nor identities.
     /// It'll verify UTXO secretly through a zk proof and emit the corresponding events while
-    /// nullifying the spent notes.
+    /// nullifying the inputs.
     ///
     /// Requirements:
     ///
     /// - `proof` validates utxos, ownership and exposes public inputs later
-    /// - `sender_enc_output` is the amount of the change note encrypted with the sender public
-    ///    key
-    /// - `receiver_enc_output` is the amount of the note encrypted with the receiver
-    ///    public key
+    /// - `sender_enc_output` encrypted sender change commitment data
+    /// - `receiver_enc_output` encrypted receiver change commitment data
     ///
     /// Emits a `NewCommitment` event.
     fn transfer(
@@ -38,28 +36,16 @@ pub trait IPrivado<TContractState> {
         receiver_enc_output: ByteArray,
     ) -> bool;
 
-    /// Returns the remaining number of tokens that `spender` is
-    /// allowed to spend on behalf of `owner` through `transfer_from`.
-    /// This is zero by default.
-    /// This value changes when `approve` or `transfer_from` are called.
+    /// Returns the remaining number of tokens that `spender` is allowed to spend
     fn allowance(self: @TContractState, owner: ContractAddress, spender: ContractAddress) -> u256;
 
     /// Moves `amount` tokens from the caller's token balance to `to`.
-    ///
-    /// Requirements:
-    ///
     fn transfer_from(
         ref self: TContractState, sender: ContractAddress, recipient: ContractAddress, amount: u256,
     ) -> bool;
 
 
     /// Sets `amount` as the allowance of `spender` over the caller’s tokens.
-    ///
-    /// Requirements:
-    ///
-    /// - `spender` is not the zero address.
-    ///
-    /// Emits an `Approval` event.
     fn approve(ref self: TContractState, spender: ContractAddress, amount: u256) -> bool;
 
 
@@ -114,9 +100,6 @@ pub mod Privado {
 
     /// Emitted when a transfer happens, we'll create 2 entries, one for the sender as a utxo
     /// and one for the receiver.
-    /// - `output_enc` should be encrypted with the note owner public key
-    /// - `commitment` is H(H(nullifier, secret), amount) where amount is plaintext and H(nullifier,
-    ///    secret) the receiver address
     #[derive(Drop, starknet::Event)]
     pub struct NewCommitment {
         pub commitment: u256,
@@ -125,7 +108,6 @@ pub mod Privado {
     }
 
     /// Emitted when a a note is nullified
-    /// - `nullifier_hash` hash of the nullifier used
     #[derive(Drop, starknet::Event)]
     pub struct NewNullifier {
         pub nullifier_hash: u256,
@@ -216,15 +198,13 @@ pub mod Privado {
             sender_enc_output: ByteArray,
             receiver_enc_output: ByteArray,
         ) -> bool {
-            // verify proof and that public inputs match
             let public_inputs = self._verify_proof(proof);
+
+            // assign new_root
             assert(
                 public_inputs.root == self.current_root.read(),
                 Errors::UNKNOWN_ROOT,
             );
-            assert(!self.nullified_notes.entry(public_inputs.nullifier_hash).read(), Errors::SPENT_NOTE);
-
-            // assign new_root
             self.current_root.write(public_inputs.new_root);
 
             // spend the notes
@@ -280,7 +260,7 @@ pub mod Privado {
         /// Requirements:
         ///
         /// - `commitment` is the commitment that will be created
-        /// - `output_enc` is amount encrypted with the receiver public key
+        /// - `output_enc` is the commitment data encrypted with owner public key
         ///
         /// Emits a `NewCommitment` event.
         fn _create_note(ref self: ContractState, commitment: u256, output_enc: ByteArray) {
@@ -289,14 +269,16 @@ pub mod Privado {
             self.current_commitment_index.write(current_index + 1);
         }
 
-        /// Internal method that spends notes
+        /// Internal method that spends notes. First check it's not already spent, then spend it
         ///
         /// Requirements:
         ///
-        /// - `nullifier_hash` is the commitment that will be created
+        /// - `nullifier_hash` is the hash of the nullifier, used for tracking notes without revealing commitment
         ///
         /// Emits a `NewNullifier` event.
         fn _spend_note(ref self: ContractState, nullifier_hash: u256) {
+            assert(!self.nullified_notes.entry(nullifier_hash).read(), Errors::SPENT_NOTE);
+
             self.nullified_notes.entry(nullifier_hash).write(true);
             self.emit(NewNullifier { nullifier_hash });
         }
@@ -306,10 +288,8 @@ pub mod Privado {
         ///
         /// Requirements:
         ///
-        /// - `commitment` is the commitment that will be created
-        /// - `output_enc` is amount encrypted with the receiver public key
-        ///
-        /// Emits a `NewCommitment` event.
+        /// - `proof` proof calldata generated by garaga
+        /// 
         fn _verify_proof(ref self: ContractState, proof: Span<felt252>) -> ProofPublicInputs {
             let verifier = ITransferVerifierContractDispatcher {
                 contract_address: self.transfer_verifier_address.read(),

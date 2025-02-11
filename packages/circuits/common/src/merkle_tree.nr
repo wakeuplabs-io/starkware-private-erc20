@@ -4,12 +4,12 @@ pub fn assert_merkle_inclusion<let N: u32>(
     root: Field,
     path: [Field],
     direction_selector: [bool],
-    commitment: Field,
+    leaf: Field,
     failure_message: str<N>
 ) {
     assert(path.len() == direction_selector.len());
     
-    let mut digest = commitment;
+    let mut digest = leaf;
     for i in 0..path.len() {
         let (left, right) = if direction_selector[i] {
             (path[i], digest)

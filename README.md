@@ -4,6 +4,117 @@
 
 Design is inspired in privacy pools like [tornado nova](https://github.com/tornadocash/tornado-core/tree/master) and [zcash](https://github.com/zcash/orchard)
 
+### Definitions
+
+**Note**:
+A note represents ownership information over certain amount of tokens. The hash of the information is called `commitment` and is stored in the merkle tree of the contract. The user balance is the sum of these Notes.
+
+**Nullifier**
+The nullifier is a unique value derived from a note used to prevent double spending. What interests us about it is that only owner can crete it and that it's linked unequivocally with one single note as we use the hash of it to prevent double spending.
+
+**Keypair**
+User wallet is composed of an RSA keypair used for asymmetric encryption. Some relevant information required to use a note will be encrypted with the owner public key and published in the `NewCommitment` event. This way only user with private key can get access to it. So public and private key are just standard rsa keys. As per the address we're currently defining it as `hash(private_key)`. This is for quickly validating ownership in circuits as there's currently no support for rsa key derivation in noir. One alternative being explored is through [signatures](https://noir-lang.org/docs/reference/NoirJS/noir_js/functions/ecdsa_secp256k1_verify) but that's not implemented yet. 
+
+**Relayer**
+The relayer is a service that can be used to further protect user privacy. Although blockchain calldata doesn't reveal any data about amounts nor zk addresses about the user, submitting the transactions exposes user starknet wallet address leaving trace of his participation. In case this factor is to be removed the relayer can be of help by submiting transactions for the users.
+
+
+### How it all works
+
+**Initial Minting Process**
+
+At the moment we're letting the deployer create the first commitment by specifyng the `MERKLE_TREE_INITIAL_ROOT` and emiting the first 2 Notes. With this initial supply is set and is up to the deployer to distribute these tokens. There's currently no minting so 
+
+**Balance discovery**
+
+To rediscover user commitment the process is as follows:
+- Fetch all `NewCommitment { commitment, enc_output, index }` events (ideally already cached so we just fetch the last ones)
+- Fetch all `NewNullifier { nullifier_hash }` events (ideally already cached so we just fetch the last ones)
+- Iterate over commitments
+   - Attempt decryption. If successful, build nullifier_hash and check weather or not it has already been used. If not add it to our usable commitments and sum up the value
+
+**Transfer**
+
+Overall 
+
+```mermaid
+sequenceDiagram
+    participant Receiver
+    participant Sender
+    participant Relayer as Relayer/Sender
+    participant Blockchain
+
+    %% receiver shares data with sender
+    Receiver->>Sender: address + pub key
+
+    %% rebuild sender balance
+    Sender->>+Blockchain: Fetch Commitment events
+    Blockchain->>-Sender: Commitments
+
+    %% generate transaction
+    Sender->>Sender: Select from my commitments one for transfer
+    Sender->>Sender: Generate output commitments (sender, receiver)
+    Sender->>Sender: Generate zk proof
+
+    %% submit transaction
+    Sender->>+Relayer: transfer(proof, enc_outputs) tx
+    Relayer->>+Blockchain: transfer(proof, enc_outputs)
+    Blockchain->>Blockchain: emit NewNullifier, NewCommitment x2
+    Blockchain->>-Relayer: tx_hash
+    Relayer->>-Sender: tx_hash
+
+    %% receiver discovers new balance
+    Receiver->>+Blockchain: Fetch Commitment events
+    Blockchain->>-Receiver: Commitments
+    Receiver->>Receiver: Discover new commitment from transfer
+```
+
+Circuit checks
+- Input commitment is included in the root and belongs to sender.
+- NullifierHash is effectivly the hash of the nullifier and it's attached to the input commitment.
+- The utxo is correct, meaning we're not mining or burning any balance.
+- Output commitments are correct, regarding amount and owner of each.
+- New root doesn't remove any element from the tree
+- New root contains both new commitments
+
+**Application**
+
+There're several packages in the overall app and they interact this way:
+
+```mermaid
+sequenceDiagram
+    participant ui as Ui
+    participant api as Api
+    participant contracts as Contracts
+    participant circuits as DeployedCircuits
+
+    %% load wallet
+    ui->>ui: Load or generate user zk wallet
+
+    %% rebuild user balance
+    ui->>contracts: Fetch commitments/nullifiers
+    contracts->>ui: commitments/nullifiers
+    ui->>ui: build user balance and display
+
+    %% build proof 
+    ui->>ui: build proof inputs
+    ui->>+api: proof inputs
+    api->>api: compute proof and build calldata
+    api->>-ui: proof calldata
+
+    %% call trasnfer
+    ui->>+contracts: transfer(proof, enc_outputs)
+    contracts->>+circuits: verify(proof)
+    circuits->>-contracts: ok
+    contracts->>contracts: update root, emit events, spend note
+    contracts->>ui: tx_hash
+```
+
+Some clarifications:
+- With circuits in this case we refer to the deployed verifier generated with garaga.
+- Api ideally is not needed and just a quick workaround over garaga not having a frontend package for noir16.
+
+
 ## Deployments setup
 
 Create the deployer account
