@@ -95,7 +95,7 @@ export const useTransfer = () => {
       );
       const nullifierHash = await BarretenbergService.generateHash(nullifier);
 
-      const generatedProof = await ProofService.generateProof({
+      const generatedProof = await ProofService.generateTransferProof({
         in_amount: formatHex(inputNote.value!),
         in_bliding: formatHex(inputNote.bliding!),
         in_commitment_nullifier_hash: formatHex(nullifierHash),
