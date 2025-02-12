@@ -34,6 +34,7 @@ export const useApprove = () => {
     }; amount: bigint
   }) => {
     try {
+
       
       if (!contract) {
         throw new Error("Contract not initialized");
@@ -42,15 +43,7 @@ export const useApprove = () => {
       setLoading(true);
       const approverAccount = await AccountService.getAccount();
       const notes = await notesService.getNotes();
-      const outRelationshipId = await BarretenbergService.generateHashArray([
-        new Fr(approverAccount.address),
-        new Fr(props.spender.address),
-      ]);
-      console.log({
-        approverAddress: approverAccount.address,
-        spenderAddress: props.spender.address,
-        outRelationshipId
-      });
+
       const senderNotes = notes.filter((n) => n.value !== undefined && n.spent !== true);
       const inputNote = senderNotes
         .sort((a, b) => parseInt((b.value! - a.value!).toString()))
@@ -63,6 +56,11 @@ export const useApprove = () => {
         new Fr(approverAccount.address),
         new Fr(props.spender.address),
         new Fr(props.amount),
+      ]);
+
+      const outRelationshipId = await BarretenbergService.generateHashArray([
+        new Fr(approverAccount.address),
+        new Fr(props.spender.address),
       ]);
 
       const generatedProof = await ProofService.generateApproveProof({

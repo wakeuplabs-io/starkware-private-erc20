@@ -4,10 +4,6 @@ import { Button } from "./ui/button";
 import { Input } from "./ui/input";
 import { QrCode } from "lucide-react";
 import { IDetectedBarcode, Scanner } from "@yudiel/react-qr-scanner";
-import { AccountService } from "@/services/account.service";
-import { BarretenbergService } from "@/services/bb.service";
-import { Fr } from "@aztec/bb.js";
-import { formatHex } from "@/lib/utils";
 
 export const Approve: React.FC = () => {
   const { sendApprove, loading } = useApprove();
@@ -18,17 +14,7 @@ export const Approve: React.FC = () => {
 
   
   const onApprove = useCallback(async () => {
-    const approverAccount = await AccountService.getAccount();
 
-    const outRelationshipId = await BarretenbergService.generateHashArray([
-      new Fr(approverAccount.address),
-      new Fr(BigInt(spenderAddress)),
-    ]);
-    console.log({
-      approverAddress: approverAccount.address,
-      spenderAddress: spenderAddress,
-      outRelationshipId: formatHex(outRelationshipId),
-    });
     sendApprove({
       spender: {
         address: BigInt(spenderAddress),
