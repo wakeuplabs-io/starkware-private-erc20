@@ -5,13 +5,11 @@ import { PRIVATE_ERC20_CONTRACT_ADDRESS } from "@/constants";
 import { AccountService } from "@/services/account.service";
 import { ProofService } from "@/services/proof.service";
 import { Fr } from "@aztec/bb.js";
-import { formatHex } from "@/utils/hex";
-import { useNotes } from "./useNotes";
+import { formatHex } from "@/lib/utils";
 import { BarretenbergService } from "@/services/bb.service";
 import { CipherService } from "@/services/cipher.service";
 
 export const useApprove = () => {
-  const { notes } = useNotes();
   const [loading, setLoading] = useState(false);
 
   const { contract } = useContract({
@@ -31,15 +29,6 @@ export const useApprove = () => {
 
       setLoading(true);
       const approverAccount = await AccountService.getAccount();
-      const senderNotes = notes.filter((n) => n.value !== undefined);
-
-      const inputNote = senderNotes
-        .sort((a, b) => parseInt((b.value! - a.value!).toString()))
-        .find((n) => n.value! > props.amount);
-
-      if (!inputNote) {
-        throw new Error("Insufficient funds in notes");
-      }
 
       const outAllowanceHash = await BarretenbergService.generateHashArray([
         new Fr(approverAccount.address),
@@ -63,9 +52,10 @@ export const useApprove = () => {
       const encryptedOutput = CipherService.encrypt(
         JSON.stringify([
           {
-            commitment: inputNote.commitment,
-            value: inputNote.value,
-            bliding: inputNote.bliding,
+            // TODO:
+            // commitment: inputNote.commitment,
+            // value: inputNote.value,
+            // bliding: inputNote.bliding,
           },
         ]),
         props.spender
