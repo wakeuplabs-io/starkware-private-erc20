@@ -1,20 +1,19 @@
 import { Fr } from "@aztec/bb.js";
-import { useNotes } from "./useNotes";
 import { ProofService } from "@/services/proof.service";
-import { useContract, useSendTransaction } from "@starknet-react/core";
+import { useContract, useProvider, useSendTransaction } from "@starknet-react/core";
 import { BarretenbergService } from "@/services/bb.service";
 import privateTokenAbi from "@/abi/private-erc20.abi";
 import { PRIVATE_ERC20_CONTRACT_ADDRESS } from "@/constants";
 import { MerkleTree } from "@/utils/merkle-tree";
 import { AccountService } from "@/services/account.service";
 import { MERKLE_TREE_DEPTH } from "@/constants";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { formatHex } from "@/utils/hex";
-import { useEvents } from "./useEvents";
+import { NotesService } from "@/services/notes.service";
+import { Provider } from "starknet";
 
 export const useTransfer = () => {
-  const { notes } = useNotes();
-  const { refetchEvents } = useEvents();
+  const { provider } = useProvider() as { provider: Provider };
   const [loading, setLoading] = useState(false);
 
   const { contract } = useContract({
@@ -26,6 +25,10 @@ export const useTransfer = () => {
     calls: undefined,
   });
 
+  const notesService = useMemo(() => {
+    return new NotesService(provider);
+  }, [provider]);
+
   const sendTransfer = async (props: {
     to: {
       address: bigint;
@@ -34,14 +37,14 @@ export const useTransfer = () => {
     amount: bigint;
   }) => {
     try {
-      await refetchEvents();
       if (!contract) {
         throw new Error("Contract not initialized");
       }
 
       const spenderAccount = await AccountService.getAccount();
+      const notes = await notesService.getNotes();
 
-      const senderNotes = notes.filter((n) => n.value !== undefined);
+      const senderNotes = notes.filter((n) => n.value !== undefined && n.spent !== true);
       const inputNote = senderNotes
         .sort((a, b) => parseInt((b.value! - a.value!).toString()))
         .find((n) => n.value! > props.amount);
@@ -129,7 +132,6 @@ export const useTransfer = () => {
       ]);
 
       await sendAsync([callData]);
-      await refetchEvents();
     } finally {
       setLoading(false);
     }
