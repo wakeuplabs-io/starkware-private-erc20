@@ -172,35 +172,39 @@ just contracts-deployer-account-deploy
 
 ## Circuits deployment
 
+### transfer
+
 First make sure to update DEPTH accordingly in your circuit. Then generate the cairo contracts with:
 
 ```bash
-just circuits-generate-verifier
+just circuits-generate-verifier transfer
 
-(cd packages/circuits/transfer && nargo build)
-(cd packages/circuits/transfer && bb write_vk_ultra_keccak_honk -b target/transfer.json -o target/vk.bin)
-Finalized circuit size: 1035
-Log dyadic circuit size: 11
-(cd packages/circuits/transfer && garaga gen --system ultra_keccak_honk --vk target/vk.bin --project-name contracts)
-⠧ Generating Smart Contract project for ProofSystem.UltraKeccakHonk using vk.bin...
-Done!
-Smart Contract project created:
-/Users/matzapata/git-work/starkware/starkware-private-erc20/packages/circuits/transfer/contracts/
-├── .tools-versions
-├── Scarb.lock
-├── Scarb.toml
-├── src/
-│   ├── honk_verifier.cairo
-│   ├── honk_verifier_circuits.cairo
-│   ├── honk_verifier_constants.cairo
-│   └── lib.cairo
-└── target/
-    ├── CACHEDIR.TAG
-    └── release/
-        ├── contracts.starknet_artifacts.json
-        ├── contracts_UltraKeccakHonkVerifier.compiled_contract_class.json
-        └── contracts_UltraKeccakHonkVerifier.contract_class.json
-You can now test the main endpoint of the verifier using a proof and `garaga calldata` command.
+# (cd packages/circuits/transfer && nargo build)
+# (cd packages/circuits/transfer && bb write_vk_ultra_keccak_honk -b target/transfer.json -o target/vk.bin)
+# Finalized circuit size: 3736
+# Log dyadic circuit size: 12
+# (cd packages/circuits/transfer && garaga gen --system ultra_keccak_honk --vk target/vk.bin --project-name contracts)
+# ⠦ Generating Smart Contract project for ProofSystem.UltraKeccakHonk using vk.bin...
+# Done!
+# Smart Contract project created:
+# /Users/matzapata/git-work/starkware/starkware-private-erc20/packages/circuits/transfer/con
+# tracts/
+# ├── .tools-versions
+# ├── Scarb.lock
+# ├── Scarb.toml
+# ├── src/
+# │   ├── honk_verifier.cairo
+# │   ├── honk_verifier_circuits.cairo
+# │   ├── honk_verifier_constants.cairo
+# │   └── lib.cairo
+# └── target/
+#     ├── CACHEDIR.TAG
+#     └── release/
+#         ├── contracts.starknet_artifacts.json
+#         ├── contracts_UltraKeccakHonkVerifier.compiled_contract_class.json
+#         └── contracts_UltraKeccakHonkVerifier.contract_class.json
+# You can now test the main endpoint of the verifier using a proof and `garaga calldata` 
+# command.
 ```
 
 Declare and deploy the contract with 
@@ -208,21 +212,123 @@ Declare and deploy the contract with
 ```bash
 just circuits-declare-verifier transfer
 
-# class_hash: 0x0521d13e079f65ee353914317bc1731213766906f1131ee68ed53ec9bb017cbf
-# transaction_hash: 0x0382fa1ad47d36c8e1e1c2bb68884c497f177a246bad06e80d7dedb2c1e0a8c0
+# class_hash: 0x056f9a91b0213845099a167ecbe93bfe99ef85f68a6342220727d61dd2edd755
+# transaction_hash: 0x0304921ad57cdcee7ab6ccec10fdde3ca99eaef2af3cf034d7f34fa2860ab127
 
 # To see declaration details, visit:
-# class: https://sepolia.starkscan.co/class/0x0521d13e079f65ee353914317bc1731213766906f1131ee68ed53ec9bb017cbf
-# transaction: https://sepolia.starkscan.co/tx/0x0382fa1ad47d36c8e1e1c2bb68884c497f177a246bad06e80d7dedb2c1e0a8c0
+# class: https://sepolia.starkscan.co/class/0x056f9a91b0213845099a167ecbe93bfe99ef85f68a6342220727d61dd2edd755
+# transaction: https://sepolia.starkscan.co/tx/0x0304921ad57cdcee7ab6ccec10fdde3ca99eaef2af3cf034d7f34fa2860ab127
 
-just circuits-deploy-verifier transfer 0x0521d13e079f65ee353914317bc1731213766906f1131ee68ed53ec9bb017cbf
+just circuits-deploy-verifier transfer 0x056f9a91b0213845099a167ecbe93bfe99ef85f68a6342220727d61dd2edd755
 
-# contract_address: 0x073a29b78d1aa45a9c3fab87f93d682134a6ffe1a010214a493c7edc16587143
-# transaction_hash: 0x05d62d45892eeb50aaf194af843b00ae79c20e5a6592485ff9badb318f79a024
+# contract_address: 0x002cb91a49726604fb8cd4c2e82b860f845fb622ad63325cbae07b41a713f872
+# transaction_hash: 0x03a9dff3f18755c028061910ab600162ef08036edf5a8097987b0a84269b63be
 
 # To see deployment details, visit:
-# contract: https://sepolia.starkscan.co/contract/0x073a29b78d1aa45a9c3fab87f93d682134a6ffe1a010214a493c7edc16587143
-# transaction: https://sepolia.starkscan.co/tx/0x05d62d45892eeb50aaf194af843b00ae79c20e5a6592485ff9badb318f79a024
+# contract: https://sepolia.starkscan.co/contract/0x002cb91a49726604fb8cd4c2e82b860f845fb622ad63325cbae07b41a713f872
+# transaction: https://sepolia.starkscan.co/tx/0x03a9dff3f18755c028061910ab600162ef08036edf5a8097987b0a84269b63be
+```
+
+
+### transfer_from
+
+First make sure to update DEPTH accordingly in your circuit. Then generate the cairo contracts with:
+
+```bash
+just circuits-generate-verifier transfer_from
+
+# (cd packages/circuits/transfer_from && nargo build)
+# (cd packages/circuits/transfer_from && bb write_vk_ultra_keccak_honk -b target/transfer_from.json -o target/vk.bin)
+# Finalized circuit size: 1109
+# Log dyadic circuit size: 11
+# (cd packages/circuits/transfer_from && garaga gen --system ultra_keccak_honk --vk target/vk.bin --project-name contracts)
+# ⠦ Generating Smart Contract project for ProofSystem.UltraKeccakHonk using vk.bin...
+# Done!
+# Smart Contract project created:
+# /Users/matzapata/git-work/starkware/starkware-private-erc20/packages/circuits/transfer_fro
+# m/contracts/
+# ├── .tools-versions
+# ├── Scarb.toml
+# └── src/
+#     ├── honk_verifier.cairo
+#     ├── honk_verifier_circuits.cairo
+#     ├── honk_verifier_constants.cairo
+#     └── lib.cairo
+# You can now test the main endpoint of the verifier using a proof and `garaga calldata` 
+# command.
+```
+
+Declare and deploy the contract with 
+
+```bash
+just circuits-declare-verifier transfer_from
+
+# class_hash: 0x04c40554ce5a8fe02750b50e13db996e804657965b72d6650fdad400ec440b80
+# transaction_hash: 0x00ea131ff2f5c63b8d398660fdb03fcac0d41500c8fd4e4e5a183b854e964a70
+
+# To see declaration details, visit:
+# class: https://sepolia.starkscan.co/class/0x04c40554ce5a8fe02750b50e13db996e804657965b72d6650fdad400ec440b80
+# transaction: https://sepolia.starkscan.co/tx/0x00ea131ff2f5c63b8d398660fdb03fcac0d41500c8fd4e4e5a183b854e964a70
+
+just circuits-deploy-verifier transfer_from 0x04c40554ce5a8fe02750b50e13db996e804657965b72d6650fdad400ec440b80
+
+# contract_address: 0x02c9c97202d1f125acd4db61671f4390f9e4ec9fe319bc10bc3a0853eac3a16d
+# transaction_hash: 0x029fc76a0e490dcec8f100381c413f08995bc6170d5df5467be79b5fba71273d
+
+# To see deployment details, visit:
+# contract: https://sepolia.starkscan.co/contract/0x02c9c97202d1f125acd4db61671f4390f9e4ec9fe319bc10bc3a0853eac3a16d
+# transaction: https://sepolia.starkscan.co/tx/0x029fc76a0e490dcec8f100381c413f08995bc6170d5df5467be79b5fba71273d
+```
+
+
+### approve
+
+First make sure to update DEPTH accordingly in your circuit. Then generate the cairo contracts with:
+
+```bash
+just circuits-generate-verifier approve
+
+# (cd packages/circuits/approve && nargo build)
+# (cd packages/circuits/approve && bb write_vk_ultra_keccak_honk -b target/approve.json -o target/vk.bin)
+# Finalized circuit size: 251
+# Log dyadic circuit size: 8
+# (cd packages/circuits/approve && garaga gen --system ultra_keccak_honk --vk target/vk.bin --project-name contracts)
+# ⠦ Generating Smart Contract project for ProofSystem.UltraKeccakHonk using vk.bin...
+# Done!
+# Smart Contract project created:
+# /Users/matzapata/git-work/starkware/starkware-private-erc20/packages/circuits/approve/cont
+# racts/
+# ├── .tools-versions
+# ├── Scarb.toml
+# └── src/
+#     ├── honk_verifier.cairo
+#     ├── honk_verifier_circuits.cairo
+#     ├── honk_verifier_constants.cairo
+#     └── lib.cairo
+# You can now test the main endpoint of the verifier using a proof and `garaga calldata` 
+# command.
+```
+
+Declare and deploy the contract with 
+
+```bash
+just circuits-declare-verifier approve
+
+# class_hash: 0x0005ab98bd08bbfc4fac40994f37bab41528ea8ee4eefbbcc9cf7244bf7782d2
+# transaction_hash: 0x01cd9e75a8504091b0438cb6dfc9bb9d4c7ca597927aefb764ba0980272c1907
+
+# To see declaration details, visit:
+# class: https://sepolia.starkscan.co/class/0x0005ab98bd08bbfc4fac40994f37bab41528ea8ee4eefbbcc9cf7244bf7782d2
+# transaction: https://sepolia.starkscan.co/tx/0x01cd9e75a8504091b0438cb6dfc9bb9d4c7ca597927aefb764ba0980272c1907
+
+just circuits-deploy-verifier approve 0x0005ab98bd08bbfc4fac40994f37bab41528ea8ee4eefbbcc9cf7244bf7782d2
+
+# contract_address: 0x028236f4aad88c151a9776c3b23427c96e841e8d1f3885f94d5fd8d8039f7371
+# transaction_hash: 0x075498d0bfa5c3be4afe4181c4d8c96c5c9fa69cbbe50a3ed8d8e294dfcc1d35
+
+# To see deployment details, visit:
+# contract: https://sepolia.starkscan.co/contract/0x028236f4aad88c151a9776c3b23427c96e841e8d1f3885f94d5fd8d8039f7371
+# transaction: https://sepolia.starkscan.co/tx/0x075498d0bfa5c3be4afe4181c4d8c96c5c9fa69cbbe50a3ed8d8e294dfcc1d35
 ```
 
 ## Contracts deployment
@@ -232,21 +338,21 @@ Deployment with just command (Same for verifier if needed). First go to `src/pri
 ```bash
 just contracts-declare-privado
 
-# class_hash: 0x03edc6fe42273a6a33f4614b4bbfe816911cd472d3ec0ac9ae08976615e13734
-# transaction_hash: 0x019dd93085d321d04f227ec20d73c1e20659ddec40fd592704638eaf18997910
+# class_hash: 0x0624974fccffe24cfd0923e98d805be436b7468c4a453f2d794a708812cffffe
+# transaction_hash: 0x01f3e59102c5f5845431d4a20497c226a0b6c89f8cf247858dbc8d9dd007c76a
 
 # To see declaration details, visit:
-# class: https://sepolia.starkscan.co/class/0x03edc6fe42273a6a33f4614b4bbfe816911cd472d3ec0ac9ae08976615e13734
-# transaction: https://sepolia.starkscan.co/tx/0x019dd93085d321d04f227ec20d73c1e20659ddec40fd592704638eaf18997910
+# class: https://sepolia.starkscan.co/class/0x0624974fccffe24cfd0923e98d805be436b7468c4a453f2d794a708812cffffe
+# transaction: https://sepolia.starkscan.co/tx/0x01f3e59102c5f5845431d4a20497c226a0b6c89f8cf247858dbc8d9dd007c76a
 
-just contracts-deploy-privado 0x03edc6fe42273a6a33f4614b4bbfe816911cd472d3ec0ac9ae08976615e13734
+just contracts-deploy-privado 0x0624974fccffe24cfd0923e98d805be436b7468c4a453f2d794a708812cffffe
 
-# contract_address: 0x0164a531a23f90df1d1780ccc5753f56c39021ca2a5874a1237cf6d2d301fa7d
-# transaction_hash: 0x049d2fb5177a1f873cdc8fb89cae67fcd98c46252db29df5f004e9bd44332ff8
+# contract_address: 0x0613e0e70df6dc6c75b3ec30cf276b2282bcbde6d2359511c8ef88d3c6c3f1ac
+# transaction_hash: 0x07552b8571c942c1dfbdf390207b9a84c6766e617a9169a92e5921b1c59bbe7d
 
 # To see deployment details, visit:
-# contract: https://sepolia.starkscan.co/contract/0x0164a531a23f90df1d1780ccc5753f56c39021ca2a5874a1237cf6d2d301fa7d
-# transaction: https://sepolia.starkscan.co/tx/0x049d2fb5177a1f873cdc8fb89cae67fcd98c46252db29df5f004e9bd44332ff8
+# contract: https://sepolia.starkscan.co/contract/0x0613e0e70df6dc6c75b3ec30cf276b2282bcbde6d2359511c8ef88d3c6c3f1ac
+# transaction: https://sepolia.starkscan.co/tx/0x07552b8571c942c1dfbdf390207b9a84c6766e617a9169a92e5921b1c59bbe7d
 ```
 
 
