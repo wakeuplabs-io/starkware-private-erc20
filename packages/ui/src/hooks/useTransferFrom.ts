@@ -3,12 +3,12 @@ import { useContract, useSendTransaction } from "@starknet-react/core";
 import privateTokenAbi from "@/abi/private-erc20.abi";
 import { MERKLE_TREE_DEPTH, PRIVATE_ERC20_CONTRACT_ADDRESS } from "@/constants";
 import { Note } from "@/interfaces";
-import { formatHex } from "@/utils/hex";
 import { ProofService } from "@/services/proof.service";
 import { Fr } from "@aztec/bb.js";
 import { AccountService } from "@/services/account.service";
-import { MerkleTree } from "@/utils/merkle-tree";
 import { BarretenbergService } from "@/services/bb.service";
+import { formatHex } from "@/lib/utils";
+import { MerkleTree } from "@/lib/merkle-tree";
 
 export const useTransferFrom = () => {
   // const { notes } = useNotes();
