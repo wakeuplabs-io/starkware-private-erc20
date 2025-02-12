@@ -9,7 +9,7 @@ export const Transfer: React.FC = () => {
   const { sendTransfer, loading } = useTransfer();
   const [recipientAddress, setRecipientAddress] = useState("");
   const [recipientPublicKey, setRecipientPublicKey] = useState("");
-  const [amount, setAmount] = useState(0);
+  const [amount, setAmount] = useState("0");
   const [scan, setScan] = useState(false);
 
   const onTransfer = useCallback(async () => {
@@ -18,7 +18,7 @@ export const Transfer: React.FC = () => {
         address: BigInt(recipientAddress),
         publicKey: BigInt(recipientPublicKey),
       },
-      amount: BigInt(amount),
+      amount: BigInt((parseFloat(amount) * 10**6).toFixed(0)),
     })
       .then(() => {
         window.alert("Transfer successful");
@@ -68,10 +68,10 @@ export const Transfer: React.FC = () => {
             />
 
             <Input
-              type="number"
+              type="text"
               placeholder="Amount"
               value={amount}
-              onChange={(e) => setAmount(parseInt(e.target.value))}
+              onChange={(e) => setAmount(e.target.value)}
             />
           </div>
 

@@ -2,7 +2,7 @@ import { Notes } from "@/components/notes";
 import { Receive } from "@/components/receive";
 import { Transfer } from "@/components/transfer";
 import { useBalance } from "@/hooks/useBalance";
-import { cn } from "@/lib/utils";
+import { cn, formatTokenAmount } from "@/lib/utils";
 import { createFileRoute } from "@tanstack/react-router";
 import { ArrowDown, ArrowUpRight, List } from "lucide-react";
 import { useState } from "react";
@@ -18,19 +18,19 @@ enum Tab {
 }
 
 function Index() {
-  const [tab, setTab] = useState<Tab>(Tab.Notes);
   const { balance } = useBalance();
+  const [tab, setTab] = useState<Tab>(Tab.Notes);
 
   return (
     <div className="w-full">
       <div className="w-full space-y-8 lg:space-y-4 mb-12">
         <div className="flex justify-between w-full">
-          <h1 className="text-2xl lg:text-4xl font-bold">Privado</h1>
+          <h1 className="text-2xl lg:text-4xl font-bold">Erc20</h1>
           <div className="relative">
             <div className="text-3xl lg:text-4xl font-bold">
-              {balance.toString()}
+              {formatTokenAmount(balance)}
             </div>
-            <div className="absolute bottom-0 translate-y-full right-0 text-sm lg:text-base">
+            <div className="absolute bottom-0 translate-y-full right-0 text-sm lg:text-base text-nowrap">
               My balance
             </div>
           </div>

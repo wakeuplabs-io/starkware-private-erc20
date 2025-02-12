@@ -1,5 +1,5 @@
 import { Button } from "@/components/ui/button";
-import { useAccount, useConnect } from "@starknet-react/core";
+import { useAccount, useConnect, useDisconnect } from "@starknet-react/core";
 import { createRootRoute, Outlet } from "@tanstack/react-router";
 import React, { useCallback } from "react";
 import { StarknetkitConnector, useStarknetkitConnectModal } from "starknetkit";
@@ -23,8 +23,9 @@ export const Route = createRootRoute({
 });
 
 function RootLayout() {
-  const { connect, connectors } = useConnect();
   const { address } = useAccount();
+  const { disconnect } = useDisconnect();
+  const { connect, connectors } = useConnect();
   const { starknetkitConnectModal } = useStarknetkitConnectModal({
     connectors: connectors as StarknetkitConnector[],
   });
@@ -48,7 +49,7 @@ function RootLayout() {
               className="h-[36px] hidden lg:block"
             />
             <img src="/starknet-logo.png" alt="" className="h-[28px]" />
-            <Button className="h-[30px] rounded-full text-xs font-medium">
+            <Button onClick={() => disconnect()} className="h-[30px] rounded-full text-xs font-medium">
               Disconnect
             </Button>
           </div>
@@ -75,7 +76,7 @@ function RootLayout() {
         <img
           src="/starknet-logo.png"
           alt=""
-          className="mb-16 h-[70px] max-w-[300px]"
+          className="mb-16 max-w-[300px] w-full"
         />
 
         <div className="mb-24 text-xl text-muted-foreground max-w-lg">
@@ -86,7 +87,7 @@ function RootLayout() {
         <div className="flex justify-between items-end">
           <Button
             onClick={onConnectWallet}
-            className="w-full h-[90px] max-w-80 rounded-lg text-lg"
+            className="w-full h-[90px] lg:max-w-80 rounded-lg text-lg"
           >
             Connect Wallet
           </Button>

@@ -30,7 +30,7 @@ export const Notes: React.FC = () => {
       {sortedNotes && show && (
         <ul className="divide-y border-t">
           {sortedNotes.map((note) => (
-            <li className="flex justify-between py-6 pr-2">
+            <li key={note.commitment} className="flex justify-between py-6 pr-2">
               <span
                 className={cn({
                   "line-through": note.spent,
