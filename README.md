@@ -32,8 +32,8 @@ Currently, the deployer is responsible for creating the first commitment by spec
 ### Balance discovery
 
 To rediscover a user's commitment, the process works as follows:
-1. Fetch all NewCommitment { commitment, enc_output, index } events (preferably already cached, so only the latest ones are fetched).
-2. Fetch all NewNullifier { nullifier_hash } events (again, ideally cached, so only the most recent ones are fetched).
+1. Fetch all NewCommitment { commitment, enc_output, index } events
+2. Fetch all NewNullifier { nullifier_hash } events.
 3. Iterate over the commitments:
    - Attempt decryption. If successful, derive the nullifier_hash and check whether it has already been used.
    - If the nullifier_hash hasn't been used, add the commitment to the pool of usable commitments and sum up the value.
@@ -128,25 +128,27 @@ Some clarifications:
 
 Current ux goes like this:
 
-A new wallet is generated for the user per browser or one is recovered from local storage
+User connects argent wallet to pay for transaction gas. A new zk wallet is generated for the user per browser or one is recovered from local storage
 
-![wallet generations](./assets/demo-1.png)
+![user connects wallet](./assets/demo-1.png)
 
-User connects argent wallet to pay for transaction gas
+User can inspect the commitments that form their balance
 
-![user connects wallet](./assets/demo-2.png)
+![commitments before transfer](./assets/demo-2.png)
 
-Sender inputs receiver address and public key. Also fills amount
+Sender scans receiver qr code and so automatically filling address and public key
 
-![Fill transfer inputs](./assets/demo-3.png)
+![scan qr code](./assets/demo-3.png)
 
-Confirm transaction in wallet. (Example transaction https://sepolia.voyager.online/tx/0x6c6b73fd34c45c05dc9ebdf168c99a0fe1d44fd5e983d7c2bc8187baec87b78?mtm_campaign=argent-redirect&mtm_source=argent&mtm_medium=referral)
+![filled form](./assets/demo-4.png)
 
-![confirm transaction](./assets/demo-4.png)
+Enter amount and click transfer. Then confirm transaction in wallet. (Example transaction https://sepolia.voyager.online/tx/0x6c6b73fd34c45c05dc9ebdf168c99a0fe1d44fd5e983d7c2bc8187baec87b78?mtm_campaign=argent-redirect&mtm_source=argent&mtm_medium=referral)
 
-Receiver discovers new note and sums up balance
+![confirm transaction](./assets/demo-5.png)
 
-![receiver balance](./assets/demo-5.png)
+A little time after receiver has balance available. They can also inspect nullified commitment for sender and new commitment for receiver
+
+![result showcase](./assets/demo-6.png)
 
 # Deployments
 
