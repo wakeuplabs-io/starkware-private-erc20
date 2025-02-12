@@ -52,7 +52,7 @@ export const useApprove = () => {
         new Fr(props.spender),
       ]);
 
-      const generatedProof = await ProofService.generateProof({
+      const generatedProof = await ProofService.generateApproveProof({
         in_private_key: formatHex(approverAccount.privateKey % Fr.MODULUS),
         in_amount: formatHex(inputNote.value!),
         in_spender: formatHex(props.spender % Fr.MODULUS),

@@ -31,6 +31,8 @@ export const useTransfer = () => {
     };
     amount: bigint;
   }) => {
+    setLoading(true);
+
     try {
       if (!contract) {
         throw new Error("Contract not initialized");
@@ -124,6 +126,7 @@ export const useTransfer = () => {
         outReceiverNote.encOutput,
       ]);
 
+      window.alert("Please approve transaction in your wallet");
       await sendAsync([callData]);
     } finally {
       setLoading(false);

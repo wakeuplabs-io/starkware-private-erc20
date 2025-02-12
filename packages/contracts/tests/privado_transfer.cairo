@@ -13,13 +13,13 @@ use contracts::privado::{Privado, IPrivado, constants::{TOKEN_NAME, TOKEN_SYMBOL
 fn test_transfer() {
     let (mut contract, contract_address) = get_contract_state_for_testing();
 
-    let root = 0;
-    let new_root = 1;
-    let sender_in_nullifier_hash = 2;
-    let sender_out_commitment = 3;
-    let receiver_out_commitment = 4;
+    let in_commitment_root = 0;
+    let in_commitment_spending_tracker = 2;
+    let out_root = 1;
+    let out_sender_commitment = 3;
+    let out_receiver_commitment = 4;
     let proof = generate_mock_proof(
-        root, new_root, sender_in_nullifier_hash, sender_out_commitment, receiver_out_commitment,
+        in_commitment_root, out_root, in_commitment_spending_tracker, out_sender_commitment, out_receiver_commitment,
     );
     let current_commitment_index = contract.current_commitment_index.read();
 
@@ -28,9 +28,9 @@ fn test_transfer() {
     // call transfer
     contract.transfer(proof, "sender_enc_output", "receiver_enc_output");
 
-    // should nullify the sender_in_nullifier_hash
+    // should nullify the in_commitment_spending_tracker
     assert(
-        contract.nullified_notes.entry(sender_in_nullifier_hash.into()).read() == true,
+        contract.spending_trackers.entry(in_commitment_spending_tracker.into()).read() == true,
         'Sender commitment not nullified',
     );
 
@@ -42,7 +42,7 @@ fn test_transfer() {
                     contract_address,
                     Privado::Event::NewCommitment(
                         Privado::NewCommitment {
-                            commitment: sender_out_commitment.into(),
+                            commitment: out_sender_commitment.into(),
                             output_enc: "sender_enc_output",
                             index: current_commitment_index,
                         },
@@ -52,7 +52,7 @@ fn test_transfer() {
                     contract_address,
                     Privado::Event::NewCommitment(
                         Privado::NewCommitment {
-                            commitment: receiver_out_commitment.into(),
+                            commitment: out_receiver_commitment.into(),
                             output_enc: "receiver_enc_output",
                             index: current_commitment_index + 1,
                         },
@@ -60,8 +60,10 @@ fn test_transfer() {
                 ),
                 (
                     contract_address,
-                    Privado::Event::NewNullifier(
-                        Privado::NewNullifier { nullifier_hash: sender_in_nullifier_hash.into() },
+                    Privado::Event::NewSpendingTracker(
+                        Privado::NewSpendingTracker {
+                            spending_tracker: in_commitment_spending_tracker.into(),
+                        },
                     ),
                 ),
             ],
@@ -73,15 +75,18 @@ fn test_transfer() {
 #[should_panic(expected: 'Cannot find your merkle root')]
 fn test_transfer_unknown_root() {
     let (mut contract, _) = get_contract_state_for_testing();
-
-    let root = 1234; // unknown root
-    let new_root = 1;
-    let sender_in_nullifier_hash = 2;
-    let sender_out_commitment = 3;
-    let receiver_out_commitment = 4;
+    
+    let in_commitment_root = 0;
+    let out_root = 1;
+    let in_commitment_spending_tracker = 2;
+    let out_sender_commitment = 3;
+    let out_receiver_commitment = 4;
     let proof = generate_mock_proof(
-        root, new_root, sender_in_nullifier_hash, sender_out_commitment, receiver_out_commitment,
+        in_commitment_root, out_root, in_commitment_spending_tracker, out_sender_commitment, out_receiver_commitment,
     );
+
+    // differ from proof
+    contract.current_root.write((in_commitment_root + 10).into());
 
     // call transfer
     contract.transfer(proof, "sender_enc_output", "receiver_enc_output");
@@ -92,17 +97,17 @@ fn test_transfer_unknown_root() {
 fn test_transfer_double_spent() {
     let (mut contract, _) = get_contract_state_for_testing();
 
-    let root = 0;
-    let new_root = 1;
-    let sender_in_nullifier_hash = 2;
-    let sender_out_commitment = 3;
-    let receiver_out_commitment = 4;
+    let in_commitment_root = 0;
+    let out_root = 1;
+    let in_commitment_spending_tracker = 2;
+    let out_sender_commitment = 3;
+    let out_receiver_commitment = 4;
     let proof = generate_mock_proof(
-        root, new_root, sender_in_nullifier_hash, sender_out_commitment, receiver_out_commitment,
+        in_commitment_root, out_root, in_commitment_spending_tracker, out_sender_commitment, out_receiver_commitment,
     );
 
     // mark the commitment as already spent
-    contract.nullified_notes.entry(sender_in_nullifier_hash.into()).write(true);
+    contract.spending_trackers.entry(in_commitment_spending_tracker.into()).write(true);
 
     // call transfer
     contract.transfer(proof, "sender_enc_output", "receiver_enc_output");
@@ -113,13 +118,13 @@ fn test_transfer_double_spent() {
 //
 
 fn generate_mock_proof(
-    root: felt252,
-    new_root: felt252,
-    nullifier_hash: felt252,
+    in_commitment_root: felt252,
+    out_root: felt252,
+    spending_tracker: felt252,
     sender_commitment: felt252,
     receiver_commitment: felt252,
 ) -> Span<felt252> {
-    array![root, nullifier_hash, receiver_commitment, sender_commitment, new_root].span()
+    array![in_commitment_root, spending_tracker, receiver_commitment, sender_commitment, out_root].span()
 }
 
 fn get_contract_state_for_testing() -> (Privado::ContractState, ContractAddress) {
@@ -130,6 +135,9 @@ fn get_contract_state_for_testing() -> (Privado::ContractState, ContractAddress)
 
     let approve_verifier_contract = declare("ApproveVerifierMock").unwrap().contract_class();
     let (approve_verifier_address, _) = approve_verifier_contract.deploy(@array![]).unwrap();
+
+    let transfer_from_verifier_contract = declare("TransferFromVerifierMock").unwrap().contract_class();
+    let (transfer_from_verifier_address, _) = transfer_from_verifier_contract.deploy(@array![]).unwrap();
 
     // initialize metadata
     dispatcher.name.write(TOKEN_NAME);
@@ -142,6 +150,7 @@ fn get_contract_state_for_testing() -> (Privado::ContractState, ContractAddress)
     // set the verifier address
     dispatcher.transfer_verifier_address.write(transfer_verifier_address);
     dispatcher.approve_verifier_address.write(approve_verifier_address);
+    dispatcher.transfer_from_verifier_address.write(transfer_from_verifier_address);
 
     (dispatcher, test_address())
 }

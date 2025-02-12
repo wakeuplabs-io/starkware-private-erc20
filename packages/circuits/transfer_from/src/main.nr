@@ -1,325 +1,349 @@
-mod merkle_tree;
-use crate::merkle_tree::assert_merkle_inclusion;
+use common::definitions::{
+    account, allowance_hash, allowance_relationship, commitment, commitment_tracker,
+};
+use common::merkle_tree::assert_merkle_inclusion;
 use std::hash::poseidon2::Poseidon2::hash;
 
 // TODO: update before deploying. So far haven't found way to override for testing
 global DEPTH: u32 = 2;
 
-// address = hash(private_key)
-// commitment = hash(address, bliding, amount)
-// nullifier = hash(commitment, private_key, path)
-
 pub fn main(
-    // utxo inputs
-    in_root: pub Field,
-    in_path: [Field; DEPTH],
-    in_direction_selector: [bool; DEPTH],
-    in_amount: Field,
-    in_commitment_nullifier_hash: pub Field,
-    in_private_key: Field,
-    in_bliding: Field,
-    // utxo outputs
-    out_receiver_account: Field,
-    out_receiver_amount: Field,
+    // account details
+    owner_account: Field,
+    receiver_account: Field,
+    spender_private_key: Field,
+    // input commitment details
+    in_commitment_root: pub Field,
+    in_commitment_path: [Field; DEPTH],
+    in_commitment_direction_selector: [bool; DEPTH],
+    in_commitment_bliding: Field,
+    in_commitment_value: Field,
+    in_commitment_spending_tracker: pub Field,
+    // allowance utxo details
+    in_allowance_value: Field,
+    in_allowance_hash: pub Field,
+    in_allowance_relationship: pub Field,
+    out_allowance_hash: pub Field,
+    // out receiver commitment details
+    out_receiver_value: Field,
     out_receiver_bliding: Field,
     out_receiver_commitment: pub Field,
-    out_sender_amount: Field,
-    out_sender_bliding: Field,
-    out_sender_commitment: pub Field,
+    // out owner commitment details
+    out_owner_value: Field,
+    out_owner_bliding: Field,
+    out_owner_commitment: pub Field,
+    // output commitment details
     out_root: pub Field,
-    out_subtree_root_path: [Field; DEPTH - 1], // path of hash(out_sender_commitment, out_receiver_commitment)
-    out_subtree_root_direction: [bool; DEPTH - 1], // path direction of hash(out_sender_commitment, out_receiver_commitment)
+    out_subtree_root_path: [Field; DEPTH - 1], // path of hash(out_owner_commitment, out_receiver_commitment)
+    out_subtree_direction_selector: [bool; DEPTH - 1], // path direction of hash(out_owner_commitment, out_receiver_commitment)
 ) {
     // check in_commitment is included in the root and belongs to sender
-    let sender_account = generate_account(in_private_key);
-    let in_commitment = generate_commitment(sender_account, in_amount, in_bliding);
-    assert_merkle_inclusion(in_root, in_path, in_direction_selector, in_commitment);
+    let in_commitment = commitment(owner_account, in_commitment_value, in_commitment_bliding);
+    assert_merkle_inclusion(
+        in_commitment_root,
+        in_commitment_path,
+        in_commitment_direction_selector,
+        in_commitment,
+        "Cannot find input commitment",
+    );
 
-    // check nullifier_hash belongs to nullifier, tied with previous check nullifier derives in commitment
-    let nullifier = generate_nullifier(in_commitment, in_private_key, in_path);
-    assert(hash([nullifier], 1) == in_commitment_nullifier_hash);
+    // check spending tracker to properly nullify commitment is correct
+    assert_eq(
+        in_commitment_spending_tracker,
+        commitment_tracker(in_commitment, in_commitment_bliding),
+        "Invalid spending tracker",
+    );
 
-    // check utxo
-    assert(in_amount == out_receiver_amount + out_sender_amount, "Invalid UTXO amounts");
+    // check input allowance hash is correct and so we can trust allowance amount. And relationship so we can trust update after
+    let spender_account = account(spender_private_key);
+    assert_eq(
+        in_allowance_hash,
+        allowance_hash(owner_account, spender_account, in_allowance_value),
+        "Invalid input allowance hash",
+    );
+    assert_eq(
+        in_allowance_relationship,
+        allowance_relationship(owner_account, spender_account),
+        "Invalid allowance relationship",
+    );
+
+    // check commitments utxo
+    assert_eq(in_commitment_value, out_receiver_value + out_owner_value, "Invalid UTXO amounts");
+
+    // check allowance utxo
+    let out_allowance_value = in_allowance_value - out_receiver_value;
+    assert_eq(
+        out_allowance_hash,
+        allowance_hash(owner_account, spender_account, out_allowance_value),
+        "Invalid output allowance hash",
+    );
 
     // validate commitment amounts and receivers are correct
-    assert(generate_commitment(sender_account, out_sender_amount, out_sender_bliding) == out_sender_commitment);
-    assert(generate_commitment(out_receiver_account,out_receiver_amount, out_receiver_bliding) == out_receiver_commitment);
+    assert_eq(
+        commitment(owner_account, out_owner_value, out_owner_bliding),
+        out_owner_commitment,
+        "Invalid owner output commitment",
+    );
+    assert_eq(
+        commitment(receiver_account, out_receiver_value, out_receiver_bliding),
+        out_receiver_commitment,
+        "Invalid receiver output commitment",
+    );
 
     // check we're inserting in a previously empty subtree
     let zero_subtree_root = hash([0, 0], 2);
     assert_merkle_inclusion(
-        in_root,
+        in_commitment_root,
         out_subtree_root_path,
-        out_subtree_root_direction,
+        out_subtree_direction_selector,
         zero_subtree_root,
+        "Missing commitments from old tree in new tree",
     );
 
-    // check newly inserted commitments belong to new_root
-    let new_subtree_root = hash([out_sender_commitment, out_receiver_commitment], 2);
+    // check newly inserted commitments belong to out_root
+    let new_subtree_root = hash([out_owner_commitment, out_receiver_commitment], 2);
     assert_merkle_inclusion(
         out_root,
         out_subtree_root_path,
-        out_subtree_root_direction,
+        out_subtree_direction_selector,
         new_subtree_root,
+        "New commits don't belong to new root",
     );
-}
-
-pub fn generate_commitment(account: Field, value: Field, bliding: Field) -> Field {
-    hash([account, value, bliding], 3)
-}
-
-pub fn generate_nullifier(
-    commitment: Field,
-    private_key: Field,
-    commitment_path: [Field; DEPTH],
-) -> Field {
-    let mut params: [Field; DEPTH + 2] = [0; DEPTH + 2];
-    params[0] = commitment;
-    params[1] = private_key;
-
-    for i in 0..DEPTH {
-        params[i + 2] = commitment_path[i];
-    }
-
-    hash(params, DEPTH + 2)
-}
-
-pub fn generate_account(private_key: Field) -> Field {
-    hash([private_key], 1)
 }
 
 #[test]
 fn test_allowed_transfer() {
-    // generate amounts
-    let in_amount = 10;
-    let out_receiver_amount = 2;
-    let out_sender_amount = 8;
+    // generate input amounts
+    let in_commitment_value = 10;
+    let in_allowance_value = 10;
 
-    // account details
-    let in_private_key = 1;
-    let sender_account = generate_account(in_private_key);
+    // output amounts
+    let out_receiver_value = 2;
+    let out_owner_value = in_commitment_value - out_receiver_value;
+    let out_allowance_value = in_allowance_value - out_receiver_value;
+
+    // accounts details
+    let spender_private_key = 0;
+    let spender_account = account(spender_private_key);
+    let owner_account = account(1);
 
     // generate commitment
-    let in_bliding = 2;
-    let in_commitment = generate_commitment(sender_account, in_amount, in_bliding);
+    let in_commitment_bliding = 2;
+    let in_commitment = commitment(owner_account, in_commitment_value, in_commitment_bliding);
+    let in_commitment_spending_tracker = commitment_tracker(in_commitment, in_commitment_bliding);
 
     // output commitment generation
-    let receiver_account = generate_account(100);
-    let out_sender_bliding = 3;
+    let receiver_account = account(100);
+    let out_owner_bliding = 3;
     let out_receiver_bliding = 3;
-    let out_receiver_commitment = generate_commitment(receiver_account, out_receiver_amount, out_receiver_bliding);
-    let out_sender_commitment = generate_commitment(sender_account, out_sender_amount, out_sender_bliding);
+    let out_receiver_commitment =
+        commitment(receiver_account, out_receiver_value, out_receiver_bliding);
+    let out_owner_commitment = commitment(owner_account, out_owner_value, out_owner_bliding);
 
     // old tree
     let old_first_level_l = hash([in_commitment, 1], 2);
     let old_first_level_r = hash([0, 0], 2);
-    let old_root = hash([old_first_level_l, old_first_level_r], 2);
+    let in_commitment_root = hash([old_first_level_l, old_first_level_r], 2);
+    let in_commitment_path = [1, old_first_level_r];
+    let in_commitment_direction_selector = [false, false];
 
     // new tree
     let new_first_level_l = hash([in_commitment, 1], 2);
-    let new_first_level_r = hash([out_sender_commitment, out_receiver_commitment], 2);
-    let new_root = hash([new_first_level_l, new_first_level_r], 2);
+    let new_first_level_r = hash([out_owner_commitment, out_receiver_commitment], 2);
+    let out_root = hash([new_first_level_l, new_first_level_r], 2);
+    let out_subtree_root_path = [new_first_level_l];
+    let out_subtree_direction_selector = [true];
 
-    // nullifier
-    let in_commitment_path = [ 1, old_first_level_r ];
-    let in_commitment_direction = [false, false];
-    let in_commitment_nullifier = generate_nullifier(in_commitment, in_private_key, in_commitment_path);
-    let in_commitment_nullifier_hash = hash([in_commitment_nullifier], 1);
+    // in_allowance_hash
+    let in_allowance_hash = allowance_hash(owner_account, spender_account, in_allowance_value);
+    let out_allowance_hash = allowance_hash(owner_account, spender_account, out_allowance_value);
+    let in_allowance_relationship = allowance_relationship(owner_account, spender_account);
 
     main(
-        old_root,
-        in_commitment_path,
-        in_commitment_direction,
-        in_amount,
-        in_commitment_nullifier_hash,
-        in_private_key,
-        in_bliding,
+        // input commitment details
+        owner_account,
         receiver_account,
-        out_receiver_amount,
+        spender_private_key,
+        in_commitment_root,
+        in_commitment_path,
+        in_commitment_direction_selector,
+        in_commitment_bliding,
+        in_commitment_value,
+        in_commitment_spending_tracker,
+        // allowance utxo details
+        in_allowance_value,
+        in_allowance_hash,
+        in_allowance_relationship,
+        out_allowance_hash,
+        // out receiver commitment details
+        out_receiver_value,
         out_receiver_bliding,
         out_receiver_commitment,
-        out_sender_amount,
-        out_sender_bliding,
-        out_sender_commitment,
-        new_root,
-        [new_first_level_l],
-        [true]
+        // out owner commitment details
+        out_owner_value,
+        out_owner_bliding,
+        out_owner_commitment,
+        // output commitment details
+        out_root,
+        out_subtree_root_path,
+        out_subtree_direction_selector,
     );
 }
 
 #[test(should_fail_with = "Invalid UTXO amounts")]
 fn test_invalid_utxo_amounts() {
-    // generate amounts
-    let in_amount = 10;
-    let out_receiver_amount = 2;
-    let out_sender_amount = 8000; // // <-------------------------------------------- out more than it should
+    // generate input amounts
+    let in_commitment_value = 10;
+    let in_allowance_value = 10;
 
-    // account details
-    let in_private_key = 1;
-    let sender_account = generate_account(in_private_key);
+    // output amounts
+    let out_receiver_value = 2;
+    let out_owner_value = 100; // <------------ Should be: in_commitment_value - out_receiver_value;
+    let out_allowance_value = in_allowance_value - out_receiver_value;
+
+    // accounts details
+    let spender_private_key = 0;
+    let spender_account = account(spender_private_key);
+    let owner_account = account(1);
 
     // generate commitment
-    let in_bliding = 2;
-    let in_commitment = generate_commitment(sender_account, in_amount, in_bliding);
+    let in_commitment_bliding = 2;
+    let in_commitment = commitment(owner_account, in_commitment_value, in_commitment_bliding);
+    let in_commitment_spending_tracker = commitment_tracker(in_commitment, in_commitment_bliding);
 
     // output commitment generation
-    let receiver_account = generate_account(100);
-    let out_sender_bliding = 3;
+    let receiver_account = account(100);
+    let out_owner_bliding = 3;
     let out_receiver_bliding = 3;
-    let out_receiver_commitment = generate_commitment(receiver_account, out_receiver_amount, out_receiver_bliding);
-    let out_sender_commitment = generate_commitment(sender_account, out_sender_amount, out_sender_bliding);
+    let out_receiver_commitment =
+        commitment(receiver_account, out_receiver_value, out_receiver_bliding);
+    let out_owner_commitment = commitment(owner_account, out_owner_value, out_owner_bliding);
 
     // old tree
     let old_first_level_l = hash([in_commitment, 1], 2);
     let old_first_level_r = hash([0, 0], 2);
-    let old_root = hash([old_first_level_l, old_first_level_r], 2);
+    let in_commitment_root = hash([old_first_level_l, old_first_level_r], 2);
+    let in_commitment_path = [1, old_first_level_r];
+    let in_commitment_direction_selector = [false, false];
 
     // new tree
     let new_first_level_l = hash([in_commitment, 1], 2);
-    let new_first_level_r = hash([out_sender_commitment, out_receiver_commitment], 2);
-    let new_root = hash([new_first_level_l, new_first_level_r], 2);
+    let new_first_level_r = hash([out_owner_commitment, out_receiver_commitment], 2);
+    let out_root = hash([new_first_level_l, new_first_level_r], 2);
+    let out_subtree_root_path = [new_first_level_l];
+    let out_subtree_direction_selector = [true];
 
-    // nullifier
-    let in_commitment_path = [ 1, old_first_level_r ];
-    let in_commitment_direction = [false, false];
-    let in_commitment_nullifier = generate_nullifier(in_commitment, in_private_key, in_commitment_path);
-    let in_commitment_nullifier_hash = hash([in_commitment_nullifier], 1);
+    // in_allowance_hash
+    let in_allowance_hash = allowance_hash(owner_account, spender_account, in_allowance_value);
+    let out_allowance_hash = allowance_hash(owner_account, spender_account, out_allowance_value);
+    let in_allowance_relationship = allowance_relationship(owner_account, spender_account);
 
     main(
-        old_root,
-        in_commitment_path,
-        in_commitment_direction,
-        in_amount,
-        in_commitment_nullifier_hash,
-        in_private_key,
-        in_bliding,
+        // input commitment details
+        owner_account,
         receiver_account,
-        out_receiver_amount,
+        spender_private_key,
+        in_commitment_root,
+        in_commitment_path,
+        in_commitment_direction_selector,
+        in_commitment_bliding,
+        in_commitment_value,
+        in_commitment_spending_tracker,
+        // allowance utxo details
+        in_allowance_value,
+        in_allowance_hash,
+        in_allowance_relationship,
+        out_allowance_hash,
+        // out receiver commitment details
+        out_receiver_value,
         out_receiver_bliding,
         out_receiver_commitment,
-        out_sender_amount,
-        out_sender_bliding,
-        out_sender_commitment,
-        new_root,
-        [new_first_level_l],
-        [true]
+        // out owner commitment details
+        out_owner_value,
+        out_owner_bliding,
+        out_owner_commitment,
+        // output commitment details
+        out_root,
+        out_subtree_root_path,
+        out_subtree_direction_selector,
     );
 }
 
-#[test(should_fail)]
-fn test_unlinked_root() {
-    // generate amounts
-    let in_amount = 10;
-    let out_receiver_amount = 2;
-    let out_sender_amount = 8000; // Notice here
+#[test(should_fail_with = "Missing commitments from old tree in new tree")]
+fn test_remove_existing_commitments() {
+    // generate input amounts
+    let in_commitment_value = 10;
+    let in_allowance_value = 10;
 
-    // account details
-    let in_private_key = 1;
-    let sender_account = generate_account(in_private_key);
+    // output amounts
+    let out_receiver_value = 2;
+    let out_owner_value = in_commitment_value - out_receiver_value;
+    let out_allowance_value = in_allowance_value - out_receiver_value;
+
+    // accounts details
+    let spender_private_key = 0;
+    let spender_account = account(spender_private_key);
+    let owner_account = account(1);
 
     // generate commitment
-    let in_bliding = 2;
-    let in_commitment = generate_commitment(sender_account, in_amount, in_bliding);
+    let in_commitment_bliding = 2;
+    let in_commitment = commitment(owner_account, in_commitment_value, in_commitment_bliding);
+    let in_commitment_spending_tracker = commitment_tracker(in_commitment, in_commitment_bliding);
 
     // output commitment generation
-    let receiver_account = generate_account(100);
-    let out_sender_bliding = 3;
+    let receiver_account = account(100);
+    let out_owner_bliding = 3;
     let out_receiver_bliding = 3;
-    let out_receiver_commitment = generate_commitment(receiver_account, out_receiver_amount, out_receiver_bliding);
-    let out_sender_commitment = generate_commitment(sender_account, out_sender_amount, out_sender_bliding);
+    let out_receiver_commitment =
+        commitment(receiver_account, out_receiver_value, out_receiver_bliding);
+    let out_owner_commitment = commitment(owner_account, out_owner_value, out_owner_bliding);
 
     // old tree
     let old_first_level_l = hash([in_commitment, 1], 2);
     let old_first_level_r = hash([0, 0], 2);
-    let old_root = hash([old_first_level_l, old_first_level_r], 2);
+    let in_commitment_root = hash([old_first_level_l, old_first_level_r], 2);
+    let in_commitment_path = [1, old_first_level_r];
+    let in_commitment_direction_selector = [false, false];
 
     // new tree
-    let new_first_level_l = hash([100000, 1], 2); // <-------------------------------------------- Removed in commitment
-    let new_first_level_r = hash([out_sender_commitment, out_receiver_commitment], 2);
-    let new_root = hash([new_first_level_l, new_first_level_r], 2);
+    let new_first_level_l = hash([0, 1], 2); // <------------------------ removed input_commitment
+    let new_first_level_r = hash([out_owner_commitment, out_receiver_commitment], 2);
+    let out_root = hash([new_first_level_l, new_first_level_r], 2);
+    let out_subtree_root_path = [new_first_level_l];
+    let out_subtree_direction_selector = [true];
 
-    // nullifier
-    let in_commitment_path = [ 1, old_first_level_r ];
-    let in_commitment_direction = [false, false];
-    let in_commitment_nullifier = generate_nullifier(in_commitment, in_private_key, in_commitment_path);
-    let in_commitment_nullifier_hash = hash([in_commitment_nullifier], 1);
-
-    main(
-        old_root,
-        in_commitment_path,
-        in_commitment_direction,
-        in_amount,
-        in_commitment_nullifier_hash,
-        in_private_key,
-        in_bliding,
-        receiver_account,
-        out_receiver_amount,
-        out_receiver_bliding,
-        out_receiver_commitment,
-        out_sender_amount,
-        out_sender_bliding,
-        out_sender_commitment,
-        new_root,
-        [new_first_level_l],
-        [true]
-    );
-}
-#[test(should_fail)]
-fn test_missing_new_commits() {
-    // generate amounts
-    let in_amount = 10;
-    let out_receiver_amount = 2;
-    let out_sender_amount = 8000; // Notice here
-
-    // account details
-    let in_private_key = 1;
-    let sender_account = generate_account(in_private_key);
-
-    // generate commitment
-    let in_bliding = 2;
-    let in_commitment = generate_commitment(sender_account, in_amount, in_bliding);
-
-    // output commitment generation
-    let receiver_account = generate_account(100);
-    let out_sender_bliding = 3;
-    let out_receiver_bliding = 3;
-    let out_receiver_commitment = generate_commitment(receiver_account, out_receiver_amount, out_receiver_bliding);
-    let out_sender_commitment = generate_commitment(sender_account, out_sender_amount, out_sender_bliding);
-
-    // old tree
-    let old_first_level_l = hash([in_commitment, 1], 2);
-    let old_first_level_r = hash([0, 0], 2);
-    let old_root = hash([old_first_level_l, old_first_level_r], 2);
-
-    // new tree
-    let new_first_level_l = hash([in_commitment, 1], 2);
-    let new_first_level_r = hash([0, 0], 2);  // <-------------------------------------------- Missing new commitments
-    let new_root = hash([new_first_level_l, new_first_level_r], 2);
-
-    // nullifier
-    let in_commitment_path = [ 1, old_first_level_r ];
-    let in_commitment_direction = [false, false];
-    let in_commitment_nullifier = generate_nullifier(in_commitment, in_private_key, in_commitment_path);
-    let in_commitment_nullifier_hash = hash([in_commitment_nullifier], 1);
+    // in_allowance_hash
+    let in_allowance_hash = allowance_hash(owner_account, spender_account, in_allowance_value);
+    let out_allowance_hash = allowance_hash(owner_account, spender_account, out_allowance_value);
+    let in_allowance_relationship = allowance_relationship(owner_account, spender_account);
 
     main(
-        old_root,
-        in_commitment_path,
-        in_commitment_direction,
-        in_amount,
-        in_commitment_nullifier_hash,
-        in_private_key,
-        in_bliding,
+        // input commitment details
+        owner_account,
         receiver_account,
-        out_receiver_amount,
+        spender_private_key,
+        in_commitment_root,
+        in_commitment_path,
+        in_commitment_direction_selector,
+        in_commitment_bliding,
+        in_commitment_value,
+        in_commitment_spending_tracker,
+        // allowance utxo details
+        in_allowance_value,
+        in_allowance_hash,
+        in_allowance_relationship,
+        out_allowance_hash,
+        // out receiver commitment details
+        out_receiver_value,
         out_receiver_bliding,
         out_receiver_commitment,
-        out_sender_amount,
-        out_sender_bliding,
-        out_sender_commitment,
-        new_root,
-        [new_first_level_l],
-        [true]
+        // out owner commitment details
+        out_owner_value,
+        out_owner_bliding,
+        out_owner_commitment,
+        // output commitment details
+        out_root,
+        out_subtree_root_path,
+        out_subtree_direction_selector,
     );
 }
