@@ -118,7 +118,7 @@ export const useTransfer = () => {
         out_subtree_root_path: outPathProof.path
           .slice(1, MERKLE_TREE_DEPTH)
           .map((e) => formatHex(e)),
-        out_subtree_root_direction_selector:
+        out_subtree_root_direction:
           outPathProof.directionSelector.slice(1, MERKLE_TREE_DEPTH),
       });
 
