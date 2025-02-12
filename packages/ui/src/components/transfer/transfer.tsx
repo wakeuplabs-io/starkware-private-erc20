@@ -1,36 +1,89 @@
-import { useTransfer } from "@/hooks/useTransfer";
-import "./transfer.css";
-import { useCallback, useState } from "react";
+import { useState, useCallback } from "react";
 import { Button } from "../ui/button";
+import { useTransfer } from "@/hooks/useTransfer";
 import { useAccount } from "@starknet-react/core";
+import { useTransferFrom } from "@/hooks/useTransferFrom";
+import "./transfer.css";
 
 const Transfer = () => {
   const { account } = useAccount();
-  const { sendTransfer, loading } = useTransfer();
+  const { sendTransfer, loading: loadingTransfer } = useTransfer();
+  const { sendTransferFrom, loading: loadingTransferFrom } = useTransferFrom();
+
+  const [useTransferFromMode, setUseTransferFromMode] = useState(false);
+
   const [recipientAddress, setRecipientAddress] = useState("");
   const [recipientPublicKey, setRecipientPublicKey] = useState("");
   const [amount, setAmount] = useState(0);
 
-  const onTransfer = useCallback(async () => {
-    sendTransfer({
-      to: {
-        address: BigInt(recipientAddress),
-        publicKey: BigInt(recipientPublicKey),
-      },
-      amount: BigInt(amount),
-    })
-      .then(() => {
-        window.alert("Transfer successful");
-      })
-      .catch((error) => {
-        console.error(error);
-        window.alert("Transfer failed");
+  const [senderAddress, setSenderAddress] = useState("");
+  const [senderPublicKey, setSenderPublicKey] = useState("");
+
+  const onSubmit = useCallback(async () => {
+    if (useTransferFromMode) {
+      await sendTransferFrom({
+        from: {
+          address: BigInt(senderAddress),
+          publicKey: BigInt(senderPublicKey),
+        },
+        to: {
+          address: BigInt(recipientAddress),
+          publicKey: BigInt(recipientPublicKey),
+        },
+        amount: BigInt(amount),
       });
-  }, [amount, recipientAddress, recipientPublicKey, sendTransfer]);
+    } else {
+      await sendTransfer({
+        to: {
+          address: BigInt(recipientAddress),
+          publicKey: BigInt(recipientPublicKey),
+        },
+        amount: BigInt(amount),
+      });
+    }
+  }, [
+    amount,
+    recipientAddress,
+    recipientPublicKey,
+    senderAddress,
+    senderPublicKey,
+    sendTransfer,
+    sendTransferFrom,
+    useTransferFromMode,
+  ]);
 
   return (
     <div className="transfer-container">
       <h2 className="text-lg text-center">Transfer</h2>
+
+      <label className="transfer-checkbox">
+        <input
+          type="checkbox"
+          checked={useTransferFromMode}
+          onChange={(e) => setUseTransferFromMode(e.target.checked)}
+        />
+        Use TransferFrom
+      </label>
+
+      {useTransferFromMode && (
+        <>
+          <input
+            className="transfer-input"
+            type="text"
+            placeholder="Sender Address"
+            value={senderAddress}
+            onChange={(e) => setSenderAddress(e.target.value)}
+          />
+
+          <input
+            className="transfer-input"
+            type="text"
+            placeholder="Sender Public Key"
+            value={senderPublicKey}
+            onChange={(e) => setSenderPublicKey(e.target.value)}
+          />
+        </>
+      )}
 
       <input
         className="transfer-input"
@@ -58,10 +111,10 @@ const Transfer = () => {
 
       <Button
         className="w-full mt-2"
-        onClick={onTransfer}
-        disabled={loading || !account}
+        onClick={onSubmit}
+        disabled={loadingTransfer || loadingTransferFrom || !account}
       >
-        {!account ? "Connect Wallet" : loading ? "Loading..." : "Transfer "}
+        {!account ? "Connect Wallet" : (loadingTransfer || loadingTransferFrom) ? "Loading..." : useTransferFromMode ? "Transfer From" : "Transfer"}
       </Button>
     </div>
   );

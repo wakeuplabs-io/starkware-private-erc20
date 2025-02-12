@@ -24,7 +24,6 @@ const ActionBar = () => {
         >
           Approve
         </Button>
-        {/* Se pueden agregar más botones como TransferFrom */}
       </div>
 
       <div className="action-content">

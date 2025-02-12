@@ -71,6 +71,17 @@ class BarretenbergService {
     ]);
     return nullifier;
   }
+
+  static async generateSpendingTracker(
+    commitment: bigint,
+    bliding: bigint
+  ): Promise<bigint> {
+    const nullifier = await BarretenbergService.generateHashArray([
+      new Fr(commitment % Fr.MODULUS),
+      new Fr(bliding % Fr.MODULUS),
+    ]);
+    return nullifier;
+  }
 }
 
 export { BarretenbergService };
