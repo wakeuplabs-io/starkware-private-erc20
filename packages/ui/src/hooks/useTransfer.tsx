@@ -36,6 +36,8 @@ export const useTransfer = () => {
     };
     amount: bigint;
   }) => {
+    setLoading(true);
+
     try {
       if (!contract) {
         throw new Error("Contract not initialized");
