@@ -1,4 +1,0 @@
-export enum CIRCUIT_TYPE {
-  TRANSFER = "TRANSFER",
-  APPROVE = "APPROVE"
-}

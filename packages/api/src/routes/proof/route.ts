@@ -1,14 +1,13 @@
-import { CIRCUIT_TYPE } from "@/constants.js";
-import { GenerateProofDto } from "@/dtos/generate-proof.dto.js";
-import { generateProof } from "@/services/proof.service.js";
+import { ApproveProofDto, TransferProofDto } from "@/dtos/generate-proof.dto.js";
+import { generateApproveProof, generateTransferProof } from "@/services/proof.service.js";
 import { Request, Response, Router, NextFunction } from "express";
 
 const router = Router();
 
 router.post("/transfer", async (req: Request, res: Response, next: NextFunction) => {
   try {
-    const body: GenerateProofDto = req.body;
-    const proofArray = await generateProof(CIRCUIT_TYPE.TRANSFER, body);
+    const body: TransferProofDto = req.body;
+    const proofArray = await generateTransferProof(body);
 
     res.status(201).send(proofArray);
   } catch (error) {
@@ -18,8 +17,8 @@ router.post("/transfer", async (req: Request, res: Response, next: NextFunction)
 
 router.post("/approve", async (req: Request, res: Response, next: NextFunction) => {
   try {
-    const body: GenerateProofDto = req.body;
-    const proofArray = await generateProof(CIRCUIT_TYPE.APPROVE, body);
+    const body: ApproveProofDto = req.body;
+    const proofArray = await generateApproveProof(body);
 
     res.status(201).send(proofArray);
   } catch (error) {

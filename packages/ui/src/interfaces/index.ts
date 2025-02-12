@@ -22,7 +22,7 @@ export interface ReceiverAccount {
   nullifier: string;
 }
 
-export interface GenerateProofDto {
+export interface TransferProofDto {
   in_amount: string;
   in_bliding: string;
   in_commitment_nullifier_hash: string;
@@ -40,4 +40,12 @@ export interface GenerateProofDto {
   out_sender_commitment: string;
   out_subtree_root_path: string[];
   out_subtree_root_direction: boolean[];
+}
+
+export interface ApproveProofDto {
+  in_private_key: string,
+  in_amount: string,
+  in_spender: string,
+  out_allowance_hash: string,
+  out_relationship_id: string,
 }

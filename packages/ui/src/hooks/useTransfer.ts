@@ -37,6 +37,7 @@ export const useTransfer = () => {
       if (!contract) {
         throw new Error("Contract not initialized");
       }
+      setLoading(true);
 
       const spenderAccount = await AccountService.getAccount();
 
@@ -44,6 +45,7 @@ export const useTransfer = () => {
       const inputNote = senderNotes
         .sort((a, b) => parseInt((b.value! - a.value!).toString()))
         .find((n) => n.value! > props.amount);
+        
       if (!inputNote) {
         throw new Error("Insufficient funds in notes");
       }
@@ -93,7 +95,7 @@ export const useTransfer = () => {
       );
       const nullifierHash = await BarretenbergService.generateHash(nullifier);
 
-      const generatedProof = await ProofService.generateProof({
+      const generatedProof = await ProofService.generateTransferProof({
         in_amount: formatHex(inputNote.value!),
         in_bliding: formatHex(inputNote.bliding!),
         in_commitment_nullifier_hash: formatHex(nullifierHash),
