@@ -92,38 +92,33 @@ export const useTransfer = () => {
       if (!outPathProof) {
         throw new Error("Couldn't generate output path proof");
       }
-      const nullifier = await BarretenbergService.generateNullifier(
+
+      const spendingTracker = await BarretenbergService.generateSpendingTracker(
         inputNote.commitment,
-        spenderAccount.privateKey,
-        inputNote.index
+        inputNote.bliding!
       );
-      const nullifierHash = await BarretenbergService.generateHash(nullifier);
 
       const generatedProof = await ProofService.generateTransferProof({
-        // accounts details
-        sender_private_key: formatHex(spenderAccount.privateKey % Fr.MODULUS),
+        owner_private_key: formatHex(spenderAccount.privateKey % Fr.MODULUS),
         receiver_account: formatHex(props.to.address),
-        // utxo inputs
         in_commitment_root: formatHex(inRoot),
         in_commitment_path: inputCommitmentProof.path.map((e) => formatHex(e)),
-        in_commitment_direction_selector:
-          inputCommitmentProof.directionSelector,
+        in_commitment_direction_selector: inputCommitmentProof.directionSelector,
         in_commitment_value: formatHex(inputNote.value!),
         in_commitment_bliding: formatHex(inputNote.bliding!),
-        in_commitment_nullifier_hash: formatHex(nullifierHash),
-        // utxo outputs
-        out_receiver_commitment_value: formatHex(props.amount),
-        out_receiver_commitment_bliding: formatHex(outReceiverNote.bliding),
+        in_commitment_spending_tracker: formatHex(spendingTracker),
+        out_receiver_value: formatHex(props.amount),
+        out_receiver_bliding: formatHex(outReceiverNote.bliding),
         out_receiver_commitment: formatHex(outReceiverNote.commitment),
-        out_sender_commitment_value: formatHex(outSenderAmount),
-        out_sender_commitment_bliding: formatHex(outSenderNote.bliding),
+        out_sender_value: formatHex(outSenderAmount),
+        out_sender_bliding: formatHex(outSenderNote.bliding),
+        out_root: formatHex(outRoot),
         out_sender_commitment: formatHex(outSenderNote.commitment),
         // updated root
-        out_root: formatHex(outRoot),
         out_subtree_root_path: outPathProof.path
           .slice(1, MERKLE_TREE_DEPTH)
           .map((e) => formatHex(e)),
-        out_subtree_root_direction_selector:
+        out_subtree_root_direction:
           outPathProof.directionSelector.slice(1, MERKLE_TREE_DEPTH),
       });
 

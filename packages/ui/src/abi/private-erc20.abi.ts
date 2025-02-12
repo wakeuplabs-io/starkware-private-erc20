@@ -63,6 +63,16 @@ const privateTokenAbi: Abi = [
     ]
   },
   {
+    "name": "core::array::Span::<core::byte_array::ByteArray>",
+    "type": "struct",
+    "members": [
+      {
+        "name": "snapshot",
+        "type": "@core::array::Array::<core::byte_array::ByteArray>"
+      }
+    ]
+  },
+  {
     "name": "contracts::privado::privado::IPrivado",
     "type": "interface",
     "items": [
@@ -155,12 +165,8 @@ const privateTokenAbi: Abi = [
         "type": "function",
         "inputs": [
           {
-            "name": "owner",
-            "type": "core::starknet::contract_address::ContractAddress"
-          },
-          {
-            "name": "spender",
-            "type": "core::starknet::contract_address::ContractAddress"
+            "name": "relationship_hash",
+            "type": "core::integer::u256"
           }
         ],
         "outputs": [
@@ -175,16 +181,16 @@ const privateTokenAbi: Abi = [
         "type": "function",
         "inputs": [
           {
-            "name": "sender",
-            "type": "core::starknet::contract_address::ContractAddress"
+            "name": "proof",
+            "type": "core::array::Span::<core::felt252>"
           },
           {
-            "name": "recipient",
-            "type": "core::starknet::contract_address::ContractAddress"
+            "name": "owner_enc_output",
+            "type": "core::byte_array::ByteArray"
           },
           {
-            "name": "amount",
-            "type": "core::integer::u256"
+            "name": "receiver_enc_output",
+            "type": "core::byte_array::ByteArray"
           }
         ],
         "outputs": [
@@ -199,12 +205,12 @@ const privateTokenAbi: Abi = [
         "type": "function",
         "inputs": [
           {
-            "name": "spender",
-            "type": "core::starknet::contract_address::ContractAddress"
+            "name": "proof",
+            "type": "core::array::Span::<core::felt252>"
           },
           {
-            "name": "amount",
-            "type": "core::integer::u256"
+            "name": "enc_outputs",
+            "type": "core::array::Span::<core::byte_array::ByteArray>"
           }
         ],
         "outputs": [
@@ -267,13 +273,40 @@ const privateTokenAbi: Abi = [
   },
   {
     "kind": "struct",
-    "name": "contracts::privado::privado::Privado::NewNullifier",
+    "name": "contracts::privado::privado::Privado::NewSpendingTracker",
     "type": "event",
     "members": [
       {
         "kind": "data",
-        "name": "nullifier_hash",
+        "name": "spending_tracker",
         "type": "core::integer::u256"
+      }
+    ]
+  },
+  {
+    "kind": "struct",
+    "name": "contracts::privado::privado::Privado::Approval",
+    "type": "event",
+    "members": [
+      {
+        "kind": "data",
+        "name": "timestamp",
+        "type": "core::integer::u64"
+      },
+      {
+        "kind": "data",
+        "name": "allowance_hash",
+        "type": "core::integer::u256"
+      },
+      {
+        "kind": "data",
+        "name": "allowance_relationship",
+        "type": "core::integer::u256"
+      },
+      {
+        "kind": "data",
+        "name": "output_enc",
+        "type": "core::byte_array::ByteArray"
       }
     ]
   },
@@ -289,8 +322,13 @@ const privateTokenAbi: Abi = [
       },
       {
         "kind": "nested",
-        "name": "NewNullifier",
-        "type": "contracts::privado::privado::Privado::NewNullifier"
+        "name": "NewSpendingTracker",
+        "type": "contracts::privado::privado::Privado::NewSpendingTracker"
+      },
+      {
+        "kind": "nested",
+        "name": "Approval",
+        "type": "contracts::privado::privado::Privado::Approval"
       }
     ]
   }

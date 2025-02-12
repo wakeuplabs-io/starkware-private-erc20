@@ -1,3 +1,4 @@
+import { Approve } from "@/components/approve";
 import { Notes } from "@/components/notes";
 import { Receive } from "@/components/receive";
 import { Transfer } from "@/components/transfer";
@@ -15,6 +16,7 @@ enum Tab {
   Notes = "notes",
   Send = "send",
   Receive = "receive",
+  Approve = "approve",
 }
 
 function Index() {
@@ -36,7 +38,7 @@ function Index() {
           </div>
         </div>
 
-        <div className="gap-2 grid grid-cols-3 max-w-sm">
+        <div className="gap-2 grid grid-cols-4 max-w-sm">
           <button
             onClick={() => setTab(Tab.Notes)}
             className={cn(
@@ -73,12 +75,25 @@ function Index() {
           >
             <ArrowDown className="h-4" /> Receive
           </button>
+          <button
+            onClick={() => setTab(Tab.Approve)}
+            className={cn(
+              "h-9 px-3 text-sm border border-input hover:bg-accent bg-transparent rounded-lg border-primary flex items-center gap-1",
+              {
+                "bg-gradient-to-r from-[#9A5583] via-[#35269A] to-[#181972] text-white border-none":
+                  tab === Tab.Approve,
+              }
+            )}
+          >
+            <ArrowDown className="h-4" /> Approve
+          </button>
         </div>
       </div>
 
       {tab === Tab.Notes && <Notes />}
       {tab === Tab.Send && <Transfer />}
       {tab === Tab.Receive && <Receive />}
+      {tab === Tab.Approve && <Approve />}
     </div>
   );
 }
