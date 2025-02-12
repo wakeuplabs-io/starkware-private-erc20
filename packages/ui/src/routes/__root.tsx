@@ -54,7 +54,7 @@ function RootLayout() {
           </div>
         </header>
 
-        <main className="px-6 lg:px-8 flex flex-col justify-between items-center bg-muted flex-1 pb-12">
+        <main className="px-4 lg:px-8 flex flex-col justify-between items-center bg-muted flex-1 pb-12">
           <div className="max-w-xl mx-auto w-full pt-8">
             <Outlet />
           </div>
@@ -62,7 +62,7 @@ function RootLayout() {
           <img
             src="/wakeup-powered.png"
             alt=""
-            className="h-[42px] w-[120px] lg:hidden"
+            className="h-[42px] w-[120px] lg:hidden mt-10"
           />
         </main>
       </div>

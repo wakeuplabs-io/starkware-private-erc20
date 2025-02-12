@@ -3,7 +3,7 @@ import { useCallback, useState } from "react";
 import { Button } from "./ui/button";
 import { Input } from "./ui/input";
 
-const Transfer = () => {
+export const Transfer: React.FC = () => {
   const { sendTransfer, loading } = useTransfer();
   const [recipientAddress, setRecipientAddress] = useState("");
   const [recipientPublicKey, setRecipientPublicKey] = useState("");
@@ -60,4 +60,3 @@ const Transfer = () => {
   );
 };
 
-export default Transfer;

@@ -1,5 +1,7 @@
-import Transfer from "@/components/transfer";
-import { Button, buttonVariants } from "@/components/ui/button";
+import { Notes } from "@/components/notes";
+import { Receive } from "@/components/receive";
+import { Transfer } from "@/components/transfer";
+import { useBalance } from "@/hooks/useBalance";
 import { cn } from "@/lib/utils";
 import { createFileRoute } from "@tanstack/react-router";
 import { ArrowDown, ArrowUpRight, List } from "lucide-react";
@@ -17,6 +19,7 @@ enum Tab {
 
 function Index() {
   const [tab, setTab] = useState<Tab>(Tab.Notes);
+  const { balance } = useBalance();
 
   return (
     <div className="w-full">
@@ -24,7 +27,9 @@ function Index() {
         <div className="flex justify-between w-full">
           <h1 className="text-2xl lg:text-4xl font-bold">Privado</h1>
           <div className="relative">
-            <div className="text-3xl lg:text-4xl font-bold">1217.12</div>
+            <div className="text-3xl lg:text-4xl font-bold">
+              {balance.toString()}
+            </div>
             <div className="absolute bottom-0 translate-y-full right-0 text-sm lg:text-base">
               My balance
             </div>
@@ -35,7 +40,7 @@ function Index() {
           <button
             onClick={() => setTab(Tab.Notes)}
             className={cn(
-              "h-9 px-3 border border-input hover:bg-accent bg-transparent rounded-lg border-primary flex items-center gap-1",
+              "h-9 px-3 text-sm border border-input hover:bg-accent bg-transparent rounded-lg border-primary flex items-center gap-1",
               {
                 "bg-gradient-to-r from-[#9A5583] via-[#35269A] to-[#181972] text-white border-none":
                   tab === Tab.Notes,
@@ -47,7 +52,7 @@ function Index() {
           <button
             onClick={() => setTab(Tab.Send)}
             className={cn(
-              "h-9 px-3 border border-input hover:bg-accent bg-transparent rounded-lg border-primary flex items-center gap-1",
+              "h-9 px-3 text-sm border border-input hover:bg-accent bg-transparent rounded-lg border-primary flex items-center gap-1",
               {
                 "bg-gradient-to-r from-[#9A5583] via-[#35269A] to-[#181972] text-white border-none":
                   tab === Tab.Send,
@@ -59,7 +64,7 @@ function Index() {
           <button
             onClick={() => setTab(Tab.Receive)}
             className={cn(
-              "h-9 px-3 border border-input hover:bg-accent bg-transparent rounded-lg border-primary flex items-center gap-1",
+              "h-9 px-3 text-sm border border-input hover:bg-accent bg-transparent rounded-lg border-primary flex items-center gap-1",
               {
                 "bg-gradient-to-r from-[#9A5583] via-[#35269A] to-[#181972] text-white border-none":
                   tab === Tab.Receive,
@@ -71,10 +76,9 @@ function Index() {
         </div>
       </div>
 
-      <Transfer />
-      {/* notes */}
-      {/* send */}
-      {/* transfer */}
+      {tab === Tab.Notes && <Notes />}
+      {tab === Tab.Send && <Transfer />}
+      {tab === Tab.Receive && <Receive />}
     </div>
   );
 }
