@@ -1,7 +1,6 @@
 import { useContract, useSendTransaction } from "@starknet-react/core";
 import { useState } from "react";
-import privateTokenAbi from "@/abi/private-erc20.abi";
-import { PRIVATE_ERC20_CONTRACT_ADDRESS } from "@/constants";
+import { PRIVATE_ERC20_ABI, PRIVATE_ERC20_CONTRACT_ADDRESS } from "@/shared/config/constants";
 import { AccountService } from "@/services/account.service";
 import { ProofService } from "@/services/proof.service";
 import { Fr } from "@aztec/bb.js";
@@ -13,7 +12,7 @@ export const useApprove = () => {
   const [loading, setLoading] = useState(false);
 
   const { contract } = useContract({
-    abi: privateTokenAbi,
+    abi: PRIVATE_ERC20_ABI,
     address: PRIVATE_ERC20_CONTRACT_ADDRESS,
   });
 

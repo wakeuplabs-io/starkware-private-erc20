@@ -1,4 +1,4 @@
-import { DECIMALS } from "@/constants";
+import { DECIMALS } from "@/shared/config/constants";
 import { clsx, type ClassValue } from "clsx";
 import { twMerge } from "tailwind-merge";
 

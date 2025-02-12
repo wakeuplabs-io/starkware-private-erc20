@@ -2,7 +2,7 @@ import "./index.css";
 import ProvidersWrapper from "@/providers/providers-wrapper.tsx";
 import React from "react";
 import ReactDOM from "react-dom/client";
-import { router } from "@/shared/config/tanstackRouter";
+import { router } from "@/shared/config/router.ts";
 import StarknetProvider from "./providers/starknet-provider.tsx";
 import { RouterProvider } from "@tanstack/react-router";
 
