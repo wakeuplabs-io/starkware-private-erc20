@@ -23,9 +23,10 @@ pub fn main(
     out_sender_value: Field,
     out_sender_bliding: Field,
     out_sender_commitment: pub Field,
+    // updated root
     out_root: pub Field,
     out_subtree_root_path: [Field; DEPTH - 1], // path of hash(out_sender_commitment, out_receiver_commitment)
-    out_subtree_root_direction: [bool; DEPTH - 1], // path direction of hash(out_sender_commitment, out_receiver_commitment)
+    out_subtree_root_direction_selector: [bool; DEPTH - 1], // path direction of hash(out_sender_commitment, out_receiver_commitment)
 ) {
     // check in_commitment is included in the root and belongs to sender
     let sender_account = account(owner_private_key);
@@ -61,7 +62,7 @@ pub fn main(
     assert_merkle_inclusion(
         in_commitment_root,
         out_subtree_root_path,
-        out_subtree_root_direction,
+        out_subtree_root_direction_selector,
         zero_subtree_root,
         "Missing commitments from old tree in new tree",
     );
@@ -71,7 +72,7 @@ pub fn main(
     assert_merkle_inclusion(
         out_root,
         out_subtree_root_path,
-        out_subtree_root_direction,
+        out_subtree_root_direction_selector,
         new_subtree_root,
         "New commits not included in new root",
     );
@@ -253,6 +254,7 @@ fn test_unlinked_root() {
         [true],
     );
 }
+
 #[test(should_fail)]
 fn test_missing_new_commits() {
     // generate amounts

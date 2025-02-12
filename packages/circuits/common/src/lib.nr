@@ -1,2 +1,2 @@
-mod merkle_tree;
-mod definitions;
+pub mod definitions;
+pub mod merkle_tree;

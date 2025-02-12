@@ -14,33 +14,25 @@ export default $config({
     };
   },
   async run() {
+    const vpc = new sst.aws.Vpc(`${PROJECT_NAME}-vpc`)
 
-    // TODO: hotfix, fix deployment script and remove this
-    const api = { url: process.env.API_URL };
-    // const cluster = new sst.aws.Cluster(`${PROJECT_NAME}-cluster`, {
-    //   vpc: {
-    //     id: process.env.VPC_ID,
-    //     securityGroups: process.env.SECURITY_GROUPS.split(","),
-    //     loadBalancerSubnets: process.env.SUBNETS.split(","),
-    //     containerSubnets: process.env.SUBNETS.split(","),
-    //     cloudmapNamespaceId: process.env.CLOUDMAP_NAMESPACE_ID,
-    //     cloudmapNamespaceName: process.env.CLOUDMAP_NAMESPACE_NAME,
-    //   }
-    // });
-    // const api = cluster.addService(`${PROJECT_NAME}-api`, {
-    //   cpu: "1 vCPU",
-    //   memory: "2 GB",
-    //   image: {
-    //     dockerfile: "packages/api/Dockerfile",
-    //     context: "packages/api",
-    //   },
-    //   loadBalancer: {
-    //     ports: [{ listen: "80/http" }],
-    //   },
-    //   dev: {
-    //     command: "npm run dev",
-    //   },
-    // });
+    const cluster = new sst.aws.Cluster(`${PROJECT_NAME}-cluster`, {
+      vpc
+    });
+    const api = cluster.addService(`${PROJECT_NAME}-api`, {
+      cpu: "1 vCPU",
+      memory: "2 GB",
+      image: {
+        dockerfile: "packages/api/Dockerfile",
+        context: "packages/api",
+      },
+      loadBalancer: {
+        ports: [{ listen: "80/http" }],
+      },
+      dev: {
+        command: "npm run dev",
+      },
+    });
 
     const ui = new sst.aws.StaticSite(`${PROJECT_NAME}-ui`, {
       path: "packages/ui",

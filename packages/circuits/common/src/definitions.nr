@@ -1,6 +1,6 @@
 use std::hash::poseidon2::Poseidon2::hash;
 
-// account = hash(private_key) // for easier verification in proof
+// account = hash(private_key) 
 pub fn account(private_key: Field) -> Field {
     hash([private_key], 1)
 }
@@ -15,7 +15,7 @@ pub fn commitment_tracker(commitment: Field, bliding: Field) -> Field {
     hash([commitment, bliding], 3)
 }
 
-// nullifier = hash(commitment, private_key, path)
+// nullifier = hash(commitment, private_key, leaf_index)
 pub fn nullifier(
     commitment: Field,
     private_key: Field,

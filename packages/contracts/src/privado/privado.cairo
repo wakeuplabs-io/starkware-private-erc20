@@ -20,15 +20,13 @@ pub trait IPrivado<TContractState> {
     /// Moves `amount` tokens from the caller's token balance to `to`.
     /// It does so secretly without reveling amounts nor identities.
     /// It'll verify UTXO secretly through a zk proof and emit the corresponding events while
-    /// nullifying the spent notes.
+    /// nullifying the inputs.
     ///
     /// Requirements:
     ///
     /// - `proof` validates utxos, ownership and exposes public inputs later
-    /// - `sender_enc_output` is the amount of the change note encrypted with the sender public
-    ///    key
-    /// - `receiver_enc_output` is the amount of the note encrypted with the receiver
-    ///    public key
+    /// - `sender_enc_output` encrypted sender change commitment data
+    /// - `receiver_enc_output` encrypted receiver change commitment data
     ///
     /// Emits a `NewCommitment` event.
     fn transfer(
@@ -38,16 +36,10 @@ pub trait IPrivado<TContractState> {
         receiver_enc_output: ByteArray,
     ) -> bool;
 
-    /// Returns the remaining number of tokens that `spender` is
-    /// allowed to spend on behalf of `owner` through `transfer_from`.
-    /// This is zero by default.
-    /// This value changes when `approve` or `transfer_from` are called.
-    fn allowance(self: @TContractState, allowance_hash: u256) -> u256;
+    /// Returns the allowance_hash for the relationship_hash
+    fn allowance(self: @TContractState, relationship_hash: u256) -> u256;
 
     /// Moves `amount` tokens from the caller's token balance to `to`.
-    ///
-    /// Requirements:
-    ///
     fn transfer_from(
         ref self: TContractState,
         proof: Span<felt252>,
@@ -57,12 +49,6 @@ pub trait IPrivado<TContractState> {
 
 
     /// Sets `amount` as the allowance of `spender` over the caller’s tokens.
-    ///
-    /// Requirements:
-    ///
-    /// - `spender` is not the zero address.
-    ///
-    /// Emits an `Approval` event.
     fn approve(
         ref self: TContractState, proof: Span<felt252>, enc_outputs: Span<ByteArray>,
     ) -> bool;
@@ -130,8 +116,6 @@ pub mod Privado {
 
     /// Emitted when a transfer happens, we'll create 2 entries, one for the sender as a utxo
     /// and one for the receiver.
-    /// - `output_enc` should be encrypted with the note owner public key
-    /// - `commitment`
     #[derive(Drop, starknet::Event)]
     pub struct NewCommitment {
         pub commitment: u256,
@@ -140,7 +124,6 @@ pub mod Privado {
     }
 
     /// Emitted when a a note is nullified
-    /// - `spending_tracker` 
     #[derive(Drop, starknet::Event)]
     pub struct NewSpendingTracker {
         pub spending_tracker: u256,
@@ -310,8 +293,8 @@ pub mod Privado {
             true
         }
 
-        fn allowance(self: @ContractState, allowance_hash: u256) -> u256 {
-            self.allowances.entry(allowance_hash).read()
+        fn allowance(self: @ContractState, relationship_hash: u256) -> u256 {
+            self.allowances.entry(relationship_hash).read()
         }
 
 
@@ -376,7 +359,7 @@ pub mod Privado {
         /// Requirements:
         ///
         /// - `commitment` is the commitment that will be created
-        /// - `output_enc` is amount encrypted with the receiver public key
+        /// - `output_enc` is the commitment data encrypted with owner public key
         ///
         /// Emits a `NewCommitment` event.
         fn _create_note(ref self: ContractState, commitment: u256, output_enc: ByteArray) {
@@ -390,7 +373,7 @@ pub mod Privado {
             self.current_commitment_index.write(current_index + 1);
         }
 
-        /// Internal method that spends notes
+        /// Internal method that spends notes. First check it's not already spent, then spend it
         ///
         /// Requirements:
         ///
