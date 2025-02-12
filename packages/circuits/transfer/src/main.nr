@@ -17,11 +17,11 @@ pub fn main(
     in_commitment_bliding: Field,
     in_commitment_spending_tracker: pub Field,
     // utxo outputs
-    out_receiver_value: Field,
-    out_receiver_bliding: Field,
+    out_receiver_commitment_value: Field,
+    out_receiver_commitment_bliding: Field,
     out_receiver_commitment: pub Field,
-    out_sender_value: Field,
-    out_sender_bliding: Field,
+    out_sender_commitment_value: Field,
+    out_sender_commitment_bliding: Field,
     out_sender_commitment: pub Field,
     // updated root
     out_root: pub Field,
@@ -43,18 +43,20 @@ pub fn main(
     // check utxo
     assert_eq(
         in_commitment_value,
-        out_receiver_value + out_sender_value,
+        out_receiver_commitment_value + out_sender_commitment_value,
         "Invalid UTXO amounts",
     );
 
     // validate commitment amounts and receivers are correct
     assert_eq(
-        commitment(sender_account, out_sender_value, out_sender_bliding),
+        commitment(sender_account, out_sender_commitment_value, out_sender_commitment_bliding),
         out_sender_commitment,
+          "Invalid out sender commitment",
     );
     assert_eq(
-        commitment(receiver_account, out_receiver_value, out_receiver_bliding),
+        commitment(receiver_account, out_receiver_commitment_value, out_receiver_commitment_bliding),
         out_receiver_commitment,
+            "Invalid out receiver commitment",
     );
 
     // check we're inserting in a previously empty subtree
@@ -82,8 +84,8 @@ pub fn main(
 fn test_allowed_transfer() {
     // generate amounts
     let in_commitment_value = 10;
-    let out_receiver_value = 2;
-    let out_sender_value = 8;
+    let out_receiver_commitment_value = 2;
+    let out_sender_commitment_value = 8;
 
     // account details
     let sender_private_key = 1;
@@ -96,11 +98,11 @@ fn test_allowed_transfer() {
 
     // output commitment generation
     let receiver_account = account(100);
-    let out_sender_bliding = 3;
-    let out_receiver_bliding = 3;
+    let out_sender_commitment_bliding = 3;
+    let out_receiver_commitment_bliding = 3;
     let out_receiver_commitment =
-        commitment(receiver_account, out_receiver_value, out_receiver_bliding);
-    let out_sender_commitment = commitment(sender_account, out_sender_value, out_sender_bliding);
+        commitment(receiver_account, out_receiver_commitment_value, out_receiver_commitment_bliding);
+    let out_sender_commitment = commitment(sender_account, out_sender_commitment_value, out_sender_commitment_bliding);
 
     // old tree
     let old_first_level_l = hash([in_commitment, 1], 2);
@@ -125,11 +127,11 @@ fn test_allowed_transfer() {
         in_commitment_value,
         in_commitment_bliding,
         in_commitment_spending_tracker,
-        out_receiver_value,
-        out_receiver_bliding,
+        out_receiver_commitment_value,
+        out_receiver_commitment_bliding,
         out_receiver_commitment,
-        out_sender_value,
-        out_sender_bliding,
+        out_sender_commitment_value,
+        out_sender_commitment_bliding,
         out_sender_commitment,
         out_root,
         [new_first_level_l],
@@ -141,8 +143,8 @@ fn test_allowed_transfer() {
 fn test_invalid_utxo_amounts() {
     // generate amounts
     let in_commitment_value = 10;
-    let out_receiver_value = 2;
-    let out_sender_value = 8000; // // <-------------------------------------------- out more than it should
+    let out_receiver_commitment_value = 2;
+    let out_sender_commitment_value = 8000; // // <-------------------------------------------- out more than it should
 
     // account details
     let sender_private_key = 1;
@@ -155,11 +157,11 @@ fn test_invalid_utxo_amounts() {
 
     // output commitment generation
     let receiver_account = account(100);
-    let out_sender_bliding = 3;
-    let out_receiver_bliding = 3;
+    let out_sender_commitment_bliding = 3;
+    let out_receiver_commitment_bliding = 3;
     let out_receiver_commitment =
-        commitment(receiver_account, out_receiver_value, out_receiver_bliding);
-    let out_sender_commitment = commitment(sender_account, out_sender_value, out_sender_bliding);
+        commitment(receiver_account, out_receiver_commitment_value, out_receiver_commitment_bliding);
+    let out_sender_commitment = commitment(sender_account, out_sender_commitment_value, out_sender_commitment_bliding);
 
     // old tree
     let old_first_level_l = hash([in_commitment, 1], 2);
@@ -184,11 +186,11 @@ fn test_invalid_utxo_amounts() {
         in_commitment_value,
         in_commitment_bliding,
         in_commitment_spending_tracker,
-        out_receiver_value,
-        out_receiver_bliding,
+        out_receiver_commitment_value,
+        out_receiver_commitment_bliding,
         out_receiver_commitment,
-        out_sender_value,
-        out_sender_bliding,
+        out_sender_commitment_value,
+        out_sender_commitment_bliding,
         out_sender_commitment,
         out_root,
         [new_first_level_l],
@@ -200,8 +202,8 @@ fn test_invalid_utxo_amounts() {
 fn test_unlinked_root() {
     // generate amounts
     let in_commitment_value = 10;
-    let out_receiver_value = 2;
-    let out_sender_value = 8000; // Notice here
+    let out_receiver_commitment_value = 2;
+    let out_sender_commitment_value = 8000; // Notice here
 
     // account details
     let sender_private_key = 1;
@@ -214,11 +216,11 @@ fn test_unlinked_root() {
 
     // output commitment generation
     let receiver_account = account(100);
-    let out_sender_bliding = 3;
-    let out_receiver_bliding = 3;
+    let out_sender_commitment_bliding = 3;
+    let out_receiver_commitment_bliding = 3;
     let out_receiver_commitment =
-        commitment(receiver_account, out_receiver_value, out_receiver_bliding);
-    let out_sender_commitment = commitment(sender_account, out_sender_value, out_sender_bliding);
+        commitment(receiver_account, out_receiver_commitment_value, out_receiver_commitment_bliding);
+    let out_sender_commitment = commitment(sender_account, out_sender_commitment_value, out_sender_commitment_bliding);
 
     // old tree
     let old_first_level_l = hash([in_commitment, 1], 2);
@@ -243,11 +245,11 @@ fn test_unlinked_root() {
         in_commitment_value,
         in_commitment_bliding,
         in_commitment_spending_tracker,
-        out_receiver_value,
-        out_receiver_bliding,
+        out_receiver_commitment_value,
+        out_receiver_commitment_bliding,
         out_receiver_commitment,
-        out_sender_value,
-        out_sender_bliding,
+        out_sender_commitment_value,
+        out_sender_commitment_bliding,
         out_sender_commitment,
         out_root,
         [new_first_level_l],
@@ -259,8 +261,8 @@ fn test_unlinked_root() {
 fn test_missing_new_commits() {
     // generate amounts
     let in_commitment_value = 10;
-    let out_receiver_value = 2;
-    let out_sender_value = 8000; // Notice here
+    let out_receiver_commitment_value = 2;
+    let out_sender_commitment_value = 8000; // Notice here
 
     // account details
     let sender_private_key = 1;
@@ -273,11 +275,11 @@ fn test_missing_new_commits() {
 
     // output commitment generation
     let receiver_account = account(100);
-    let out_sender_bliding = 3;
-    let out_receiver_bliding = 3;
+    let out_sender_commitment_bliding = 3;
+    let out_receiver_commitment_bliding = 3;
     let out_receiver_commitment =
-        commitment(receiver_account, out_receiver_value, out_receiver_bliding);
-    let out_sender_commitment = commitment(sender_account, out_sender_value, out_sender_bliding);
+        commitment(receiver_account, out_receiver_commitment_value, out_receiver_commitment_bliding);
+    let out_sender_commitment = commitment(sender_account, out_sender_commitment_value, out_sender_commitment_bliding);
 
     // old tree
     let old_first_level_l = hash([in_commitment, 1], 2);
@@ -302,11 +304,11 @@ fn test_missing_new_commits() {
         in_commitment_value,
         in_commitment_bliding,
         in_commitment_spending_tracker,
-        out_receiver_value,
-        out_receiver_bliding,
+        out_receiver_commitment_value,
+        out_receiver_commitment_bliding,
         out_receiver_commitment,
-        out_sender_value,
-        out_sender_bliding,
+        out_sender_commitment_value,
+        out_sender_commitment_bliding,
         out_sender_commitment,
         out_root,
         [new_first_level_l],

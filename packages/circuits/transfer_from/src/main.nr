@@ -24,7 +24,7 @@ pub fn main(
     in_allowance_hash: pub Field,
     in_allowance_relationship: pub Field,
     out_allowance_hash: pub Field,
-    // out receiver commitment details
+    // out receiver commitment detailsa
     out_receiver_value: Field,
     out_receiver_bliding: Field,
     out_receiver_commitment: pub Field,
