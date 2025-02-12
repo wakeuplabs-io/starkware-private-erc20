@@ -174,7 +174,7 @@ export class NotesService {
               account.privateKey
             )
           );
-
+          
           const nullifier = await BarretenbergService.generateNullifier(
             commitment,
             account.privateKey,

@@ -21,8 +21,6 @@ class BarretenbergService {
     return BigInt(bb.poseidon2Hash(inputs).toString());
   }
 
-  // "0xc87c78ad8a509a532b761404065873cf"
-
   static async generateNote(
     toAddress: bigint,
     toPublicKey: bigint,

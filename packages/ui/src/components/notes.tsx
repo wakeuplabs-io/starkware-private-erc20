@@ -29,8 +29,17 @@ export const Notes: React.FC = () => {
 
       {sortedNotes && show && (
         <ul className="divide-y border-t">
+          {sortedNotes.length === 0 && (
+            <li className="flex justify-between py-6 pr-2">
+              <span className="text-muted-foreground">No notes</span>
+            </li>
+          )}
+
           {sortedNotes.map((note) => (
-            <li key={note.commitment} className="flex justify-between py-6 pr-2">
+            <li
+              key={note.commitment}
+              className="flex justify-between py-6 pr-2"
+            >
               <span
                 className={cn({
                   "line-through": note.spent,
