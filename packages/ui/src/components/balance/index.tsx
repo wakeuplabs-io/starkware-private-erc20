@@ -1,7 +1,7 @@
-import { useNotes } from "@/hooks/useNotes";
+import { useBalance } from "@/hooks/useBalance";
 
 const Balance = () => {
-  const { balance } = useNotes();
+  const { balance } = useBalance();
 
   return (
     <div className="w-full border bg-muted p-4 rounded-md text-center">
