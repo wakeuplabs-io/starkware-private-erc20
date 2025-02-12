@@ -1,0 +1,9 @@
+Prover.toml
+contracts
+build
+calldata.txt
+
+
+target/*
+!target/vk.bin
+!target/*.json

@@ -15,15 +15,6 @@ pub fn commitment_tracker(commitment: Field, bliding: Field) -> Field {
     hash([commitment, bliding], 3)
 }
 
-// nullifier = hash(commitment, private_key, leaf_index)
-pub fn nullifier(
-    commitment: Field,
-    private_key: Field,
-    index: Field,
-) -> Field {
-    hash([commitment, private_key, index], 3)
-}
-
 // allowance_hash = hash(owner, spender, value)
 pub fn allowance_hash(owner: Field, spender: Field, value: Field) -> Field {
     hash([owner, spender, value], 3)
