@@ -1,9 +1,11 @@
 export interface Note {
-  commitment: bigint;
-  bliding?: bigint;
-  encryptedOutput: string;
-  value?: bigint;
   index: bigint;
+  commitment: bigint;
+  encryptedOutput: string;
+  bliding?: bigint;
+  value?: bigint;
+  spent?: boolean;
+  nullifierHash?: bigint;
 }
 
 export interface CommitmentEvent {

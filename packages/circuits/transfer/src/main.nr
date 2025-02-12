@@ -7,7 +7,7 @@ global DEPTH: u32 = 2;
 
 pub fn main(
     // accounts details
-    owner_private_key: Field,
+    sender_private_key: Field,
     receiver_account: Field,
     // utxo inputs
     in_commitment_root: pub Field,
@@ -23,12 +23,13 @@ pub fn main(
     out_sender_value: Field,
     out_sender_bliding: Field,
     out_sender_commitment: pub Field,
+    // updated root
     out_root: pub Field,
     out_subtree_root_path: [Field; DEPTH - 1], // path of hash(out_sender_commitment, out_receiver_commitment)
-    out_subtree_root_direction: [bool; DEPTH - 1], // path direction of hash(out_sender_commitment, out_receiver_commitment)
+    out_subtree_root_direction_selector: [bool; DEPTH - 1], // path direction of hash(out_sender_commitment, out_receiver_commitment)
 ) {
     // check in_commitment is included in the root and belongs to sender
-    let sender_account = account(owner_private_key);
+    let sender_account = account(sender_private_key);
     let in_commitment = commitment(sender_account, in_commitment_value, in_commitment_bliding);
     assert_merkle_inclusion(
         in_commitment_root,
@@ -61,7 +62,7 @@ pub fn main(
     assert_merkle_inclusion(
         in_commitment_root,
         out_subtree_root_path,
-        out_subtree_root_direction,
+        out_subtree_root_direction_selector,
         zero_subtree_root,
         "Missing commitments from old tree in new tree",
     );
@@ -71,7 +72,7 @@ pub fn main(
     assert_merkle_inclusion(
         out_root,
         out_subtree_root_path,
-        out_subtree_root_direction,
+        out_subtree_root_direction_selector,
         new_subtree_root,
         "New commits not included in new root",
     );
@@ -85,8 +86,8 @@ fn test_allowed_transfer() {
     let out_sender_value = 8;
 
     // account details
-    let owner_private_key = 1;
-    let sender_account = account(owner_private_key);
+    let sender_private_key = 1;
+    let sender_account = account(sender_private_key);
 
     // generate commitment
     let in_commitment_bliding = 2;
@@ -116,7 +117,7 @@ fn test_allowed_transfer() {
     let in_commitment_direction_selector = [false, false];
 
     main(
-        owner_private_key,
+        sender_private_key,
         receiver_account,
         in_commitment_root,
         in_commitment_path,
@@ -144,8 +145,8 @@ fn test_invalid_utxo_amounts() {
     let out_sender_value = 8000; // // <-------------------------------------------- out more than it should
 
     // account details
-    let owner_private_key = 1;
-    let sender_account = account(owner_private_key);
+    let sender_private_key = 1;
+    let sender_account = account(sender_private_key);
 
     // generate commitment
     let in_commitment_bliding = 2;
@@ -175,7 +176,7 @@ fn test_invalid_utxo_amounts() {
     let in_commitment_direction_selector = [false, false];
 
     main(
-        owner_private_key,
+        sender_private_key,
         receiver_account,
         in_commitment_root,
         in_commitment_path,
@@ -203,8 +204,8 @@ fn test_unlinked_root() {
     let out_sender_value = 8000; // Notice here
 
     // account details
-    let owner_private_key = 1;
-    let sender_account = account(owner_private_key);
+    let sender_private_key = 1;
+    let sender_account = account(sender_private_key);
 
     // generate commitment
     let in_commitment_bliding = 2;
@@ -234,7 +235,7 @@ fn test_unlinked_root() {
     let in_commitment_direction_selector = [false, false];
 
     main(
-        owner_private_key,
+        sender_private_key,
         receiver_account,
         in_commitment_root,
         in_commitment_path,
@@ -253,6 +254,7 @@ fn test_unlinked_root() {
         [true],
     );
 }
+
 #[test(should_fail)]
 fn test_missing_new_commits() {
     // generate amounts
@@ -261,8 +263,8 @@ fn test_missing_new_commits() {
     let out_sender_value = 8000; // Notice here
 
     // account details
-    let owner_private_key = 1;
-    let sender_account = account(owner_private_key);
+    let sender_private_key = 1;
+    let sender_account = account(sender_private_key);
 
     // generate commitment
     let in_commitment_bliding = 2;
@@ -292,7 +294,7 @@ fn test_missing_new_commits() {
     let in_commitment_direction_selector = [false, false];
 
     main(
-        owner_private_key,
+        sender_private_key,
         receiver_account,
         in_commitment_root,
         in_commitment_path,

@@ -17,8 +17,8 @@ pub const MERKLE_TREE_INITIAL_ROOT: u256 =
     0x2014041a4a7a0ac1ba11adeec064fdf62d54fbfb0a2a6cb1be92163d8e1f349b; // should already include the first commitment
 pub fn GET_MINT_COMMITMENT() -> (u256, ByteArray) {
     (
-        0xD8BF9DAA6A48439A3EE467CBCD7084BF4A5CE590839E9C9F63DFC91BEFE614E,
-        "wPmqd6w0l3nOdAPjLyy-nEUIGy-x_9R1zlxyyyqKlAO9eNkAEZK8nIm7Eko74rqTC74gYG7iwmYP2x-PJPbc0dNt3hKyU8SPYGHrASGzT7RDKtRaTK7pk8oJ8w3xSrSUUR3I4YsbfA4UnpC95gg",
+        0x1c028244f99518875102dff733c34fdc80f9be59ef16ecd5befbe7f4e83960b,
+        "xN15gk5bIQlJSo2N44h2v0ATGPDYcW4-zpJaKV0R0lLnT14Q5PdqXnBuDPcuVH82lHEijlx9cxcw2x5t3DmKomsM5z3YLKuNKqOqfnbIE1hNk0g5pyPaojfwG8EtxZP-UygaHw4lwM3Y3qLaRX5c6kOC1A"
     )
 }
 // testnet sepolia ========================================================================
