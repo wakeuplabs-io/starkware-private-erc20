@@ -32,8 +32,8 @@ Currently, the deployer is responsible for creating the first commitment by spec
 ### Balance discovery
 
 To rediscover a user's commitment, the process works as follows:
-1. Fetch all NewCommitment { commitment, enc_output, index } events (preferably already cached, so only the latest ones are fetched).
-2. Fetch all NewNullifier { nullifier_hash } events (again, ideally cached, so only the most recent ones are fetched).
+1. Fetch all NewCommitment { commitment, enc_output, index } events
+2. Fetch all NewNullifier { nullifier_hash } events.
 3. Iterate over the commitments:
    - Attempt decryption. If successful, derive the nullifier_hash and check whether it has already been used.
    - If the nullifier_hash hasn't been used, add the commitment to the pool of usable commitments and sum up the value.
@@ -128,25 +128,27 @@ Some clarifications:
 
 Current ux goes like this:
 
-A new wallet is generated for the user per browser or one is recovered from local storage
+User connects argent wallet to pay for transaction gas. A new zk wallet is generated for the user per browser or one is recovered from local storage
 
-![wallet generations](./assets/demo-1.png)
+![user connects wallet](./assets/demo-1.png)
 
-User connects argent wallet to pay for transaction gas
+User can inspect the commitments that form their balance
 
-![user connects wallet](./assets/demo-2.png)
+![commitments before transfer](./assets/demo-2.png)
 
-Sender inputs receiver address and public key. Also fills amount
+Sender scans receiver qr code and so automatically filling address and public key
 
-![Fill transfer inputs](./assets/demo-3.png)
+![scan qr code](./assets/demo-3.png)
 
-Confirm transaction in wallet. (Example transaction https://sepolia.voyager.online/tx/0x6c6b73fd34c45c05dc9ebdf168c99a0fe1d44fd5e983d7c2bc8187baec87b78?mtm_campaign=argent-redirect&mtm_source=argent&mtm_medium=referral)
+![filled form](./assets/demo-4.png)
 
-![confirm transaction](./assets/demo-4.png)
+Enter amount and click transfer. Then confirm transaction in wallet. (Example transaction https://sepolia.voyager.online/tx/0x6c6b73fd34c45c05dc9ebdf168c99a0fe1d44fd5e983d7c2bc8187baec87b78?mtm_campaign=argent-redirect&mtm_source=argent&mtm_medium=referral)
 
-Receiver discovers new note and sums up balance
+![confirm transaction](./assets/demo-5.png)
 
-![receiver balance](./assets/demo-5.png)
+A little time after receiver has balance available. They can also inspect nullified commitment for sender and new commitment for receiver
+
+![result showcase](./assets/demo-6.png)
 
 # Deployments
 
@@ -230,21 +232,21 @@ Deployment with just command (Same for verifier if needed). First go to `src/pri
 ```bash
 just contracts-declare-privado
 
-# class_hash: 0x008ccb72ab0cc84a8afd2644a5c1d55b13d9e91b05ef0c721aacd9ee2e3d5028
-# transaction_hash: 0x02132e8d9d7285fc9dfc65ae5fe8a4c28863de846e530f571ac8af3b8245fa9c
+# class_hash: 0x03edc6fe42273a6a33f4614b4bbfe816911cd472d3ec0ac9ae08976615e13734
+# transaction_hash: 0x019dd93085d321d04f227ec20d73c1e20659ddec40fd592704638eaf18997910
 
 # To see declaration details, visit:
-# class: https://sepolia.starkscan.co/class/0x008ccb72ab0cc84a8afd2644a5c1d55b13d9e91b05ef0c721aacd9ee2e3d5028
-# transaction: https://sepolia.starkscan.co/tx/0x02132e8d9d7285fc9dfc65ae5fe8a4c28863de846e530f571ac8af3b8245fa9c
+# class: https://sepolia.starkscan.co/class/0x03edc6fe42273a6a33f4614b4bbfe816911cd472d3ec0ac9ae08976615e13734
+# transaction: https://sepolia.starkscan.co/tx/0x019dd93085d321d04f227ec20d73c1e20659ddec40fd592704638eaf18997910
 
-just contracts-deploy-privado 0x008ccb72ab0cc84a8afd2644a5c1d55b13d9e91b05ef0c721aacd9ee2e3d5028
+just contracts-deploy-privado 0x03edc6fe42273a6a33f4614b4bbfe816911cd472d3ec0ac9ae08976615e13734
 
-# contract_address: 0x0259a6a2b5e664b71518462d9857944982b76f1e49d57abf14b6c64dd5b5894e
-# transaction_hash: 0x01c471bc2156aa73c7cad8a91d910a0cc72f3954300d28ab3e7baa8d9ff213d2
+# contract_address: 0x0164a531a23f90df1d1780ccc5753f56c39021ca2a5874a1237cf6d2d301fa7d
+# transaction_hash: 0x049d2fb5177a1f873cdc8fb89cae67fcd98c46252db29df5f004e9bd44332ff8
 
 # To see deployment details, visit:
-# contract: https://sepolia.starkscan.co/contract/0x0259a6a2b5e664b71518462d9857944982b76f1e49d57abf14b6c64dd5b5894e
-# transaction: https://sepolia.starkscan.co/tx/0x01c471bc2156aa73c7cad8a91d910a0cc72f3954300d28ab3e7baa8d9ff213d2
+# contract: https://sepolia.starkscan.co/contract/0x0164a531a23f90df1d1780ccc5753f56c39021ca2a5874a1237cf6d2d301fa7d
+# transaction: https://sepolia.starkscan.co/tx/0x049d2fb5177a1f873cdc8fb89cae67fcd98c46252db29df5f004e9bd44332ff8
 ```
 
 

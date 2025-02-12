@@ -4,11 +4,11 @@ import { useContract, useProvider, useSendTransaction } from "@starknet-react/co
 import { BarretenbergService } from "@/services/bb.service";
 import privateTokenAbi from "@/abi/private-erc20.abi";
 import { PRIVATE_ERC20_CONTRACT_ADDRESS } from "@/constants";
-import { MerkleTree } from "@/utils/merkle-tree";
+import { MerkleTree } from "@/lib/merkle-tree";
 import { AccountService } from "@/services/account.service";
 import { MERKLE_TREE_DEPTH } from "@/constants";
 import { useMemo, useState } from "react";
-import { formatHex } from "@/utils/hex";
+import { formatHex } from "@/lib/utils";
 import { NotesService } from "@/services/notes.service";
 import { Provider } from "starknet";
 
