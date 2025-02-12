@@ -132,6 +132,8 @@ export const useTransfer = () => {
       ]);
 
       await sendAsync([callData]);
+    } catch (error) {
+      throw error;
     } finally {
       setLoading(false);
     }
