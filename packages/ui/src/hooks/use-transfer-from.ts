@@ -1,7 +1,6 @@
 import { useState } from "react";
 import {
   useContract,
-  useProvider,
   useSendTransaction,
 } from "@starknet-react/core";
 import {
@@ -19,11 +18,11 @@ import { BarretenbergService } from "@/services/bb.service";
 import { formatHex, parse } from "@/lib/utils";
 import { MerkleTree } from "@/lib/merkle-tree";
 import { notesService } from "@/services/notes.service";
-import { hash, num, events as Events, CallData, Provider } from "starknet";
+import { hash, num, events as Events, CallData } from "starknet";
 import { CipherService } from "@/services/cipher.service";
+import { provider } from "@/shared/config/rpc";
 
 export const useTransferFrom = () => {
-  const { provider } = useProvider() as { provider: Provider };
   const [loading, setLoading] = useState(false);
 
   const { contract } = useContract({
@@ -52,12 +51,23 @@ export const useTransferFrom = () => {
       let continuationToken = undefined;
       const approvalEvents: ApprovalEvent[] = [];
       const lastBlock = await provider.getBlock("latest");
+
+      const relationshipId = await BarretenbergService.generateHashArray([
+        new Fr(props.from.address),
+        new Fr(spenderAccount.address),
+      ]);
+
       do {
         const res = await provider.getEvents({
           address: PRIVATE_ERC20_CONTRACT_ADDRESS,
           from_block: { block_number: PRIVATE_ERC20_DEPLOY_BLOCK }, // TODO: avoid fetching all
           to_block: { block_number: lastBlock.block_number },
-          keys: [[num.toHex(hash.starknetKeccak("Approval"))]],
+          keys: [
+            [
+              num.toHex(hash.starknetKeccak("Approval")),
+              num.toHex(hash.computePedersenHashOnElements([relationshipId])),
+            ],
+          ],
           chunk_size: 10,
           continuation_token: continuationToken,
         });
@@ -84,13 +94,6 @@ export const useTransferFrom = () => {
 
         continuationToken = res.continuation_token;
       } while (continuationToken);
-
-      // TODO: filter while querying events by this relationship. Currently there's issue with data size, starknet doesn't like hash being u256.
-      const relationshipId =
-        (await BarretenbergService.generateHashArray([
-          new Fr(props.from.address),
-          new Fr(spenderAccount.address),
-        ])) % Fr.MODULUS;
 
       const approval = approvalEvents
         .filter((ae) => ae.allowance_relationship == relationshipId)

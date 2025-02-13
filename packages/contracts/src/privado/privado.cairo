@@ -1,5 +1,6 @@
 use starknet::ContractAddress;
 
+
 #[starknet::interface]
 pub trait IPrivado<TContractState> {
     /// Returns the name of the token.
@@ -80,6 +81,9 @@ pub mod Privado {
         GET_MINT_COMMITMENT,
     };
     use starknet::get_block_timestamp;
+    use core::poseidon::PoseidonTrait;
+    use core::hash::{HashStateTrait, HashStateExTrait};
+    
 
     //
     // Storage
@@ -130,10 +134,11 @@ pub mod Privado {
     }
 
     /// Emitted when user Approves external entity
+    /// - allowance_relationship = hash of relationship so we can use as key and query
     #[derive(Drop, starknet::Event)]
     pub struct Approval {
         #[key]
-        pub allowance_relationship: u256,
+        pub allowance_relationship: felt252, 
         pub timestamp: u64,
         pub allowance_hash: u256,
         pub output_enc_owner: ByteArray,
@@ -285,7 +290,7 @@ pub mod Privado {
             // emit approval event for each encryption provided
             self.emit(
                 Approval {
-                    allowance_relationship: public_inputs.out_allowance_relationship,
+                    allowance_relationship: PoseidonTrait::new().update_with(public_inputs.out_allowance_relationship).finalize(),
                     allowance_hash: public_inputs.out_allowance_hash,
                     timestamp: get_block_timestamp(),
                     output_enc_owner: output_enc_owner.clone(),

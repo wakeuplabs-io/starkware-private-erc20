@@ -1,5 +1,5 @@
 import { useCopyToClipboard } from "@/hooks/use-copy";
-import { formatHex, shortenAddress } from "@/lib/utils";
+import { formatHex, shortenString } from "@/lib/utils";
 import { AccountService } from "@/services/account.service";
 import { CopyCheckIcon, CopyIcon } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
@@ -53,7 +53,7 @@ const AddressField: React.FC<{ value: string; label: string }> = ({
     <button onClick={() => copyToClipboard(value)} disabled={isCopied} className="flex gap-2 items-start justify-center text-muted-foreground bg-transparent">
       {isCopied? <CopyCheckIcon className="h-5 w-5 m-1" /> : <CopyIcon className="h-5 w-5 m-1" />}
       <div className="text-left">
-        <div className="text-sm">{shortenAddress(value)}</div>
+        <div className="text-sm">{shortenString(value)}</div>
         <div className="text-xs">{label}</div>
       </div>
     </button>

@@ -6,6 +6,7 @@ import { QrCode } from "lucide-react";
 import { IDetectedBarcode, Scanner } from "@yudiel/react-qr-scanner";
 import { useToast } from "@/hooks/use-toast";
 import { ToastAction } from "@radix-ui/react-toast";
+import { buildExplorerUrl, shortenString } from "@/lib/utils";
 
 export const Approve: React.FC = () => {
   const { toast } = useToast();
@@ -29,16 +30,11 @@ export const Approve: React.FC = () => {
       });
 
       toast({
-        title: "Transfer successful",
-        description: `Transaction hash: ${txHash}`,
+        title: "Approve successful",
+        description: `Transaction hash: ${shortenString(txHash)}`,
         action: (
           <ToastAction
-            onClick={() =>
-              window.open(
-                `https://sepolia.voyager.online/tx/${txHash}`,
-                "_blank"
-              )
-            }
+            onClick={() => window.open(buildExplorerUrl(txHash), "_blank")}
             altText="View transaction"
           >
             View transaction
