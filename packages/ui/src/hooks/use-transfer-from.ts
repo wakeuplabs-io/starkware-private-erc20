@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useState } from "react";
 import {
   useContract,
   useProvider,
@@ -18,7 +18,7 @@ import { AccountService } from "@/services/account.service";
 import { BarretenbergService } from "@/services/bb.service";
 import { formatHex, parse } from "@/lib/utils";
 import { MerkleTree } from "@/lib/merkle-tree";
-import { NotesService } from "@/services/notes.service";
+import { notesService } from "@/services/notes.service";
 import { hash, num, events as Events, CallData, Provider } from "starknet";
 import { CipherService } from "@/services/cipher.service";
 
@@ -34,10 +34,6 @@ export const useTransferFrom = () => {
   const { sendAsync } = useSendTransaction({
     calls: undefined,
   });
-
-  const notesService = useMemo(() => {
-    return new NotesService(provider);
-  }, [provider]);
 
   const sendTransferFrom = async (props: {
     from: { address: bigint; publicKey: bigint };

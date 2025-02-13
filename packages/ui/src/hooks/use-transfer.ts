@@ -2,7 +2,6 @@ import { Fr } from "@aztec/bb.js";
 import { ProofService } from "@/services/proof.service";
 import {
   useContract,
-  useProvider,
   useSendTransaction,
 } from "@starknet-react/core";
 import { BarretenbergService } from "@/services/bb.service";
@@ -13,13 +12,11 @@ import {
 import { MerkleTree } from "@/lib/merkle-tree";
 import { AccountService } from "@/services/account.service";
 import { MERKLE_TREE_DEPTH } from "@/shared/config/constants";
-import { useMemo, useState } from "react";
+import { useState } from "react";
 import { formatHex } from "@/lib/utils";
-import { NotesService } from "@/services/notes.service";
-import { Provider } from "starknet";
+import { notesService } from "@/services/notes.service";
 
 export const useTransfer = () => {
-  const { provider } = useProvider() as { provider: Provider };
   const [loading, setLoading] = useState(false);
 
   const { contract } = useContract({
@@ -30,10 +27,6 @@ export const useTransfer = () => {
   const { sendAsync } = useSendTransaction({
     calls: undefined,
   });
-
-  const notesService = useMemo(() => {
-    return new NotesService(provider);
-  }, [provider]);
 
   const sendTransfer = async (props: {
     to: {

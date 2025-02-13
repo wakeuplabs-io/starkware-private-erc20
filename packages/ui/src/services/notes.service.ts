@@ -5,6 +5,7 @@ import { PRIVATE_ERC20_ABI, PRIVATE_ERC20_CONTRACT_ADDRESS } from "@/shared/conf
 import { BarretenbergService } from "./bb.service";
 import { AccountService } from "./account.service";
 import { CipherService } from "./cipher.service";
+import { provider } from "@/shared/config/rpc";
 
 export class NotesService {
   private provider: Provider;
@@ -200,3 +201,5 @@ export class NotesService {
     return { notes: notesExpanded, nullifiers };
   }
 }
+
+export const notesService = new NotesService(provider);

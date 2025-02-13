@@ -1,9 +1,8 @@
 import {
   useContract,
-  useProvider,
   useSendTransaction,
 } from "@starknet-react/core";
-import { useMemo, useState } from "react";
+import { useState } from "react";
 import {
   PRIVATE_ERC20_ABI,
   PRIVATE_ERC20_CONTRACT_ADDRESS,
@@ -14,13 +13,10 @@ import { Fr } from "@aztec/bb.js";
 import { formatHex, stringify } from "@/lib/utils";
 import { BarretenbergService } from "@/services/bb.service";
 import { CipherService } from "@/services/cipher.service";
-import { NotesService } from "@/services/notes.service";
-import { Provider } from "starknet";
 import { ApprovalPayload } from "@/interfaces";
-import { PhoneForwarded } from "lucide-react";
+import { notesService } from "@/services/notes.service";
 
 export const useApprove = () => {
-  const { provider } = useProvider() as { provider: Provider };
   const [loading, setLoading] = useState(false);
   const { contract } = useContract({
     abi: PRIVATE_ERC20_ABI,
@@ -31,9 +27,6 @@ export const useApprove = () => {
     calls: undefined,
   });
 
-  const notesService = useMemo(() => {
-    return new NotesService(provider);
-  }, [provider]);
 
   const sendApprove = async (props: {
     spender: {
