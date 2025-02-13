@@ -21,12 +21,13 @@ export const useApprove = () => {
   });
 
   const sendApprove = async (props: { spender: bigint; amount: bigint }) => {
+    setLoading(true);
+    
     try {
       if (!contract) {
         throw new Error("Contract not initialized");
       }
 
-      setLoading(true);
       const approverAccount = await AccountService.getAccount();
 
       const outAllowanceHash = await BarretenbergService.generateHashArray([

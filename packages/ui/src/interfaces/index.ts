@@ -14,8 +14,15 @@ export interface CommitmentEvent {
   index: bigint;
 }
 
+export interface ApprovalEvent {
+  allowance_hash: bigint;
+  allowance_relationship: bigint;
+  output_enc: string;
+  timestamp: bigint;
+}
+
 export interface DecryptedOutput {
-  value: bigint;    
+  value: bigint;
   bliding: bigint;
 }
 

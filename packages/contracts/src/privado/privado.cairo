@@ -50,7 +50,7 @@ pub trait IPrivado<TContractState> {
 
     /// Sets `amount` as the allowance of `spender` over the caller’s tokens.
     fn approve(
-        ref self: TContractState, proof: Span<felt252>, enc_outputs: Span<ByteArray>,
+        ref self: TContractState, proof: Span<felt252>, output_enc_owner: ByteArray, output_enc_spender: ByteArray
     ) -> bool;
 
 
@@ -135,7 +135,8 @@ pub mod Privado {
         pub timestamp: u64,
         pub allowance_hash: u256,
         pub allowance_relationship: u256,
-        pub output_enc: ByteArray,
+        pub output_enc_owner: ByteArray,
+        pub output_enc_spender: ByteArray,
     }
 
     //
@@ -267,7 +268,10 @@ pub mod Privado {
         }
 
         fn approve(
-            ref self: ContractState, proof: Span<felt252>, enc_outputs: Span<ByteArray>,
+            ref self: ContractState, 
+            proof: Span<felt252>, 
+            output_enc_owner: ByteArray,
+            output_enc_spender: ByteArray,
         ) -> bool {
             let public_inputs = self._verify_approve_proof(proof);
 
@@ -278,17 +282,15 @@ pub mod Privado {
                 .write(public_inputs.out_allowance_hash);
 
             // emit approval event for each encryption provided
-            for output_enc in enc_outputs {
-                self
-                    .emit(
-                        Approval {
-                            allowance_relationship: public_inputs.out_allowance_relationship,
-                            allowance_hash: public_inputs.out_allowance_hash,
-                            timestamp: get_block_timestamp(),
-                            output_enc: output_enc.clone(),
-                        },
-                    )
-            };
+            self.emit(
+                Approval {
+                    allowance_relationship: public_inputs.out_allowance_relationship,
+                    allowance_hash: public_inputs.out_allowance_hash,
+                    timestamp: get_block_timestamp(),
+                    output_enc_owner: output_enc_owner.clone(),
+                    output_enc_spender: output_enc_spender.clone()
+                }
+            );
 
             true
         }

@@ -16,6 +16,7 @@ export const useUserNotes = () => {
   }, [provider]);
 
   useEffect(() => {
+    return;
     setLoading(true);
 
     notesService

@@ -17,14 +17,13 @@ fn test_approve() {
     let allowance_hash = 1;
     let allowance_relationship = 2;
     let proof = generate_approve_mock_proof(allowance_hash, allowance_relationship);
-    let enc_outputs = array!["spender_enc_output", "owner_enc_output"].span();
 
     let mut spy = spy_events();
     let cheap_timestamp: u64 = 100;
     start_cheat_block_timestamp(contract_address, cheap_timestamp);
 
     // call transfer
-    contract.approve(proof, enc_outputs);
+    contract.approve(proof, "owner_enc_output", "spender_enc_output");
 
     // should update the allowance_hash
     assert(
@@ -43,24 +42,14 @@ fn test_approve() {
                             timestamp: cheap_timestamp,
                             allowance_hash: allowance_hash.into(),
                             allowance_relationship: allowance_relationship.into(),
-                            output_enc: "spender_enc_output",
+                            output_enc_owner: "owner_enc_output",
+                            output_enc_spender: "spender_enc_output",
                         },
                     ),
-                ),
-                (
-                    contract_address,
-                    Privado::Event::Approval(
-                        Privado::Approval {
-                            timestamp: cheap_timestamp,
-                            allowance_hash: allowance_hash.into(),
-                            allowance_relationship: allowance_relationship.into(),
-                            output_enc: "owner_enc_output",
-                        },
-                    ),
-                ),
+                )
             ],
         );
-    assert(spy.get_events().events.len() == enc_outputs.len(), 'There should no more events');
+    assert(spy.get_events().events.len() == 1, 'There should no more events');
 }
 
 //

@@ -4,38 +4,58 @@ import { Button } from "./ui/button";
 import { Input } from "./ui/input";
 import { QrCode } from "lucide-react";
 import { IDetectedBarcode, Scanner } from "@yudiel/react-qr-scanner";
+import { useTransferFrom } from "@/hooks/useTransferFrom";
 
 export const Transfer: React.FC = () => {
   const { sendTransfer, loading } = useTransfer();
+  const { sendTransferFrom } = useTransferFrom();
   const [recipientAddress, setRecipientAddress] = useState("");
   const [recipientPublicKey, setRecipientPublicKey] = useState("");
   const [amount, setAmount] = useState("0");
   const [scan, setScan] = useState(false);
 
   const onTransfer = useCallback(async () => {
-    sendTransfer({
-      to: {
-        address: BigInt(recipientAddress),
-        publicKey: BigInt(recipientPublicKey),
+    sendTransferFrom({
+      from: {
+        address: 0n,
+        publicKey: 0n,
       },
-      amount: BigInt((parseFloat(amount) * 10**6).toFixed(0)),
-    })
-      .then(() => {
-        window.alert("Transfer successful");
-      })
-      .catch((error) => {
-        console.error(error);
-        window.alert("Transfer failed");
-      });
+      to: {
+        address: 0n,
+        publicKey: 0n,
+      },
+      amount: 0n,
+    });
+    // sendTransfer({
+    //   to: {
+    //     address: BigInt(recipientAddress),
+    //     publicKey: BigInt(recipientPublicKey),
+    //   },
+    //   amount: BigInt((parseFloat(amount) * 10**6).toFixed(0)),
+    // })
+    //   .then(() => {
+    //     window.alert("Transfer successful");
+    //   })
+    //   .catch((error) => {
+    //     console.error(error);
+    //     window.alert("Transfer failed");
+    //   });
   }, [amount, recipientAddress, recipientPublicKey, sendTransfer]);
 
-  const onScan = useCallback((result: IDetectedBarcode[]) => {
-    const data = JSON.parse(result[0].rawValue);
+  const onScan = useCallback(
+    (result: IDetectedBarcode[]) => {
+      const data = JSON.parse(result[0].rawValue);
 
-    setRecipientAddress(data.address.startsWith("0x") ? data.address : `0x${data.address}`);
-    setRecipientPublicKey(data.publicKey.startsWith("0x") ? data.publicKey : `0x${data.publicKey}`);
-    setScan(false);
-  }, [setRecipientAddress, setRecipientPublicKey, setScan]);
+      setRecipientAddress(
+        data.address.startsWith("0x") ? data.address : `0x${data.address}`
+      );
+      setRecipientPublicKey(
+        data.publicKey.startsWith("0x") ? data.publicKey : `0x${data.publicKey}`
+      );
+      setScan(false);
+    },
+    [setRecipientAddress, setRecipientPublicKey, setScan]
+  );
 
   return (
     <div className="flex flex-col p-6 bg-white rounded-3xl border border-primary">

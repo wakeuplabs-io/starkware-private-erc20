@@ -15,6 +15,7 @@ export const useBalance = () => {
   }, [provider]);
 
   useEffect(() => {
+    return;
     setLoading(true);
 
     notesService
