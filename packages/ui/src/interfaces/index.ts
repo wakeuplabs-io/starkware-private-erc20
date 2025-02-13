@@ -25,7 +25,7 @@ export interface ReceiverAccount {
 }
 
 export interface TransferProofDto {
-  owner_private_key: string;
+  sender_private_key: string;
   receiver_account: string;
   in_commitment_root: string;
   in_commitment_path: string[];
@@ -33,15 +33,15 @@ export interface TransferProofDto {
   in_commitment_value: string;
   in_commitment_bliding: string;
   in_commitment_spending_tracker: string;
-  out_receiver_value: string;
-  out_receiver_bliding: string;
+  out_receiver_commitment_value: string;
+  out_receiver_commitment_bliding: string;
   out_receiver_commitment: string;
-  out_sender_value: string;
-  out_sender_bliding: string;
+  out_sender_commitment_value: string;
+  out_sender_commitment_bliding: string;
   out_sender_commitment: string;
   out_root: string;
   out_subtree_root_path: string[];
-  out_subtree_root_direction: boolean[];
+  out_subtree_root_direction_selector: boolean[];
 }
 
 export interface ApproveProofDto {
