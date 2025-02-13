@@ -1,5 +1,5 @@
 import envParsed from "@/envParsed";
-import { ApproveProofDto, TransferFromProofDto, TransferProofDto } from "@/interfaces";
+import { ApproveProofDto, DepositProofDto, TransferFromProofDto, TransferProofDto } from "@/interfaces";
 import axios from "axios";
 
 export const ProofService = {
@@ -34,6 +34,20 @@ export const ProofService = {
   async generateTransferFromProof(proofInputs: TransferFromProofDto) {
     try {
       const response = await axios.post(`${envParsed().API_BASE_URL}/api/proof/transfer-from`, proofInputs, {
+        headers: {
+          "Content-Type": "application/json",
+        },
+      });
+      return response.data;
+    } catch (error) {
+      console.error("Error generating proof:", error);
+      throw error;
+    }
+  },
+
+  async generateDepositProof(proofInputs: DepositProofDto) {
+    try {
+      const response = await axios.post(`${envParsed().API_BASE_URL}/api/proof/deposit`, proofInputs, {
         headers: {
           "Content-Type": "application/json",
         },

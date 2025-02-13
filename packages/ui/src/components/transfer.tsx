@@ -31,23 +31,23 @@ export const Transfer: React.FC = () => {
 
       const txHash = transferFrom
         ? await sendTransferFrom({
-            amount: amountBn,
-            from: {
-              address: BigInt(from.address),
-              publicKey: BigInt(from.publicKey),
-            },
-            to: {
-              address: BigInt(to.address),
-              publicKey: BigInt(to.publicKey),
-            },
-          })
+          amount: amountBn,
+          from: {
+            address: BigInt(from.address),
+            publicKey: BigInt(from.publicKey),
+          },
+          to: {
+            address: BigInt(to.address),
+            publicKey: BigInt(to.publicKey),
+          },
+        })
         : await sendTransfer({
-            amount: amountBn,
-            to: {
-              address: BigInt(to.address),
-              publicKey: BigInt(to.publicKey),
-            },
-          });
+          amount: amountBn,
+          to: {
+            address: BigInt(to.address),
+            publicKey: BigInt(to.publicKey),
+          },
+        });
 
       toast({
         title: "Transfer successful",
