@@ -1,0 +1,3 @@
+(cd packages/circuits/transfer_from && nargo execute witness && bb prove_ultra_keccak_honk -b target/transfer_from.json -w target/witness.gz -o target/proof.bin && garaga calldata --system ultra_keccak_honk --vk target/vk.bin --proof target/proof.bin --format array > calldata.txt)
+Expected witness values to be integers, provided value causes `cannot parse integer from empty string` error
+error: Recipe `circuits-proof` failed on line 33 with exit code 1

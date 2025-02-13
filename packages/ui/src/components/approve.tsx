@@ -1,42 +1,62 @@
-import { useApprove } from "@/hooks/useApprove";
+import { useApprove } from "@/hooks/use-approve";
 import { useCallback, useState } from "react";
 import { Button } from "./ui/button";
 import { Input } from "./ui/input";
 import { QrCode } from "lucide-react";
 import { IDetectedBarcode, Scanner } from "@yudiel/react-qr-scanner";
+import { useToast } from "@/hooks/use-toast";
+import { ToastAction } from "@radix-ui/react-toast";
 
 export const Approve: React.FC = () => {
+  const { toast } = useToast();
   const { sendApprove, loading } = useApprove();
-  const [spenderAddress, setSpenderAddress] = useState("");
-  const [spenderPublicKey, setSpenderPublicKey] = useState("");
+
+  const [spender, setSpender] = useState({
+    address: "",
+    publicKey: "",
+  });
   const [amount, setAmount] = useState("0");
   const [scan, setScan] = useState(false);
 
-  
   const onApprove = useCallback(async () => {
-
-    sendApprove({
-      spender: {
-        address: BigInt(spenderAddress),
-        publicKey: BigInt(spenderPublicKey),
-      },
-      amount: BigInt((parseFloat(amount) * 10 ** 6).toFixed(0)),
-    })
-      .then(() => {
-        window.alert("Approval successful");
-      })
-      .catch((error) => {
-        console.error(error);
-        window.alert("Approval failed");
+    try {
+      const txHash = await sendApprove({
+        spender: {
+          address: BigInt(spender.address),
+          publicKey: BigInt(spender.publicKey),
+        },
+        amount: BigInt((parseFloat(amount) * 10 ** 6).toFixed(0)),
       });
-  }, [amount, spenderAddress, spenderPublicKey, sendApprove]);
 
-  const onScan = useCallback((result: IDetectedBarcode[]) => {
-    const data = JSON.parse(result[0].rawValue);
-    setSpenderAddress(data.spender.startsWith("0x") ? data.spender : `0x${data.spender}`);
-    setSpenderPublicKey(data.publicKey.startsWith("0x") ? data.publicKey : `0x${data.publicKey}`);
-    setScan(false);
-  }, [setSpenderAddress, setSpenderPublicKey, setScan]);
+      toast({
+        title: "Transfer successful",
+        description: `Transaction hash: ${txHash}`,
+        action: (
+          <ToastAction
+            onClick={() =>
+              window.open(
+                `https://sepolia.voyager.online/tx/${txHash}`,
+                "_blank"
+              )
+            }
+            altText="View transaction"
+          >
+            View transaction
+          </ToastAction>
+        ),
+      });
+    } catch (e) {}
+  }, [amount, spender, sendApprove]);
+
+  const onScan = useCallback(
+    (result: IDetectedBarcode[]) => {
+      const { address, publicKey } = JSON.parse(result[0].rawValue);
+      setSpender({ address, publicKey });
+
+      setScan(false);
+    },
+    [spender, setScan]
+  );
 
   return (
     <div className="flex flex-col p-6 bg-white rounded-3xl border border-primary">
@@ -57,15 +77,19 @@ export const Approve: React.FC = () => {
             <Input
               type="text"
               placeholder="Spender Address"
-              value={spenderAddress}
-              onChange={(e) => setSpenderAddress(e.target.value)}
+              value={spender.address}
+              onChange={(e) =>
+                setSpender({ ...spender, address: e.target.value })
+              }
             />
 
             <Input
               type="text"
               placeholder="Spender Public Key"
-              value={spenderPublicKey}
-              onChange={(e) => setSpenderPublicKey(e.target.value)}
+              value={spender.publicKey}
+              onChange={(e) =>
+                setSpender({ ...spender, publicKey: e.target.value })
+              }
             />
 
             <Input

@@ -1,7 +1,7 @@
 import { Eye, EyeClosed } from "lucide-react";
 import { Button } from "./ui/button";
 import { cn, shortenAddress } from "@/lib/utils";
-import { useUserNotes } from "@/hooks/useUserNotes";
+import { useUserNotes } from "@/hooks/use-user-notes";
 import { useMemo, useState } from "react";
 import { Input } from "./ui/input";
 

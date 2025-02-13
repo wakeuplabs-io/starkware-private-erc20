@@ -1,6 +1,15 @@
 import { Abi } from "starknet";
 
-const privateTokenAbi: Abi = [
+export const PRIVATE_ERC20_DEPLOY_BLOCK = 521743;
+export const PRIVATE_ERC20_EVENT_KEY =
+  "contracts::privado::privado::Privado::Approval";
+export const PRIVATE_ERC20_CONTRACT_ADDRESS =
+  "0x06dcec601f8306580ed8969f9d45b319c4f2b539cfa16ac2667c5558385920ff";
+export const ZERO_BIG_INT = BigInt(0);
+export const MERKLE_TREE_DEPTH = 12;
+export const DECIMALS = 6n;
+
+export const PRIVATE_ERC20_ABI: Abi = [
   {
     "name": "PrivadoImpl",
     "type": "impl",
@@ -59,16 +68,6 @@ const privateTokenAbi: Abi = [
       {
         "name": "True",
         "type": "()"
-      }
-    ]
-  },
-  {
-    "name": "core::array::Span::<core::byte_array::ByteArray>",
-    "type": "struct",
-    "members": [
-      {
-        "name": "snapshot",
-        "type": "@core::array::Array::<core::byte_array::ByteArray>"
       }
     ]
   },
@@ -209,8 +208,12 @@ const privateTokenAbi: Abi = [
             "type": "core::array::Span::<core::felt252>"
           },
           {
-            "name": "enc_outputs",
-            "type": "core::array::Span::<core::byte_array::ByteArray>"
+            "name": "output_enc_owner",
+            "type": "core::byte_array::ByteArray"
+          },
+          {
+            "name": "output_enc_spender",
+            "type": "core::byte_array::ByteArray"
           }
         ],
         "outputs": [
@@ -299,13 +302,18 @@ const privateTokenAbi: Abi = [
         "type": "core::integer::u256"
       },
       {
-        "kind": "data",
+        "kind": "key",
         "name": "allowance_relationship",
         "type": "core::integer::u256"
       },
       {
         "kind": "data",
-        "name": "output_enc",
+        "name": "output_enc_owner",
+        "type": "core::byte_array::ByteArray"
+      },
+      {
+        "kind": "data",
+        "name": "output_enc_spender",
         "type": "core::byte_array::ByteArray"
       }
     ]
@@ -332,6 +340,4 @@ const privateTokenAbi: Abi = [
       }
     ]
   }
-];
-
-export default privateTokenAbi;
+]
