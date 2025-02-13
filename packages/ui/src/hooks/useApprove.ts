@@ -33,22 +33,14 @@ export const useApprove = () => {
     }; amount: bigint
   }) => {
     try {
-
-      
       if (!contract) {
         throw new Error("Contract not initialized");
       }
 
       const approverAccount = await AccountService.getAccount();
-      const notes = await notesService.getNotes();
 
+      const notes = await notesService.getNotes();
       const senderNotes = notes.filter((n) => n.value !== undefined && n.spent !== true);
-      const inputNote = senderNotes
-        .sort((a, b) => parseInt((b.value! - a.value!).toString()))
-        .find((n) => n.value! > props.amount);
-      if (!inputNote) {
-        throw new Error("Insufficient funds in notes");
-      }
 
       const outAllowanceHash = await BarretenbergService.generateHashArray([
         new Fr(approverAccount.address),
@@ -69,30 +61,34 @@ export const useApprove = () => {
         out_relationship_id: formatHex(outRelationshipId),
       });
 
-
-      const decryptedOutput =  JSON.stringify({
+      // generate encrypted data
+      const allowanceData =  JSON.stringify({
         allowance: props.amount.toString(16),
         commitments: senderNotes.map(note => ({
           commitment: note.commitment.toString(16),
-          value: inputNote.value!.toString(16),
+          value: note.value!.toString(16),
           bliding: note.bliding!.toString(16),
         }))
       });
 
       const [encryptedSpenderOutput, encryptedApproverOutput] = await Promise.all([
         CipherService.encrypt(
-          decryptedOutput,
+          allowanceData,
           props.spender.publicKey
         ),
         CipherService.encrypt(
-          decryptedOutput,
+          allowanceData,
           approverAccount.publicKey
         ),
       ]);
 
+      console.log("encryptedApproverOutput", encryptedApproverOutput);
+      console.log("encryptedSpenderOutput", encryptedSpenderOutput);
+
       const callData = contract.populate("approve", [
         generatedProof,
-        [encryptedSpenderOutput, encryptedApproverOutput],
+        encryptedApproverOutput, 
+        encryptedSpenderOutput,
       ]);
 
       await sendAsync([callData]);

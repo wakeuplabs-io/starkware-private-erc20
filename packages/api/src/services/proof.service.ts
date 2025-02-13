@@ -12,13 +12,16 @@ const execPromise = promisify(exec);
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
+const CIRCUITS_PATH = path.join(__dirname, "../../circuits");
+const TRANSFER_CIRCUIT_PATH = path.join(__dirname, "../../circuits/transfer");
+const TRANSFER_FROM_CIRCUIT_PATH = path.join(__dirname, "../../circuits/transfer_from");
+const APPROVE_CIRCUIT_PATH = path.join(__dirname, "../../circuits/approve");
 
 export async function generateTransferProof(
   input: TransferProofDto
 ): Promise<string[]> {
-  const CIRCUIT_PATH = path.join(__dirname, "../../circuits/transfer");
-  const ACIR_PATH = path.join(CIRCUIT_PATH, "target/transfer.json");
-  const VK_PATH = path.join(CIRCUIT_PATH, "target/vk-transfer.bin");
+  const ACIR_PATH = path.join(CIRCUITS_PATH, "transfer/target/transfer.json");
+  const VK_PATH = path.join(CIRCUITS_PATH, "transfer/target/vk.bin");
   const TMP_DIR = os.tmpdir();
 
   const proofId = randomUUID().toString();
@@ -31,21 +34,21 @@ export async function generateTransferProof(
 
     // generate witness
     await execPromise(`nargo execute -p ${proverPath} ${witnessName}`, {
-      cwd: CIRCUIT_PATH,
+      cwd: CIRCUITS_PATH,
     });
 
     // generate proof
     await execPromise(
       `bb prove_ultra_keccak_honk -b ${ACIR_PATH} -w ${witnessName} -o ${proofPath}`,
       {
-        cwd: CIRCUIT_PATH,
+        cwd: TRANSFER_CIRCUIT_PATH,
       }
     );
 
     // generate calldata
     const { stdout } = await execPromise(
       `garaga calldata --system ultra_keccak_honk --vk ${VK_PATH} --proof ${proofPath} --format array`,
-      { cwd: CIRCUIT_PATH }
+      { cwd: TRANSFER_CIRCUIT_PATH }
     );
 
     const trimmedStdout = stdout.trim();
@@ -68,9 +71,8 @@ export async function generateTransferProof(
 export async function generateApproveProof(
   input: ApproveProofDto
 ): Promise<string[]> {
-  const CIRCUIT_PATH = path.join(__dirname, "../../circuits/approve");
-  const ACIR_PATH = path.join(CIRCUIT_PATH, "target/approve.json");
-  const VK_PATH = path.join(CIRCUIT_PATH, "target/vk-approve.bin");
+  const ACIR_PATH = path.join(APPROVE_CIRCUIT_PATH, "target/approve.json");
+  const VK_PATH = path.join(APPROVE_CIRCUIT_PATH, "target/vk.bin");
   const TMP_DIR = os.tmpdir();
 
   const proofId = randomUUID().toString();
@@ -83,21 +85,21 @@ export async function generateApproveProof(
 
     // generate witness
     await execPromise(`nargo execute -p ${proverPath} ${witnessName}`, {
-      cwd: CIRCUIT_PATH,
+      cwd: APPROVE_CIRCUIT_PATH,
     });
 
     // generate proof
     await execPromise(
       `bb prove_ultra_keccak_honk -b ${ACIR_PATH} -w ${witnessName} -o ${proofPath}`,
       {
-        cwd: CIRCUIT_PATH,
+        cwd: APPROVE_CIRCUIT_PATH,
       }
     );
 
     // generate calldata
     const { stdout } = await execPromise(
       `garaga calldata --system ultra_keccak_honk --vk ${VK_PATH} --proof ${proofPath} --format array`,
-      { cwd: CIRCUIT_PATH }
+      { cwd: APPROVE_CIRCUIT_PATH }
     );
 
     const trimmedStdout = stdout.trim();

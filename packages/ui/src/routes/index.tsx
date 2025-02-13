@@ -38,7 +38,7 @@ function Index() {
           </div>
         </div>
 
-        <div className="gap-2 grid grid-cols-4 max-w-sm">
+        <div className="gap-2 grid grid-cols-4">
           <button
             onClick={() => setTab(Tab.Notes)}
             className={cn(

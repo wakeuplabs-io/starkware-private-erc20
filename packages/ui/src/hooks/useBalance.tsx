@@ -4,7 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import { Provider } from "starknet";
 
 export const useBalance = () => {
-  const { data } = useBlockNumber({ refetchInterval: 1000 });
+  const { data } = useBlockNumber({ refetchInterval: 10000 });
   const { provider } = useProvider() as { provider: Provider };
 
   const [balance, setBalance] = useState(0n);
@@ -15,12 +15,12 @@ export const useBalance = () => {
   }, [provider]);
 
   useEffect(() => {
-    return;
     setLoading(true);
 
     notesService
       .getNotes()
       .then((notes) => {
+        console.log("notes", notes)
         setBalance(notes.reduce((acc, note) => acc + (note.value && !note.spent ? note.value : 0n), 0n));
       })
       .finally(() => setLoading(false));
