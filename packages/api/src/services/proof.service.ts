@@ -4,6 +4,7 @@ import { promisify } from "util";
 import path from "path";
 import {
   ApproveProofDto,
+  DepositProofDto,
   TransferFromProofDto,
   TransferProofDto,
 } from "@/dtos/generate-proof.dto.js";
@@ -22,6 +23,7 @@ const TRANSFER_FROM_CIRCUIT_PATH = path.join(
   "../../circuits/transfer_from"
 );
 const APPROVE_CIRCUIT_PATH = path.join(__dirname, "../../circuits/approve");
+const DEPOSIT_CIRCUIT_PATH = path.join(__dirname, "../../circuits/deposit");
 
 export async function generateTransferProof(
   input: TransferProofDto
@@ -156,6 +158,59 @@ export async function generateTransferFromProof(
     const { stdout } = await execPromise(
       `garaga calldata --system ultra_keccak_honk --vk ${VK_PATH} --proof ${proofPath} --format array`,
       { cwd: TRANSFER_FROM_CIRCUIT_PATH }
+    );
+
+    const trimmedStdout = stdout.trim();
+    const calldata = trimmedStdout.substring(1, trimmedStdout.length - 1);
+
+    return calldata.split(",").map((x) => x.trim());
+  } catch (error) {
+    console.error("Error occurred during proof generation:", error);
+    throw new Error(`Proof generation failed: ${(error as Error).message}`);
+  } finally {
+    await Promise.allSettled([
+      fs.unlink(proverPath),
+      fs.unlink(witnessName),
+      fs.unlink(proofPath),
+    ]).catch(() => console.log("cleanup failed"));
+  }
+}
+
+export async function generateDepositProof(
+  input: DepositProofDto
+): Promise<string[]> {
+  const ACIR_PATH = path.join(
+    DEPOSIT_CIRCUIT_PATH,
+    "target/deposit.json"
+  );
+  const VK_PATH = path.join(DEPOSIT_CIRCUIT_PATH, "target/vk.bin");
+  const TMP_DIR = os.tmpdir();
+
+  const proofId = randomUUID().toString();
+  const proverPath = path.join(TMP_DIR, `${proofId}-prover.toml`);
+  const witnessName = path.join(TMP_DIR, `${proofId}-witness.gz`);
+  const proofPath = path.join(TMP_DIR, `${proofId}-proof.bin`);
+  try {
+    // generate prover file
+    await fs.writeFile(proverPath, tomlStringify(input), "utf-8");
+
+    // generate witness
+    await execPromise(`nargo execute -p ${proverPath} ${witnessName}`, {
+      cwd: DEPOSIT_CIRCUIT_PATH,
+    });
+
+    // generate proof
+    await execPromise(
+      `bb prove_ultra_keccak_honk -b ${ACIR_PATH} -w ${witnessName} -o ${proofPath}`,
+      {
+        cwd: DEPOSIT_CIRCUIT_PATH,
+      }
+    );
+
+    // generate calldata
+    const { stdout } = await execPromise(
+      `garaga calldata --system ultra_keccak_honk --vk ${VK_PATH} --proof ${proofPath} --format array`,
+      { cwd: DEPOSIT_CIRCUIT_PATH }
     );
 
     const trimmedStdout = stdout.trim();

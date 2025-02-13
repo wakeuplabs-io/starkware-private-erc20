@@ -60,3 +60,18 @@ export interface TransferFromProofDto {
   out_subtree_root_path: string[];
   out_subtree_direction_selector: boolean[];
 }
+
+export interface DepositProofDto {
+  // accounts details
+  receiver_account: string;
+  // utxo inputs
+  in_commitment_root: string;
+  // utxo outputs
+  out_receiver_commitment_value: string;
+  out_receiver_commitment_bliding: string;
+  out_receiver_commitment: string;
+  // updated root
+  out_root: string;
+  out_subtree_root_path: string[];
+  out_subtree_root_direction_selector: boolean[];
+}
