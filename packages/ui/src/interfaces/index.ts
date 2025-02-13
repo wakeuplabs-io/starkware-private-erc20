@@ -59,6 +59,7 @@ export interface ApproveProofDto {
   out_relationship_id: string;
 }
 
+
 export interface TransferFromProofDto {
   owner_account: string;
   receiver_account: string;
