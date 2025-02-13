@@ -48,16 +48,7 @@ export const useTransferFrom = () => {
       }
 
       const spenderAccount = await AccountService.getAccount();
-      
-      // TODO: filter events by this relationship. Currently there's issue with data size, starknet doesn't like hash being u256.
-      const relationshipId =
-      (await BarretenbergService.generateHashArray([
-        new Fr(props.from.address),
-        new Fr(spenderAccount.address),
-      ])) % Fr.MODULUS;
-      const keyFilter = [[num.toHex(hash.starknetKeccak("Approval"))]];
-      
-      
+
       let continuationToken = undefined;
       const approvalEvents: ApprovalEvent[] = [];
       const lastBlock = await provider.getBlock("latest");
@@ -66,7 +57,7 @@ export const useTransferFrom = () => {
           address: PRIVATE_ERC20_CONTRACT_ADDRESS,
           from_block: { block_number: PRIVATE_ERC20_DEPLOY_BLOCK }, // TODO: avoid fetching all
           to_block: { block_number: lastBlock.block_number },
-          keys: keyFilter,
+          keys: [[num.toHex(hash.starknetKeccak("Approval"))]],
           chunk_size: 10,
           continuation_token: continuationToken,
         });
@@ -94,9 +85,16 @@ export const useTransferFrom = () => {
         continuationToken = res.continuation_token;
       } while (continuationToken);
 
-      const approval = approvalEvents.sort(
-        (a, b) => Number(b.timestamp) - Number(a.timestamp)
-      )[0];
+      // TODO: filter while querying events by this relationship. Currently there's issue with data size, starknet doesn't like hash being u256.
+      const relationshipId =
+        (await BarretenbergService.generateHashArray([
+          new Fr(props.from.address),
+          new Fr(spenderAccount.address),
+        ])) % Fr.MODULUS;
+
+      const approval = approvalEvents
+        .filter((ae) => ae.allowance_relationship == relationshipId)
+        .sort((a, b) => Number(b.timestamp) - Number(a.timestamp))[0];
 
       const allowance: ApprovalPayload = parse(
         await CipherService.decrypt(
