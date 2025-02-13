@@ -17,6 +17,7 @@ import { CipherService } from "@/services/cipher.service";
 import { NotesService } from "@/services/notes.service";
 import { Provider } from "starknet";
 import { ApprovalPayload } from "@/interfaces";
+import { PhoneForwarded } from "lucide-react";
 
 export const useApprove = () => {
   const { provider } = useProvider() as { provider: Provider };
@@ -40,7 +41,7 @@ export const useApprove = () => {
       publicKey: bigint;
     };
     amount: bigint;
-  }) => {
+  }): Promise<string> => {
     setLoading(true);
 
     try {
@@ -96,16 +97,14 @@ export const useApprove = () => {
           ),
         ]);
 
-      console.log("encryptedApproverOutput", encryptedApproverOutput);
-      console.log("encryptedSpenderOutput", encryptedSpenderOutput);
-
-      const callData = contract.populate("approve", [
-        generatedProof,
-        encryptedApproverOutput,
-        encryptedSpenderOutput,
+      const { transaction_hash } = await sendAsync([
+        contract.populate("approve", [
+          generatedProof,
+          encryptedApproverOutput,
+          encryptedSpenderOutput,
+        ]),
       ]);
-
-      await sendAsync([callData]);
+      return transaction_hash;
     } finally {
       setLoading(false);
     }

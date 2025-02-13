@@ -11,7 +11,7 @@ import {
   PRIVATE_ERC20_DEPLOY_BLOCK,
   PRIVATE_ERC20_EVENT_KEY,
 } from "@/shared/config/constants";
-import { ApprovalEvent, ApprovalPayload, Note } from "@/interfaces";
+import { ApprovalEvent, ApprovalPayload } from "@/interfaces";
 import { ProofService } from "@/services/proof.service";
 import { Fr } from "@aztec/bb.js";
 import { AccountService } from "@/services/account.service";
@@ -20,7 +20,6 @@ import { formatHex, parse } from "@/lib/utils";
 import { MerkleTree } from "@/lib/merkle-tree";
 import { NotesService } from "@/services/notes.service";
 import { hash, num, events as Events, CallData, Provider } from "starknet";
-// import { provider } from "@/shared/config/rpc";
 import { CipherService } from "@/services/cipher.service";
 
 export const useTransferFrom = () => {
@@ -44,7 +43,7 @@ export const useTransferFrom = () => {
     from: { address: bigint; publicKey: bigint };
     to: { address: bigint; publicKey: bigint };
     amount: bigint;
-  }) => {
+  }): Promise<string> => {
     setLoading(true);
 
     try {
@@ -53,24 +52,23 @@ export const useTransferFrom = () => {
       }
 
       const spenderAccount = await AccountService.getAccount();
-
-      // TODO: retrieve notes that are approved
-      const lastBlock = await provider.getBlock("latest");
-
-      // TODO:
-      const relationshipId = await BarretenbergService.generateHashArray([
+      
+      // TODO: filter events by this relationship. Currently there's issue with data size, starknet doesn't like hash being u256.
+      const relationshipId =
+      (await BarretenbergService.generateHashArray([
         new Fr(props.from.address),
         new Fr(spenderAccount.address),
-      ]);
-      // 0x280c2a33f20f560f449b16a1ff045707c687269a12bce3315dbb942da45b43e0
+      ])) % Fr.MODULUS;
       const keyFilter = [[num.toHex(hash.starknetKeccak("Approval"))]];
-
+      
+      
       let continuationToken = undefined;
       const approvalEvents: ApprovalEvent[] = [];
+      const lastBlock = await provider.getBlock("latest");
       do {
         const res = await provider.getEvents({
           address: PRIVATE_ERC20_CONTRACT_ADDRESS,
-          from_block: { block_number: PRIVATE_ERC20_DEPLOY_BLOCK }, // TODO: avoid fetching
+          from_block: { block_number: PRIVATE_ERC20_DEPLOY_BLOCK }, // TODO: avoid fetching all
           to_block: { block_number: lastBlock.block_number },
           keys: keyFilter,
           chunk_size: 10,
@@ -83,7 +81,6 @@ export const useTransferFrom = () => {
           CallData.getAbiStruct(PRIVATE_ERC20_ABI),
           CallData.getAbiEnum(PRIVATE_ERC20_ABI)
         );
-        console.log("parsed", parsed);
 
         const sortedApprovalEvents = parsed
           .filter((event) => event[PRIVATE_ERC20_EVENT_KEY])
@@ -101,12 +98,9 @@ export const useTransferFrom = () => {
         continuationToken = res.continuation_token;
       } while (continuationToken);
 
-      console.log("approval", approvalEvents);
-
-      const approval = approvalEvents
-          .sort((a, b) => Number(b.timestamp) - Number(a.timestamp))[0];
-
-      console.log("last Approval", approval);
+      const approval = approvalEvents.sort(
+        (a, b) => Number(b.timestamp) - Number(a.timestamp)
+      )[0];
 
       const allowance: ApprovalPayload = parse(
         await CipherService.decrypt(
@@ -115,7 +109,6 @@ export const useTransferFrom = () => {
           spenderAccount.privateKey
         )
       );
-      console.log("allowance", allowance);
 
       // check if spender has enough allowance
       if (allowance.allowance < props.amount) {
@@ -124,7 +117,7 @@ export const useTransferFrom = () => {
 
       // fetch all notes
       const { notesArray, notesMap } = await notesService.getNotes();
-      
+
       // filter already spent notes
       const spendableNotes = allowance.commitments.filter((c) => {
         const note = notesMap.get(c.commitment);
@@ -139,11 +132,11 @@ export const useTransferFrom = () => {
         throw new Error("Insufficient funds in notes");
       }
 
-      const inputCommitmentTracker = await BarretenbergService.generateHashArray([
-        new Fr(inputNote.commitment % Fr.MODULUS),
-        new Fr(inputNote.bliding % Fr.MODULUS),
-      ])
-  
+      const inputCommitmentTracker =
+        await BarretenbergService.generateHashArray([
+          new Fr(inputNote.commitment % Fr.MODULUS),
+          new Fr(inputNote.bliding % Fr.MODULUS),
+        ]);
 
       // generate proof
       const outOwnerAmount = inputNote.value! - props.amount;
@@ -208,18 +201,16 @@ export const useTransferFrom = () => {
         in_commitment_bliding: formatHex(inputNote.bliding!),
         in_commitment_value: formatHex(inputNote.value!),
         in_commitment_spending_tracker: formatHex(inputCommitmentTracker),
-        
-        
+
         in_allowance_value: formatHex(allowance.allowance),
-        in_allowance_hash: formatHex(inAllowanceHash), 
+        in_allowance_hash: formatHex(inAllowanceHash),
         in_allowance_relationship: formatHex(relationshipId),
 
-        
         out_allowance_hash: formatHex(outAllowanceHash),
         out_receiver_value: formatHex(outReceiverNote.value),
         out_receiver_bliding: formatHex(outReceiverNote.bliding),
         out_receiver_commitment: formatHex(outReceiverNote.commitment),
-        
+
         out_owner_value: formatHex(outOwnerNote.value),
         out_owner_bliding: formatHex(outOwnerNote.bliding),
         out_owner_commitment: formatHex(outOwnerNote.commitment),
@@ -234,15 +225,17 @@ export const useTransferFrom = () => {
         ),
       });
 
-      const callData = contract.populate("transfer_from", [
-        generatedProof,
-        outOwnerNote.encOutput, 
-        outReceiverNote.encOutput,
+      const { transaction_hash } = await sendAsync([
+        contract.populate("transfer_from", [
+          generatedProof,
+          outOwnerNote.encOutput,
+          outReceiverNote.encOutput,
+        ]),
       ]);
 
-      await sendAsync([callData]);
+      return transaction_hash;
     } catch (error) {
-      console.error("Error in transferFrom:", error);
+      throw error;
     } finally {
       setLoading(false);
     }

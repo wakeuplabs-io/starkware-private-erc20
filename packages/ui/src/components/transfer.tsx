@@ -1,60 +1,85 @@
-import { useTransfer } from "@/hooks/useTransfer";
+import { useTransfer } from "@/hooks/use-transfer";
 import { useCallback, useState } from "react";
 import { Button } from "./ui/button";
 import { Input } from "./ui/input";
-import { QrCode } from "lucide-react";
+import { QrCode, WalletIcon } from "lucide-react";
 import { IDetectedBarcode, Scanner } from "@yudiel/react-qr-scanner";
-import { useTransferFrom } from "@/hooks/useTransferFrom";
+import { useTransferFrom } from "@/hooks/use-transfer-from";
+import { useToast } from "@/hooks/use-toast";
+import { ToastAction } from "@radix-ui/react-toast";
 
 export const Transfer: React.FC = () => {
-  const { sendTransfer, loading } = useTransfer();
-  const { sendTransferFrom } = useTransferFrom();
-  const [recipientAddress, setRecipientAddress] = useState("");
-  const [recipientPublicKey, setRecipientPublicKey] = useState("");
+  const { toast } = useToast();
+  const { sendTransfer, loading: transferLoading } = useTransfer();
+  const { sendTransferFrom, loading: transferFromLoading } = useTransferFrom();
+  const [from, setFrom] = useState({
+    address: "",
+    publicKey: "",
+  });
+  const [to, setTo] = useState({
+    address: "",
+    publicKey: "",
+  });
+
   const [amount, setAmount] = useState("0");
   const [scan, setScan] = useState(false);
+  const [transferFrom, setTransferFrom] = useState(false);
 
   const onTransfer = useCallback(async () => {
-    sendTransferFrom({
-      from: {
-        address: BigInt("0xf4280fa36dd274233822111013be2d770e02332ac2766ae093aa25ee33a2d31"),
-        publicKey: BigInt("0x9fe40de6a38adf7cb7ed7afbd20a65d068682ab1090fd6274a44b10be0cfad10"),
-      },
-      to: {
-        address: BigInt("0x2b37f11720bc94c3c683985e4837d8796cc202dd99cff285fee9035250a7097c"),
-        publicKey: BigInt("0xb8b2f1337369cd0dfdbd36b4d33e66c58d587a9ad77c2f3cf469d9109f91655e"),
-      },
-      amount: 1000000n,
-    });
-    // sendTransfer({
-    //   to: {
-    //     address: BigInt(recipientAddress),
-    //     publicKey: BigInt(recipientPublicKey),
-    //   },
-    //   amount: BigInt((parseFloat(amount) * 10**6).toFixed(0)),
-    // })
-    //   .then(() => {
-    //     window.alert("Transfer successful");
-    //   })
-    //   .catch((error) => {
-    //     console.error(error);
-    //     window.alert("Transfer failed");
-    //   });
-  }, [amount, recipientAddress, recipientPublicKey, sendTransfer]);
+    try {
+      const amountBn = BigInt((parseFloat(amount) * 10 ** 6).toFixed(0));
+
+      const txHash = transferFrom
+        ? await sendTransferFrom({
+            amount: amountBn,
+            from: {
+              address: BigInt(from.address),
+              publicKey: BigInt(from.publicKey),
+            },
+            to: {
+              address: BigInt(to.address),
+              publicKey: BigInt(to.publicKey),
+            },
+          })
+        : await sendTransfer({
+            amount: amountBn,
+            to: {
+              address: BigInt(to.address),
+              publicKey: BigInt(to.publicKey),
+            },
+          });
+
+      toast({
+        title: "Transfer successful",
+        description: `Transaction hash: ${txHash}`,
+        action: (
+          <ToastAction
+            onClick={() =>
+              window.open(`https://sepolia.voyager.online/tx/${txHash}`, "_blank")
+            }
+            altText="View transaction"
+          >
+            View transaction
+          </ToastAction>
+        ),
+      });
+    } catch (e) {
+      toast({
+        title: "Transfer failed",
+        description: (e as Error).message,
+        variant: "destructive",
+      });
+    }
+  }, [amount, to, from, sendTransfer]);
 
   const onScan = useCallback(
     (result: IDetectedBarcode[]) => {
-      const data = JSON.parse(result[0].rawValue);
+      const { address, publicKey } = JSON.parse(result[0].rawValue);
+      setTo({ address, publicKey });
 
-      setRecipientAddress(
-        data.address.startsWith("0x") ? data.address : `0x${data.address}`
-      );
-      setRecipientPublicKey(
-        data.publicKey.startsWith("0x") ? data.publicKey : `0x${data.publicKey}`
-      );
       setScan(false);
     },
-    [setRecipientAddress, setRecipientPublicKey, setScan]
+    [setTo, setScan]
   );
 
   return (
@@ -76,15 +101,15 @@ export const Transfer: React.FC = () => {
             <Input
               type="text"
               placeholder="Recipient Address"
-              value={recipientAddress}
-              onChange={(e) => setRecipientAddress(e.target.value)}
+              value={to.address}
+              onChange={(e) => setTo({ ...to, address: e.target.value })}
             />
 
             <Input
               type="text"
               placeholder="Recipient Public Key"
-              value={recipientPublicKey}
-              onChange={(e) => setRecipientPublicKey(e.target.value)}
+              value={to.publicKey}
+              onChange={(e) => setTo({ ...to, publicKey: e.target.value })}
             />
 
             <Input
@@ -93,11 +118,42 @@ export const Transfer: React.FC = () => {
               value={amount}
               onChange={(e) => setAmount(e.target.value)}
             />
+
+            {transferFrom && (
+              <>
+                <Input
+                  type="text"
+                  placeholder="Sender Address"
+                  value={from.address}
+                  onChange={(e) => setFrom({ ...from, address: e.target.value })}
+                />
+
+                <Input
+                  type="text"
+                  placeholder="Sender Public Key"
+                  value={from.publicKey}
+                  onChange={(e) =>
+                    setFrom({ ...from, publicKey: e.target.value })
+                  }
+                />
+              </>
+            )}
           </div>
 
-          <Button className="w-full" onClick={onTransfer} disabled={loading}>
-            {loading ? "Transferring..." : "Transfer "}
-          </Button>
+          <div className="flex gap-4">
+            <Button
+              className="w-full"
+              onClick={onTransfer}
+              disabled={transferFromLoading || transferLoading}
+            >
+              {transferFromLoading || transferLoading
+                ? "Transferring..."
+                : "Transfer"}
+            </Button>
+            <Button onClick={() => setTransferFrom(!transferFrom)}>
+              <WalletIcon />
+            </Button>
+          </div>
         </>
       )}
     </div>

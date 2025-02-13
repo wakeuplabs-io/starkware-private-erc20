@@ -41,7 +41,7 @@ export const useTransfer = () => {
       publicKey: bigint;
     };
     amount: bigint;
-  }) => {
+  }): Promise<string> => {
     setLoading(true);
 
     try {
@@ -107,8 +107,10 @@ export const useTransfer = () => {
       );
 
       const generatedProof = await ProofService.generateTransferProof({
-        owner_private_key: formatHex(spenderAccount.privateKey % Fr.MODULUS),
+        // accounts details
+        sender_private_key: formatHex(spenderAccount.privateKey % Fr.MODULUS),
         receiver_account: formatHex(props.to.address),
+        // utxo inputs
         in_commitment_root: formatHex(inRoot),
         in_commitment_path: inputCommitmentProof.path.map((e) => formatHex(e)),
         in_commitment_direction_selector:
@@ -116,30 +118,31 @@ export const useTransfer = () => {
         in_commitment_value: formatHex(inputNote.value!),
         in_commitment_bliding: formatHex(inputNote.bliding!),
         in_commitment_spending_tracker: formatHex(spendingTracker),
-        out_receiver_value: formatHex(props.amount),
-        out_receiver_bliding: formatHex(outReceiverNote.bliding),
+        // utxo outputs
+        out_receiver_commitment_value: formatHex(props.amount),
+        out_receiver_commitment_bliding: formatHex(outReceiverNote.bliding),
         out_receiver_commitment: formatHex(outReceiverNote.commitment),
-        out_sender_value: formatHex(outSenderAmount),
-        out_sender_bliding: formatHex(outSenderNote.bliding),
-        out_root: formatHex(outRoot),
+        out_sender_commitment_value: formatHex(outSenderAmount),
+        out_sender_commitment_bliding: formatHex(outSenderNote.bliding),
         out_sender_commitment: formatHex(outSenderNote.commitment),
         // updated root
+        out_root: formatHex(outRoot),
         out_subtree_root_path: outPathProof.path
           .slice(1, MERKLE_TREE_DEPTH)
           .map((e) => formatHex(e)),
-        out_subtree_root_direction: outPathProof.directionSelector.slice(
-          1,
-          MERKLE_TREE_DEPTH
-        ),
+        out_subtree_root_direction_selector:
+          outPathProof.directionSelector.slice(1, MERKLE_TREE_DEPTH),
       });
 
-      const callData = contract.populate("transfer", [
-        generatedProof,
-        outSenderNote.encOutput,
-        outReceiverNote.encOutput,
+      const { transaction_hash } = await sendAsync([
+        contract.populate("transfer", [
+          generatedProof,
+          outSenderNote.encOutput,
+          outReceiverNote.encOutput,
+        ]),
       ]);
 
-      await sendAsync([callData]);
+      return transaction_hash;
     } catch (error) {
       throw error;
     } finally {

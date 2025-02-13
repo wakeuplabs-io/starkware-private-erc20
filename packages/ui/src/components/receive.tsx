@@ -1,4 +1,4 @@
-import { useCopyToClipboard } from "@/hooks/useCopy";
+import { useCopyToClipboard } from "@/hooks/use-copy";
 import { formatHex, shortenAddress } from "@/lib/utils";
 import { AccountService } from "@/services/account.service";
 import { CopyCheckIcon, CopyIcon } from "lucide-react";

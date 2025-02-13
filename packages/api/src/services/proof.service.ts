@@ -2,7 +2,11 @@ import fs from "fs/promises";
 import { exec } from "child_process";
 import { promisify } from "util";
 import path from "path";
-import { ApproveProofDto, TransferFromProofDto, TransferProofDto } from "@/dtos/generate-proof.dto.js";
+import {
+  ApproveProofDto,
+  TransferFromProofDto,
+  TransferProofDto,
+} from "@/dtos/generate-proof.dto.js";
 import { fileURLToPath } from "url";
 import { randomUUID } from "crypto";
 import os from "os";
@@ -12,16 +16,18 @@ const execPromise = promisify(exec);
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
-const CIRCUITS_PATH = path.join(__dirname, "../../circuits");
 const TRANSFER_CIRCUIT_PATH = path.join(__dirname, "../../circuits/transfer");
-const TRANSFER_FROM_CIRCUIT_PATH = path.join(__dirname, "../../circuits/transfer_from");
+const TRANSFER_FROM_CIRCUIT_PATH = path.join(
+  __dirname,
+  "../../circuits/transfer_from"
+);
 const APPROVE_CIRCUIT_PATH = path.join(__dirname, "../../circuits/approve");
 
 export async function generateTransferProof(
   input: TransferProofDto
 ): Promise<string[]> {
-  const ACIR_PATH = path.join(CIRCUITS_PATH, "transfer/target/transfer.json");
-  const VK_PATH = path.join(CIRCUITS_PATH, "transfer/target/vk.bin");
+  const ACIR_PATH = path.join(TRANSFER_CIRCUIT_PATH, "target/transfer.json");
+  const VK_PATH = path.join(TRANSFER_CIRCUIT_PATH, "target/vk.bin");
   const TMP_DIR = os.tmpdir();
 
   const proofId = randomUUID().toString();
@@ -34,15 +40,13 @@ export async function generateTransferProof(
 
     // generate witness
     await execPromise(`nargo execute -p ${proverPath} ${witnessName}`, {
-      cwd: CIRCUITS_PATH,
+      cwd: TRANSFER_CIRCUIT_PATH,
     });
 
     // generate proof
     await execPromise(
       `bb prove_ultra_keccak_honk -b ${ACIR_PATH} -w ${witnessName} -o ${proofPath}`,
-      {
-        cwd: TRANSFER_CIRCUIT_PATH,
-      }
+      { cwd: TRANSFER_CIRCUIT_PATH }
     );
 
     // generate calldata
@@ -66,7 +70,6 @@ export async function generateTransferProof(
     ]).catch(() => console.log("cleanup failed"));
   }
 }
-
 
 export async function generateApproveProof(
   input: ApproveProofDto
@@ -118,11 +121,13 @@ export async function generateApproveProof(
   }
 }
 
-
 export async function generateTransferFromProof(
   input: TransferFromProofDto
 ): Promise<string[]> {
-  const ACIR_PATH = path.join(TRANSFER_FROM_CIRCUIT_PATH, "target/transfer_from.json");
+  const ACIR_PATH = path.join(
+    TRANSFER_FROM_CIRCUIT_PATH,
+    "target/transfer_from.json"
+  );
   const VK_PATH = path.join(TRANSFER_FROM_CIRCUIT_PATH, "target/vk.bin");
   const TMP_DIR = os.tmpdir();
 
@@ -168,4 +173,3 @@ export async function generateTransferFromProof(
     ]).catch(() => console.log("cleanup failed"));
   }
 }
-

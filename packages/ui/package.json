@@ -12,6 +12,7 @@
     "@aztec/bb.js": "^0.72.1",
     "@noir-lang/noir_js": "^1.0.0-beta.1",
     "@radix-ui/react-slot": "^1.1.2",
+    "@radix-ui/react-toast": "^1.2.6",
     "@starknet-react/chains": "^3.1.2",
     "@starknet-react/core": "^3.7.2",
     "@tanstack/react-query": "^5.40.0",

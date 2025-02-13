@@ -5,7 +5,7 @@ import { useEffect, useMemo, useState } from "react";
 import { Provider } from "starknet";
 
 export const useUserNotes = () => {
-  const { data } = useBlockNumber({ refetchInterval: 1000 });
+  const { data } = useBlockNumber({ refetchInterval: 10000 });
   const { provider } = useProvider() as { provider: Provider };
 
   const [notes, setNotes] = useState<Note[]>([]);
@@ -16,7 +16,6 @@ export const useUserNotes = () => {
   }, [provider]);
 
   useEffect(() => {
-    return;
     setLoading(true);
 
     notesService
