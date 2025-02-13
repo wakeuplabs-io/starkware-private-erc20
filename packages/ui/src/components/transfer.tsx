@@ -1,41 +1,85 @@
-import { useTransfer } from "@/hooks/useTransfer";
+import { useTransfer } from "@/hooks/use-transfer";
 import { useCallback, useState } from "react";
 import { Button } from "./ui/button";
 import { Input } from "./ui/input";
-import { QrCode } from "lucide-react";
+import { QrCode, WalletIcon } from "lucide-react";
 import { IDetectedBarcode, Scanner } from "@yudiel/react-qr-scanner";
+import { useTransferFrom } from "@/hooks/use-transfer-from";
+import { useToast } from "@/hooks/use-toast";
+import { ToastAction } from "@radix-ui/react-toast";
+import { buildExplorerUrl, shortenString } from "@/lib/utils";
 
 export const Transfer: React.FC = () => {
-  const { sendTransfer, loading } = useTransfer();
-  const [recipientAddress, setRecipientAddress] = useState("");
-  const [recipientPublicKey, setRecipientPublicKey] = useState("");
+  const { toast } = useToast();
+  const { sendTransfer, loading: transferLoading } = useTransfer();
+  const { sendTransferFrom, loading: transferFromLoading } = useTransferFrom();
+  const [from, setFrom] = useState({
+    address: "",
+    publicKey: "",
+  });
+  const [to, setTo] = useState({
+    address: "",
+    publicKey: "",
+  });
+
   const [amount, setAmount] = useState("0");
   const [scan, setScan] = useState(false);
+  const [transferFrom, setTransferFrom] = useState(false);
 
   const onTransfer = useCallback(async () => {
-    sendTransfer({
-      to: {
-        address: BigInt(recipientAddress),
-        publicKey: BigInt(recipientPublicKey),
-      },
-      amount: BigInt((parseFloat(amount) * 10**6).toFixed(0)),
-    })
-      .then(() => {
-        window.alert("Transfer successful");
-      })
-      .catch((error) => {
-        console.error(error);
-        window.alert("Transfer failed");
+    try {
+      const amountBn = BigInt((parseFloat(amount) * 10 ** 6).toFixed(0));
+
+      const txHash = transferFrom
+        ? await sendTransferFrom({
+            amount: amountBn,
+            from: {
+              address: BigInt(from.address),
+              publicKey: BigInt(from.publicKey),
+            },
+            to: {
+              address: BigInt(to.address),
+              publicKey: BigInt(to.publicKey),
+            },
+          })
+        : await sendTransfer({
+            amount: amountBn,
+            to: {
+              address: BigInt(to.address),
+              publicKey: BigInt(to.publicKey),
+            },
+          });
+
+      toast({
+        title: "Transfer successful",
+        description: `Transaction hash: ${shortenString(txHash)}`,
+        action: (
+          <ToastAction
+            onClick={() => window.open(buildExplorerUrl(txHash), "_blank")}
+            altText="View transaction"
+          >
+            View transaction
+          </ToastAction>
+        ),
       });
-  }, [amount, recipientAddress, recipientPublicKey, sendTransfer]);
+    } catch (e) {
+      toast({
+        title: "Transfer failed",
+        description: (e as Error).message,
+        variant: "destructive",
+      });
+    }
+  }, [amount, to, from, sendTransfer]);
 
-  const onScan = useCallback((result: IDetectedBarcode[]) => {
-    const data = JSON.parse(result[0].rawValue);
+  const onScan = useCallback(
+    (result: IDetectedBarcode[]) => {
+      const { address, publicKey } = JSON.parse(result[0].rawValue);
+      setTo({ address, publicKey });
 
-    setRecipientAddress(data.address.startsWith("0x") ? data.address : `0x${data.address}`);
-    setRecipientPublicKey(data.publicKey.startsWith("0x") ? data.publicKey : `0x${data.publicKey}`);
-    setScan(false);
-  }, [setRecipientAddress, setRecipientPublicKey, setScan]);
+      setScan(false);
+    },
+    [setTo, setScan]
+  );
 
   return (
     <div className="flex flex-col p-6 bg-white rounded-3xl border border-primary">
@@ -56,15 +100,15 @@ export const Transfer: React.FC = () => {
             <Input
               type="text"
               placeholder="Recipient Address"
-              value={recipientAddress}
-              onChange={(e) => setRecipientAddress(e.target.value)}
+              value={to.address}
+              onChange={(e) => setTo({ ...to, address: e.target.value })}
             />
 
             <Input
               type="text"
               placeholder="Recipient Public Key"
-              value={recipientPublicKey}
-              onChange={(e) => setRecipientPublicKey(e.target.value)}
+              value={to.publicKey}
+              onChange={(e) => setTo({ ...to, publicKey: e.target.value })}
             />
 
             <Input
@@ -73,11 +117,44 @@ export const Transfer: React.FC = () => {
               value={amount}
               onChange={(e) => setAmount(e.target.value)}
             />
+
+            {transferFrom && (
+              <>
+                <Input
+                  type="text"
+                  placeholder="Sender Address"
+                  value={from.address}
+                  onChange={(e) =>
+                    setFrom({ ...from, address: e.target.value })
+                  }
+                />
+
+                <Input
+                  type="text"
+                  placeholder="Sender Public Key"
+                  value={from.publicKey}
+                  onChange={(e) =>
+                    setFrom({ ...from, publicKey: e.target.value })
+                  }
+                />
+              </>
+            )}
           </div>
 
-          <Button className="w-full" onClick={onTransfer} disabled={loading}>
-            {loading ? "Transferring..." : "Transfer "}
-          </Button>
+          <div className="flex gap-4">
+            <Button
+              className="w-full"
+              onClick={onTransfer}
+              disabled={transferFromLoading || transferLoading}
+            >
+              {transferFromLoading || transferLoading
+                ? "Transferring..."
+                : "Transfer"}
+            </Button>
+            <Button onClick={() => setTransferFrom(!transferFrom)}>
+              <WalletIcon />
+            </Button>
+          </div>
         </>
       )}
     </div>

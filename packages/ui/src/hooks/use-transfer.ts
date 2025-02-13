@@ -1,23 +1,26 @@
 import { Fr } from "@aztec/bb.js";
 import { ProofService } from "@/services/proof.service";
-import { useContract, useProvider, useSendTransaction } from "@starknet-react/core";
+import {
+  useContract,
+  useSendTransaction,
+} from "@starknet-react/core";
 import { BarretenbergService } from "@/services/bb.service";
-import privateTokenAbi from "@/abi/private-erc20.abi";
-import { PRIVATE_ERC20_CONTRACT_ADDRESS } from "@/constants";
+import {
+  PRIVATE_ERC20_ABI,
+  PRIVATE_ERC20_CONTRACT_ADDRESS,
+} from "@/shared/config/constants";
 import { MerkleTree } from "@/lib/merkle-tree";
 import { AccountService } from "@/services/account.service";
-import { MERKLE_TREE_DEPTH } from "@/constants";
-import { useMemo, useState } from "react";
+import { MERKLE_TREE_DEPTH } from "@/shared/config/constants";
+import { useState } from "react";
 import { formatHex } from "@/lib/utils";
-import { NotesService } from "@/services/notes.service";
-import { Provider } from "starknet";
+import { notesService } from "@/services/notes.service";
 
 export const useTransfer = () => {
-  const { provider } = useProvider() as { provider: Provider };
   const [loading, setLoading] = useState(false);
 
   const { contract } = useContract({
-    abi: privateTokenAbi,
+    abi: PRIVATE_ERC20_ABI,
     address: PRIVATE_ERC20_CONTRACT_ADDRESS,
   });
 
@@ -25,17 +28,13 @@ export const useTransfer = () => {
     calls: undefined,
   });
 
-  const notesService = useMemo(() => {
-    return new NotesService(provider);
-  }, [provider]);
-
   const sendTransfer = async (props: {
     to: {
       address: bigint;
       publicKey: bigint;
     };
     amount: bigint;
-  }) => {
+  }): Promise<string> => {
     setLoading(true);
 
     try {
@@ -44,9 +43,11 @@ export const useTransfer = () => {
       }
 
       const spenderAccount = await AccountService.getAccount();
-      const notes = await notesService.getNotes();
+      const { notesArray: notes } = await notesService.getNotes();
 
-      const senderNotes = notes.filter((n) => n.value !== undefined && n.spent !== true);
+      const senderNotes = notes.filter(
+        (n) => n.value !== undefined && n.spent !== true
+      );
       const inputNote = senderNotes
         .sort((a, b) => parseInt((b.value! - a.value!).toString()))
         .find((n) => n.value! > props.amount);
@@ -99,36 +100,42 @@ export const useTransfer = () => {
       );
 
       const generatedProof = await ProofService.generateTransferProof({
-        owner_private_key: formatHex(spenderAccount.privateKey % Fr.MODULUS),
+        // accounts details
+        sender_private_key: formatHex(spenderAccount.privateKey % Fr.MODULUS),
         receiver_account: formatHex(props.to.address),
+        // utxo inputs
         in_commitment_root: formatHex(inRoot),
         in_commitment_path: inputCommitmentProof.path.map((e) => formatHex(e)),
-        in_commitment_direction_selector: inputCommitmentProof.directionSelector,
+        in_commitment_direction_selector:
+          inputCommitmentProof.directionSelector,
         in_commitment_value: formatHex(inputNote.value!),
         in_commitment_bliding: formatHex(inputNote.bliding!),
         in_commitment_spending_tracker: formatHex(spendingTracker),
-        out_receiver_value: formatHex(props.amount),
-        out_receiver_bliding: formatHex(outReceiverNote.bliding),
+        // utxo outputs
+        out_receiver_commitment_value: formatHex(props.amount),
+        out_receiver_commitment_bliding: formatHex(outReceiverNote.bliding),
         out_receiver_commitment: formatHex(outReceiverNote.commitment),
-        out_sender_value: formatHex(outSenderAmount),
-        out_sender_bliding: formatHex(outSenderNote.bliding),
-        out_root: formatHex(outRoot),
+        out_sender_commitment_value: formatHex(outSenderAmount),
+        out_sender_commitment_bliding: formatHex(outSenderNote.bliding),
         out_sender_commitment: formatHex(outSenderNote.commitment),
         // updated root
+        out_root: formatHex(outRoot),
         out_subtree_root_path: outPathProof.path
           .slice(1, MERKLE_TREE_DEPTH)
           .map((e) => formatHex(e)),
-        out_subtree_root_direction:
+        out_subtree_root_direction_selector:
           outPathProof.directionSelector.slice(1, MERKLE_TREE_DEPTH),
       });
 
-      const callData = contract.populate("transfer", [
-        generatedProof,
-        outSenderNote.encOutput,
-        outReceiverNote.encOutput,
+      const { transaction_hash } = await sendAsync([
+        contract.populate("transfer", [
+          generatedProof,
+          outSenderNote.encOutput,
+          outReceiverNote.encOutput,
+        ]),
       ]);
 
-      await sendAsync([callData]);
+      return transaction_hash;
     } catch (error) {
       throw error;
     } finally {

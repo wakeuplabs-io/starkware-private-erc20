@@ -2,7 +2,7 @@ import { Approve } from "@/components/approve";
 import { Notes } from "@/components/notes";
 import { Receive } from "@/components/receive";
 import { Transfer } from "@/components/transfer";
-import { useBalance } from "@/hooks/useBalance";
+import { useBalance } from "@/hooks/use-balance";
 import { cn, formatTokenAmount } from "@/lib/utils";
 import { createFileRoute } from "@tanstack/react-router";
 import { ArrowDown, ArrowUpRight, List } from "lucide-react";
@@ -26,19 +26,19 @@ function Index() {
   return (
     <div className="w-full">
       <div className="w-full space-y-8 lg:space-y-4 mb-12">
-        <div className="flex justify-between w-full">
+        <div className="flex justify-between w-full mb-10">
           <h1 className="text-2xl lg:text-4xl font-bold">Erc20</h1>
           <div className="relative">
             <div className="text-3xl lg:text-4xl font-bold">
               {formatTokenAmount(balance)}
             </div>
-            <div className="absolute bottom-0 translate-y-full right-0 text-sm lg:text-base text-nowrap">
+            <div className="absolute bottom-0 translate-y-full right-0 text-sm text-nowrap">
               My balance
             </div>
           </div>
         </div>
 
-        <div className="gap-2 grid grid-cols-4 max-w-sm">
+        <div className="gap-2 grid grid-cols-4">
           <button
             onClick={() => setTab(Tab.Notes)}
             className={cn(
