@@ -1,343 +1,343 @@
 import { Abi } from "starknet";
 
-export const PRIVATE_ERC20_DEPLOY_BLOCK = 519739;
+export const PRIVATE_ERC20_DEPLOY_BLOCK = 521743;
 export const PRIVATE_ERC20_EVENT_KEY =
   "contracts::privado::privado::Privado::Approval";
 export const PRIVATE_ERC20_CONTRACT_ADDRESS =
-  "0x04e64f1948eb340f3b7a3152975f93de5f8d14c034fe6f574364555ad5a7a78c";
+  "0x06dcec601f8306580ed8969f9d45b319c4f2b539cfa16ac2667c5558385920ff";
 export const ZERO_BIG_INT = BigInt(0);
 export const MERKLE_TREE_DEPTH = 12;
 export const DECIMALS = 6n;
 
 export const PRIVATE_ERC20_ABI: Abi = [
   {
-    name: "PrivadoImpl",
-    type: "impl",
-    interface_name: "contracts::privado::privado::IPrivado",
+    "name": "PrivadoImpl",
+    "type": "impl",
+    "interface_name": "contracts::privado::privado::IPrivado"
   },
   {
-    name: "core::integer::u256",
-    type: "struct",
-    members: [
+    "name": "core::integer::u256",
+    "type": "struct",
+    "members": [
       {
-        name: "low",
-        type: "core::integer::u128",
+        "name": "low",
+        "type": "core::integer::u128"
       },
       {
-        name: "high",
-        type: "core::integer::u128",
-      },
-    ],
+        "name": "high",
+        "type": "core::integer::u128"
+      }
+    ]
   },
   {
-    name: "core::array::Span::<core::felt252>",
-    type: "struct",
-    members: [
+    "name": "core::array::Span::<core::felt252>",
+    "type": "struct",
+    "members": [
       {
-        name: "snapshot",
-        type: "@core::array::Array::<core::felt252>",
-      },
-    ],
+        "name": "snapshot",
+        "type": "@core::array::Array::<core::felt252>"
+      }
+    ]
   },
   {
-    name: "core::byte_array::ByteArray",
-    type: "struct",
-    members: [
+    "name": "core::byte_array::ByteArray",
+    "type": "struct",
+    "members": [
       {
-        name: "data",
-        type: "core::array::Array::<core::bytes_31::bytes31>",
+        "name": "data",
+        "type": "core::array::Array::<core::bytes_31::bytes31>"
       },
       {
-        name: "pending_word",
-        type: "core::felt252",
+        "name": "pending_word",
+        "type": "core::felt252"
       },
       {
-        name: "pending_word_len",
-        type: "core::integer::u32",
-      },
-    ],
+        "name": "pending_word_len",
+        "type": "core::integer::u32"
+      }
+    ]
   },
   {
-    name: "core::bool",
-    type: "enum",
-    variants: [
+    "name": "core::bool",
+    "type": "enum",
+    "variants": [
       {
-        name: "False",
-        type: "()",
+        "name": "False",
+        "type": "()"
       },
       {
-        name: "True",
-        type: "()",
-      },
-    ],
+        "name": "True",
+        "type": "()"
+      }
+    ]
   },
   {
-    name: "contracts::privado::privado::IPrivado",
-    type: "interface",
-    items: [
+    "name": "contracts::privado::privado::IPrivado",
+    "type": "interface",
+    "items": [
       {
-        name: "name",
-        type: "function",
-        inputs: [],
-        outputs: [
+        "name": "name",
+        "type": "function",
+        "inputs": [],
+        "outputs": [
           {
-            type: "core::felt252",
-          },
+            "type": "core::felt252"
+          }
         ],
-        state_mutability: "view",
+        "state_mutability": "view"
       },
       {
-        name: "symbol",
-        type: "function",
-        inputs: [],
-        outputs: [
+        "name": "symbol",
+        "type": "function",
+        "inputs": [],
+        "outputs": [
           {
-            type: "core::felt252",
-          },
+            "type": "core::felt252"
+          }
         ],
-        state_mutability: "view",
+        "state_mutability": "view"
       },
       {
-        name: "decimals",
-        type: "function",
-        inputs: [],
-        outputs: [
+        "name": "decimals",
+        "type": "function",
+        "inputs": [],
+        "outputs": [
           {
-            type: "core::integer::u8",
-          },
+            "type": "core::integer::u8"
+          }
         ],
-        state_mutability: "view",
+        "state_mutability": "view"
       },
       {
-        name: "total_supply",
-        type: "function",
-        inputs: [],
-        outputs: [
+        "name": "total_supply",
+        "type": "function",
+        "inputs": [],
+        "outputs": [
           {
-            type: "core::integer::u256",
-          },
+            "type": "core::integer::u256"
+          }
         ],
-        state_mutability: "view",
+        "state_mutability": "view"
       },
       {
-        name: "balance_of",
-        type: "function",
-        inputs: [
+        "name": "balance_of",
+        "type": "function",
+        "inputs": [
           {
-            name: "account",
-            type: "core::starknet::contract_address::ContractAddress",
-          },
+            "name": "account",
+            "type": "core::starknet::contract_address::ContractAddress"
+          }
         ],
-        outputs: [
+        "outputs": [
           {
-            type: "core::integer::u256",
-          },
+            "type": "core::integer::u256"
+          }
         ],
-        state_mutability: "view",
+        "state_mutability": "view"
       },
       {
-        name: "transfer",
-        type: "function",
-        inputs: [
+        "name": "transfer",
+        "type": "function",
+        "inputs": [
           {
-            name: "proof",
-            type: "core::array::Span::<core::felt252>",
+            "name": "proof",
+            "type": "core::array::Span::<core::felt252>"
           },
           {
-            name: "sender_enc_output",
-            type: "core::byte_array::ByteArray",
+            "name": "sender_enc_output",
+            "type": "core::byte_array::ByteArray"
           },
           {
-            name: "receiver_enc_output",
-            type: "core::byte_array::ByteArray",
-          },
+            "name": "receiver_enc_output",
+            "type": "core::byte_array::ByteArray"
+          }
         ],
-        outputs: [
+        "outputs": [
           {
-            type: "core::bool",
-          },
+            "type": "core::bool"
+          }
         ],
-        state_mutability: "external",
+        "state_mutability": "external"
       },
       {
-        name: "allowance",
-        type: "function",
-        inputs: [
+        "name": "allowance",
+        "type": "function",
+        "inputs": [
           {
-            name: "relationship_hash",
-            type: "core::integer::u256",
-          },
+            "name": "relationship_hash",
+            "type": "core::integer::u256"
+          }
         ],
-        outputs: [
+        "outputs": [
           {
-            type: "core::integer::u256",
-          },
+            "type": "core::integer::u256"
+          }
         ],
-        state_mutability: "view",
+        "state_mutability": "view"
       },
       {
-        name: "transfer_from",
-        type: "function",
-        inputs: [
+        "name": "transfer_from",
+        "type": "function",
+        "inputs": [
           {
-            name: "proof",
-            type: "core::array::Span::<core::felt252>",
+            "name": "proof",
+            "type": "core::array::Span::<core::felt252>"
           },
           {
-            name: "owner_enc_output",
-            type: "core::byte_array::ByteArray",
+            "name": "owner_enc_output",
+            "type": "core::byte_array::ByteArray"
           },
           {
-            name: "receiver_enc_output",
-            type: "core::byte_array::ByteArray",
-          },
+            "name": "receiver_enc_output",
+            "type": "core::byte_array::ByteArray"
+          }
         ],
-        outputs: [
+        "outputs": [
           {
-            type: "core::bool",
-          },
+            "type": "core::bool"
+          }
         ],
-        state_mutability: "external",
+        "state_mutability": "external"
       },
       {
-        name: "approve",
-        type: "function",
-        inputs: [
+        "name": "approve",
+        "type": "function",
+        "inputs": [
           {
-            name: "proof",
-            type: "core::array::Span::<core::felt252>",
+            "name": "proof",
+            "type": "core::array::Span::<core::felt252>"
           },
           {
-            name: "output_enc_owner",
-            type: "core::byte_array::ByteArray",
+            "name": "output_enc_owner",
+            "type": "core::byte_array::ByteArray"
           },
           {
-            name: "output_enc_spender",
-            type: "core::byte_array::ByteArray",
-          },
+            "name": "output_enc_spender",
+            "type": "core::byte_array::ByteArray"
+          }
         ],
-        outputs: [
+        "outputs": [
           {
-            type: "core::bool",
-          },
+            "type": "core::bool"
+          }
         ],
-        state_mutability: "external",
+        "state_mutability": "external"
       },
       {
-        name: "current_root",
-        type: "function",
-        inputs: [],
-        outputs: [
+        "name": "current_root",
+        "type": "function",
+        "inputs": [],
+        "outputs": [
           {
-            type: "core::integer::u256",
-          },
+            "type": "core::integer::u256"
+          }
         ],
-        state_mutability: "view",
+        "state_mutability": "view"
       },
       {
-        name: "current_commitment_index",
-        type: "function",
-        inputs: [],
-        outputs: [
+        "name": "current_commitment_index",
+        "type": "function",
+        "inputs": [],
+        "outputs": [
           {
-            type: "core::integer::u256",
-          },
+            "type": "core::integer::u256"
+          }
         ],
-        state_mutability: "view",
-      },
-    ],
+        "state_mutability": "view"
+      }
+    ]
   },
   {
-    name: "constructor",
-    type: "constructor",
-    inputs: [],
+    "name": "constructor",
+    "type": "constructor",
+    "inputs": []
   },
   {
-    kind: "struct",
-    name: "contracts::privado::privado::Privado::NewCommitment",
-    type: "event",
-    members: [
+    "kind": "struct",
+    "name": "contracts::privado::privado::Privado::NewCommitment",
+    "type": "event",
+    "members": [
       {
-        kind: "data",
-        name: "commitment",
-        type: "core::integer::u256",
+        "kind": "data",
+        "name": "commitment",
+        "type": "core::integer::u256"
       },
       {
-        kind: "data",
-        name: "output_enc",
-        type: "core::byte_array::ByteArray",
+        "kind": "data",
+        "name": "output_enc",
+        "type": "core::byte_array::ByteArray"
       },
       {
-        kind: "data",
-        name: "index",
-        type: "core::integer::u256",
-      },
-    ],
+        "kind": "data",
+        "name": "index",
+        "type": "core::integer::u256"
+      }
+    ]
   },
   {
-    kind: "struct",
-    name: "contracts::privado::privado::Privado::NewSpendingTracker",
-    type: "event",
-    members: [
+    "kind": "struct",
+    "name": "contracts::privado::privado::Privado::NewSpendingTracker",
+    "type": "event",
+    "members": [
       {
-        kind: "data",
-        name: "spending_tracker",
-        type: "core::integer::u256",
-      },
-    ],
+        "kind": "data",
+        "name": "spending_tracker",
+        "type": "core::integer::u256"
+      }
+    ]
   },
   {
-    kind: "struct",
-    name: "contracts::privado::privado::Privado::Approval",
-    type: "event",
-    members: [
+    "kind": "struct",
+    "name": "contracts::privado::privado::Privado::Approval",
+    "type": "event",
+    "members": [
       {
-        kind: "data",
-        name: "timestamp",
-        type: "core::integer::u64",
+        "kind": "data",
+        "name": "timestamp",
+        "type": "core::integer::u64"
       },
       {
-        kind: "data",
-        name: "allowance_hash",
-        type: "core::integer::u256",
+        "kind": "data",
+        "name": "allowance_hash",
+        "type": "core::integer::u256"
       },
       {
-        kind: "data",
-        name: "allowance_relationship",
-        type: "core::integer::u256",
+        "kind": "key",
+        "name": "allowance_relationship",
+        "type": "core::integer::u256"
       },
       {
-        kind: "data",
-        name: "output_enc_owner",
-        type: "core::byte_array::ByteArray",
+        "kind": "data",
+        "name": "output_enc_owner",
+        "type": "core::byte_array::ByteArray"
       },
       {
-        kind: "data",
-        name: "output_enc_spender",
-        type: "core::byte_array::ByteArray",
-      },
-    ],
+        "kind": "data",
+        "name": "output_enc_spender",
+        "type": "core::byte_array::ByteArray"
+      }
+    ]
   },
   {
-    kind: "enum",
-    name: "contracts::privado::privado::Privado::Event",
-    type: "event",
-    variants: [
+    "kind": "enum",
+    "name": "contracts::privado::privado::Privado::Event",
+    "type": "event",
+    "variants": [
       {
-        kind: "nested",
-        name: "NewCommitment",
-        type: "contracts::privado::privado::Privado::NewCommitment",
+        "kind": "nested",
+        "name": "NewCommitment",
+        "type": "contracts::privado::privado::Privado::NewCommitment"
       },
       {
-        kind: "nested",
-        name: "NewSpendingTracker",
-        type: "contracts::privado::privado::Privado::NewSpendingTracker",
+        "kind": "nested",
+        "name": "NewSpendingTracker",
+        "type": "contracts::privado::privado::Privado::NewSpendingTracker"
       },
       {
-        kind: "nested",
-        name: "Approval",
-        type: "contracts::privado::privado::Privado::Approval",
-      },
-    ],
-  },
-];
+        "kind": "nested",
+        "name": "Approval",
+        "type": "contracts::privado::privado::Privado::Approval"
+      }
+    ]
+  }
+]

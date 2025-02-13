@@ -11,20 +11,20 @@ import {
   PRIVATE_ERC20_DEPLOY_BLOCK,
   PRIVATE_ERC20_EVENT_KEY,
 } from "@/shared/config/constants";
-import { ApprovalEvent, Note } from "@/interfaces";
+import { ApprovalEvent, ApprovalPayload, Note } from "@/interfaces";
 import { ProofService } from "@/services/proof.service";
 import { Fr } from "@aztec/bb.js";
 import { AccountService } from "@/services/account.service";
 import { BarretenbergService } from "@/services/bb.service";
-import { formatHex } from "@/lib/utils";
+import { formatHex, parse } from "@/lib/utils";
 import { MerkleTree } from "@/lib/merkle-tree";
 import { NotesService } from "@/services/notes.service";
-import { hash, num, events as Events, CallData } from "starknet";
-import { provider } from "@/shared/config/rpc";
+import { hash, num, events as Events, CallData, Provider } from "starknet";
+// import { provider } from "@/shared/config/rpc";
 import { CipherService } from "@/services/cipher.service";
 
 export const useTransferFrom = () => {
-  // const { provider } = useProvider() as { provider: Provider };
+  const { provider } = useProvider() as { provider: Provider };
   const [loading, setLoading] = useState(false);
 
   const { contract } = useContract({
@@ -56,21 +56,14 @@ export const useTransferFrom = () => {
 
       // TODO: retrieve notes that are approved
       const lastBlock = await provider.getBlock("latest");
+
+      // TODO:
       const relationshipId = await BarretenbergService.generateHashArray([
-        new Fr(
-          BigInt(
-            "0xf4280fa36dd274233822111013be2d770e02332ac2766ae093aa25ee33a2d31" // approver
-          )
-        ),
-        new Fr(
-          BigInt(
-            "0x1157bc9404765dd3c073c4ad1593445c1e96e6d1504a12d6b53d38f26e8c99eb" // spender
-          )
-        ),
+        new Fr(props.from.address),
+        new Fr(spenderAccount.address),
       ]);
-      const keyFilter = [
-        [num.toHex(hash.starknetKeccak("Approval")), num.toHex(relationshipId)],
-      ];
+      // 0x280c2a33f20f560f449b16a1ff045707c687269a12bce3315dbb942da45b43e0
+      const keyFilter = [[num.toHex(hash.starknetKeccak("Approval"))]];
 
       let continuationToken = undefined;
       const approvalEvents: ApprovalEvent[] = [];
@@ -90,6 +83,7 @@ export const useTransferFrom = () => {
           CallData.getAbiStruct(PRIVATE_ERC20_ABI),
           CallData.getAbiEnum(PRIVATE_ERC20_ABI)
         );
+        console.log("parsed", parsed);
 
         const sortedApprovalEvents = parsed
           .filter((event) => event[PRIVATE_ERC20_EVENT_KEY])
@@ -97,7 +91,8 @@ export const useTransferFrom = () => {
           .map((event) => ({
             allowance_hash: event.allowance_hash,
             allowance_relationship: event.allowance_relationship,
-            output_enc: event.output_enc,
+            output_enc_owner: event.output_enc_owner,
+            output_enc_spender: event.output_enc_spender,
             timestamp: event.timestamp,
           })) as ApprovalEvent[];
 
@@ -108,113 +103,144 @@ export const useTransferFrom = () => {
 
       console.log("approval", approvalEvents);
 
-      const approval = approvalEvents.sort((a, b) =>
-        Number(a.timestamp - b.timestamp)
-      )[0];
+      const approval = approvalEvents
+          .sort((a, b) => Number(b.timestamp) - Number(a.timestamp))[0];
+
       console.log("last Approval", approval);
 
-      const dec = await CipherService.decrypt(
-        approval.output_enc,
-        BigInt(
-          "0x2caa6f22dd2b39742da00ce519c8ada57ad5d507dc99fdf6060d02c47f136648"
-        ),
-        BigInt(
-          "0x2efe4d50e62d08f1335a7d8b6e8cb0a1b92d68e9bc34fcab1f547b2588d36ff1"
+      const allowance: ApprovalPayload = parse(
+        await CipherService.decrypt(
+          approval.output_enc_spender,
+          spenderAccount.publicKey,
+          spenderAccount.privateKey
         )
       );
-      console.log("dec", dec);
+      console.log("allowance", allowance);
+
+      // check if spender has enough allowance
+      if (allowance.allowance < props.amount) {
+        throw new Error("Insufficient allowance");
+      }
+
+      // fetch all notes
+      const { notesArray, notesMap } = await notesService.getNotes();
+      
+      // filter already spent notes
+      const spendableNotes = allowance.commitments.filter((c) => {
+        const note = notesMap.get(c.commitment);
+        return note && !note.spent;
+      });
 
       // select note to use for transfer
-      // const notes = [] as Note[]; // TODO: get approved notes
-      // const senderNotes = notes.filter((n) => n.value !== undefined);
-      // const inputNote = senderNotes
-      //   .sort((a, b) => parseInt((b.value! - a.value!).toString()))
-      //   .find((n) => n.value! > props.amount);
-      // if (!inputNote) {
-      //   throw new Error("Insufficient funds in notes");
-      // }
+      const inputNote = spendableNotes
+        .sort((a, b) => parseInt((b.value! - a.value!).toString()))
+        .find((n) => n.value! > props.amount);
+      if (!inputNote) {
+        throw new Error("Insufficient funds in notes");
+      }
+
+      const inputCommitmentTracker = await BarretenbergService.generateHashArray([
+        new Fr(inputNote.commitment % Fr.MODULUS),
+        new Fr(inputNote.bliding % Fr.MODULUS),
+      ])
+  
 
       // generate proof
-      // const outSenderAmount = inputNote.value! - props.amount;
-      // const callerAccount = await AccountService.getAccount();
+      const outOwnerAmount = inputNote.value! - props.amount;
 
-      // // rebuild tree
-      // const tree = new MerkleTree();
-      // const notes = await notesService.getNotes();
-      // const orderedNotes = notes.sort((a, b) =>
-      //   parseInt((a.index! - b.index!).toString())
-      // );
-      // for (const note of orderedNotes) {
-      //   await tree.addCommitment(note.commitment);
-      // }
+      // rebuild tree
+      const tree = new MerkleTree();
+      const orderedNotes = notesArray.sort((a, b) =>
+        parseInt((a.index! - b.index!).toString())
+      );
+      for (const note of orderedNotes) {
+        await tree.addCommitment(note.commitment);
+      }
 
-      // // compute input commitment root and path
-      // const inRoot = tree.getRoot();
-      // const inputCommitmentProof = tree.getProof(inputNote.commitment);
-      // if (!inputCommitmentProof) {
-      //   throw new Error("Input commitment doesn't belong to the tree");
-      // }
+      // compute input commitment root and path
+      const inRoot = tree.getRoot();
+      const inputCommitmentProof = tree.getProof(inputNote.commitment);
+      if (!inputCommitmentProof) {
+        throw new Error("Input commitment doesn't belong to the tree");
+      }
 
-      // // generate notes
-      // const [outSenderNote, outReceiverNote] = await Promise.all([
-      //   BarretenbergService.generateNote(
-      //     callerAccount.address,
-      //     callerAccount.publicKey,
-      //     outSenderAmount
-      //   ),
-      //   BarretenbergService.generateNote(
-      //     props.to.address,
-      //     props.to.publicKey,
-      //     props.amount
-      //   ),
-      // ]);
-      // await tree.addCommitment(outSenderNote.commitment);
-      // await tree.addCommitment(outReceiverNote.commitment);
+      // generate notes
+      const [outOwnerNote, outReceiverNote] = await Promise.all([
+        BarretenbergService.generateNote(
+          props.from.address,
+          props.from.publicKey,
+          outOwnerAmount
+        ),
+        BarretenbergService.generateNote(
+          props.to.address,
+          props.to.publicKey,
+          props.amount
+        ),
+      ]);
+      await tree.addCommitment(outOwnerNote.commitment);
+      await tree.addCommitment(outReceiverNote.commitment);
 
-      // const outRoot = tree.getRoot();
-      // const outPathProof = tree.getProof(outSenderNote.commitment);
+      const outRoot = tree.getRoot();
+      const outPathProof = tree.getProof(outOwnerNote.commitment);
 
-      // const generatedProof = await ProofService.generateTransferFromProof({
-      //   // account details
-      //   owner_account: formatHex(props.from.address),
-      //   receiver_account: formatHex(props.to.address),
-      //   spender_private_key: formatHex(callerAccount.privateKey % Fr.MODULUS),
-      //   // input commitment details
-      //   in_commitment_root: formatHex(inRoot),
-      //   in_commitment_path: inputCommitmentProof.path.map((e) => formatHex(e)),
-      //   in_commitment_direction_selector:
-      //     inputCommitmentProof.directionSelector,
-      //   in_commitment_bliding: formatHex(inputNote.bliding!),
-      //   in_commitment_value: formatHex(inputNote.value!),
-      //   in_commitment_spending_tracker: formatHex(inputNote.value!),
-      //   in_allowance_value: formatHex(inputNote.value!),
-      //   in_allowance_hash: formatHex(inputNote.value!),
-      //   in_allowance_relationship: formatHex(inputNote.value!),
+      const inAllowanceHash = await BarretenbergService.generateHashArray([
+        new Fr(props.from.address),
+        new Fr(spenderAccount.address),
+        new Fr(allowance.allowance),
+      ]);
 
-      //   out_allowance_hash: formatHex(outReceiverNote.bliding),
-      //   out_receiver_value: formatHex(outSenderAmount),
-      //   out_receiver_bliding: formatHex(outReceiverNote.bliding),
-      //   out_receiver_commitment: formatHex(outReceiverNote.commitment),
-      //   out_owner_value: formatHex(outRoot),
-      //   out_owner_bliding: formatHex(outRoot),
-      //   out_owner_commitment: formatHex(outRoot),
-      //   out_root: formatHex(outRoot),
-      //   out_subtree_root_path: outPathProof.path
-      //     .slice(1, MERKLE_TREE_DEPTH)
-      //     .map((e) => formatHex(e)),
-      //   out_subtree_direction_selector: outPathProof.directionSelector.slice(
-      //     1,
-      //     MERKLE_TREE_DEPTH
-      //   ),
-      // });
+      const outAllowanceHash = await BarretenbergService.generateHashArray([
+        new Fr(props.from.address),
+        new Fr(spenderAccount.address),
+        new Fr(allowance.allowance - props.amount),
+      ]);
 
-      // const callData = contract.populate("transfer_from", [
-      //   generatedProof,
-      //   outSenderNote.encOutput, // TODO: should include ourselves here
-      //   outReceiverNote.encOutput,
-      // ]);
+      const generatedProof = await ProofService.generateTransferFromProof({
+        // account details
+        owner_account: formatHex(props.from.address),
+        receiver_account: formatHex(props.to.address),
+        spender_private_key: formatHex(spenderAccount.privateKey % Fr.MODULUS),
+        // input commitment details
+        in_commitment_root: formatHex(inRoot),
+        in_commitment_path: inputCommitmentProof.path.map((e) => formatHex(e)),
+        in_commitment_direction_selector:
+          inputCommitmentProof.directionSelector,
+        in_commitment_bliding: formatHex(inputNote.bliding!),
+        in_commitment_value: formatHex(inputNote.value!),
+        in_commitment_spending_tracker: formatHex(inputCommitmentTracker),
+        
+        
+        in_allowance_value: formatHex(allowance.allowance),
+        in_allowance_hash: formatHex(inAllowanceHash), 
+        in_allowance_relationship: formatHex(relationshipId),
 
-      // await sendAsync([callData]);
+        
+        out_allowance_hash: formatHex(outAllowanceHash),
+        out_receiver_value: formatHex(outReceiverNote.value),
+        out_receiver_bliding: formatHex(outReceiverNote.bliding),
+        out_receiver_commitment: formatHex(outReceiverNote.commitment),
+        
+        out_owner_value: formatHex(outOwnerNote.value),
+        out_owner_bliding: formatHex(outOwnerNote.bliding),
+        out_owner_commitment: formatHex(outOwnerNote.commitment),
+
+        out_root: formatHex(outRoot),
+        out_subtree_root_path: outPathProof.path
+          .slice(1, MERKLE_TREE_DEPTH)
+          .map((e) => formatHex(e)),
+        out_subtree_direction_selector: outPathProof.directionSelector.slice(
+          1,
+          MERKLE_TREE_DEPTH
+        ),
+      });
+
+      const callData = contract.populate("transfer_from", [
+        generatedProof,
+        outOwnerNote.encOutput, 
+        outReceiverNote.encOutput,
+      ]);
+
+      await sendAsync([callData]);
     } catch (error) {
       console.error("Error in transferFrom:", error);
     } finally {

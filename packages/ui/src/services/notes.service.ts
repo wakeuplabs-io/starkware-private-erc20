@@ -1,4 +1,4 @@
-import { CommitmentEvent, DecryptedOutput, Note } from "@/interfaces";
+import { CommitmentEvent, CommitmentPayload, Note } from "@/interfaces";
 import { Provider, selector, events as Events, CallData } from "starknet";
 import { EVENTS_CHUNK } from "node_modules/starknet-types-07/dist/types/api/components";
 import { PRIVATE_ERC20_ABI, PRIVATE_ERC20_CONTRACT_ADDRESS } from "@/shared/config/constants";
@@ -13,7 +13,7 @@ export class NotesService {
     this.provider = provider;
   }
 
-  async getNotes(): Promise<Note[]> {
+  async getNotes(): Promise<{ notesArray: Note[], notesMap: Map<bigint, Note> }> {
     const toBlock = await this.provider.getBlock("latest");
     const fromBlock = await this.getCacheLatestBlock();
 
@@ -54,7 +54,7 @@ export class NotesService {
     await this.setCachedNullifiers(Array.from(nullifiersMap.values()));
     await this.setCacheLatestBlock(toBlock.block_number);
 
-    return notesArray;
+    return { notesArray, notesMap }
   }
 
   private getCacheLatestBlock(): number {
@@ -166,7 +166,7 @@ export class NotesService {
         try {
           const { commitment, encryptedOutput, index }: Note = commitmentEvent;
 
-          const decrypted: DecryptedOutput = JSON.parse(
+          const decrypted: CommitmentPayload = JSON.parse(
             await CipherService.decrypt(
               encryptedOutput,
               account.publicKey,

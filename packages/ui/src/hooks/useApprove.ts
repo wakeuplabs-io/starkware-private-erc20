@@ -1,14 +1,22 @@
-import { useContract, useProvider, useSendTransaction } from "@starknet-react/core";
+import {
+  useContract,
+  useProvider,
+  useSendTransaction,
+} from "@starknet-react/core";
 import { useMemo, useState } from "react";
-import { PRIVATE_ERC20_ABI, PRIVATE_ERC20_CONTRACT_ADDRESS } from "@/shared/config/constants";
+import {
+  PRIVATE_ERC20_ABI,
+  PRIVATE_ERC20_CONTRACT_ADDRESS,
+} from "@/shared/config/constants";
 import { AccountService } from "@/services/account.service";
 import { ProofService } from "@/services/proof.service";
 import { Fr } from "@aztec/bb.js";
-import { formatHex } from "@/lib/utils";
+import { formatHex, stringify } from "@/lib/utils";
 import { BarretenbergService } from "@/services/bb.service";
 import { CipherService } from "@/services/cipher.service";
 import { NotesService } from "@/services/notes.service";
 import { Provider } from "starknet";
+import { ApprovalPayload } from "@/interfaces";
 
 export const useApprove = () => {
   const { provider } = useProvider() as { provider: Provider };
@@ -30,8 +38,11 @@ export const useApprove = () => {
     spender: {
       address: bigint;
       publicKey: bigint;
-    }; amount: bigint
+    };
+    amount: bigint;
   }) => {
+    setLoading(true);
+
     try {
       if (!contract) {
         throw new Error("Contract not initialized");
@@ -39,8 +50,10 @@ export const useApprove = () => {
 
       const approverAccount = await AccountService.getAccount();
 
-      const notes = await notesService.getNotes();
-      const senderNotes = notes.filter((n) => n.value !== undefined && n.spent !== true);
+      const { notesArray: notes } = await notesService.getNotes();
+      const senderNotes = notes.filter(
+        (n) => n.value !== undefined && n.spent !== true
+      );
 
       const outAllowanceHash = await BarretenbergService.generateHashArray([
         new Fr(approverAccount.address),
@@ -62,32 +75,33 @@ export const useApprove = () => {
       });
 
       // generate encrypted data
-      const allowanceData =  JSON.stringify({
-        allowance: props.amount.toString(16),
-        commitments: senderNotes.map(note => ({
-          commitment: note.commitment.toString(16),
-          value: note.value!.toString(16),
-          bliding: note.bliding!.toString(16),
-        }))
-      });
+      const approvalPayload: ApprovalPayload = {
+        allowance: props.amount,
+        commitments: senderNotes.map((note) => ({
+          commitment: note.commitment,
+          value: note.value!,
+          bliding: note.bliding!,
+        })),
+      };
 
-      const [encryptedSpenderOutput, encryptedApproverOutput] = await Promise.all([
-        CipherService.encrypt(
-          allowanceData,
-          props.spender.publicKey
-        ),
-        CipherService.encrypt(
-          allowanceData,
-          approverAccount.publicKey
-        ),
-      ]);
+      const [encryptedSpenderOutput, encryptedApproverOutput] =
+        await Promise.all([
+          CipherService.encrypt(
+            stringify(approvalPayload),
+            props.spender.publicKey
+          ),
+          CipherService.encrypt(
+            stringify(approvalPayload),
+            approverAccount.publicKey
+          ),
+        ]);
 
       console.log("encryptedApproverOutput", encryptedApproverOutput);
       console.log("encryptedSpenderOutput", encryptedSpenderOutput);
 
       const callData = contract.populate("approve", [
         generatedProof,
-        encryptedApproverOutput, 
+        encryptedApproverOutput,
         encryptedSpenderOutput,
       ]);
 

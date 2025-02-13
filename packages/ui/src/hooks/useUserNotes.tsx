@@ -21,7 +21,7 @@ export const useUserNotes = () => {
 
     notesService
       .getNotes()
-      .then((notes) => {
+      .then(({ notesArray: notes }) => {
         setNotes(notes.filter((note) => note.value !== undefined));
       })
       .finally(() => setLoading(false));

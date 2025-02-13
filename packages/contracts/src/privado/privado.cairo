@@ -132,9 +132,10 @@ pub mod Privado {
     /// Emitted when user Approves external entity
     #[derive(Drop, starknet::Event)]
     pub struct Approval {
+        #[key]
+        pub allowance_relationship: u256,
         pub timestamp: u64,
         pub allowance_hash: u256,
-        pub allowance_relationship: u256,
         pub output_enc_owner: ByteArray,
         pub output_enc_spender: ByteArray,
     }

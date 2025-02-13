@@ -17,14 +17,14 @@ export const Transfer: React.FC = () => {
   const onTransfer = useCallback(async () => {
     sendTransferFrom({
       from: {
-        address: 0n,
-        publicKey: 0n,
+        address: BigInt("0xf4280fa36dd274233822111013be2d770e02332ac2766ae093aa25ee33a2d31"),
+        publicKey: BigInt("0x9fe40de6a38adf7cb7ed7afbd20a65d068682ab1090fd6274a44b10be0cfad10"),
       },
       to: {
-        address: 0n,
-        publicKey: 0n,
+        address: BigInt("0x2b37f11720bc94c3c683985e4837d8796cc202dd99cff285fee9035250a7097c"),
+        publicKey: BigInt("0xb8b2f1337369cd0dfdbd36b4d33e66c58d587a9ad77c2f3cf469d9109f91655e"),
       },
-      amount: 0n,
+      amount: 1000000n,
     });
     // sendTransfer({
     //   to: {

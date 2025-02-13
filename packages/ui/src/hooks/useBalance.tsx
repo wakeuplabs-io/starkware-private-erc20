@@ -19,7 +19,7 @@ export const useBalance = () => {
 
     notesService
       .getNotes()
-      .then((notes) => {
+      .then(({ notesArray: notes }) => {
         console.log("notes", notes)
         setBalance(notes.reduce((acc, note) => acc + (note.value && !note.spent ? note.value : 0n), 0n));
       })

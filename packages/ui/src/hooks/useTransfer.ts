@@ -1,8 +1,15 @@
 import { Fr } from "@aztec/bb.js";
 import { ProofService } from "@/services/proof.service";
-import { useContract, useProvider, useSendTransaction } from "@starknet-react/core";
+import {
+  useContract,
+  useProvider,
+  useSendTransaction,
+} from "@starknet-react/core";
 import { BarretenbergService } from "@/services/bb.service";
-import { PRIVATE_ERC20_ABI, PRIVATE_ERC20_CONTRACT_ADDRESS } from "@/shared/config/constants";
+import {
+  PRIVATE_ERC20_ABI,
+  PRIVATE_ERC20_CONTRACT_ADDRESS,
+} from "@/shared/config/constants";
 import { MerkleTree } from "@/lib/merkle-tree";
 import { AccountService } from "@/services/account.service";
 import { MERKLE_TREE_DEPTH } from "@/shared/config/constants";
@@ -43,9 +50,11 @@ export const useTransfer = () => {
       }
 
       const spenderAccount = await AccountService.getAccount();
-      const notes = await notesService.getNotes();
+      const { notesArray: notes } = await notesService.getNotes();
 
-      const senderNotes = notes.filter((n) => n.value !== undefined && n.spent !== true);
+      const senderNotes = notes.filter(
+        (n) => n.value !== undefined && n.spent !== true
+      );
       const inputNote = senderNotes
         .sort((a, b) => parseInt((b.value! - a.value!).toString()))
         .find((n) => n.value! > props.amount);
@@ -102,7 +111,8 @@ export const useTransfer = () => {
         receiver_account: formatHex(props.to.address),
         in_commitment_root: formatHex(inRoot),
         in_commitment_path: inputCommitmentProof.path.map((e) => formatHex(e)),
-        in_commitment_direction_selector: inputCommitmentProof.directionSelector,
+        in_commitment_direction_selector:
+          inputCommitmentProof.directionSelector,
         in_commitment_value: formatHex(inputNote.value!),
         in_commitment_bliding: formatHex(inputNote.bliding!),
         in_commitment_spending_tracker: formatHex(spendingTracker),
@@ -117,8 +127,10 @@ export const useTransfer = () => {
         out_subtree_root_path: outPathProof.path
           .slice(1, MERKLE_TREE_DEPTH)
           .map((e) => formatHex(e)),
-        out_subtree_root_direction:
-          outPathProof.directionSelector.slice(1, MERKLE_TREE_DEPTH),
+        out_subtree_root_direction: outPathProof.directionSelector.slice(
+          1,
+          MERKLE_TREE_DEPTH
+        ),
       });
 
       const callData = contract.populate("transfer", [

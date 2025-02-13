@@ -1,0 +1,72 @@
+owner_account = "0xf4280fa36dd274233822111013be2d770e02332ac2766ae093aa25ee33a2d31"
+receiver_account = "0x2b37f11720bc94c3c683985e4837d8796cc202dd99cff285fee9035250a7097c"
+spender_private_key = "0x10d9d2bae3ec82a393375f337768b18b93dab5512fc3a1210d586caaf393d989"
+in_commitment_root = "0xd2db584a9435853002feb637647d77f0818f141fdf3a68aba53f5deb8ea50a9"
+in_commitment_path = [
+  "0x0",
+  "0x2437906196e7137c7551eafef9f575315b09b65d638c9e879bf66e5f8fead1d0",
+  "0xe34ac2c09f45a503d2908bcb12f1cbae5fa4065759c88d501c097506a8b2290",
+  "0x21f9172d72fdcdafc312eee05cf5092980dda821da5b760a9fb8dbdf607c8a20",
+  "0x2373ea368857ec7af97e7b470d705848e2bf93ed7bef142a490f2119bcf82d8e",
+  "0x120157cfaaa49ce3da30f8b47879114977c24b266d58b0ac18b325d878aafddf",
+  "0x1c28fe1059ae0237b72334700697bdf465e03df03986fe05200cadeda66bd76",
+  "0x2d78ed82f93b61ba718b17c2dfe5b52375b4d37cbbed6f1fc98b47614b0cf21b",
+  "0x67243231eddf4222f3911defbba7705aff06ed45960b27f6f91319196ef97e1",
+  "0x1849b85f3c693693e732dfc4577217acc18295193bede09ce8b97ad910310972",
+  "0x2a775ea761d20435b31fa2c33ff07663e24542ffb9e7b293dfce3042eb104686",
+  "0xf320b0703439a8114f81593de99cd0b8f3b9bf854601abb5b2ea0e8a3dda4a7"
+]
+in_commitment_direction_selector = [
+  false,
+  false,
+  false,
+  false,
+  false,
+  false,
+  false,
+  false,
+  false,
+  false,
+  false,
+  false
+]
+in_commitment_bliding = "0x9c54a59cf62f8368d4c87b82adfeb753"
+in_commitment_value = "0xe8d4a51000"
+in_commitment_spending_tracker = "0x16954883b8ec70cbf0bf90ce4e76747609641e717a34fb1b81b212e8c3035626"
+in_allowance_value = "0xbebc200"
+in_allowance_hash = "0x1342ae7ca8319fe5b5ef0ef59c0fe7e5d27ba6fe84bc7c23c37a47726f499da2"
+in_allowance_relationship = "0x280c2a33f20f560f449b16a1ff045707c687269a12bce3315dbb942da45b43e0"
+out_allowance_hash = "0xe529f45d09f303d67eaf3533a9b68e0a2509d4768505c3db5750e2b04832fb2"
+out_receiver_value = "0xf4240"
+out_receiver_bliding = "0x637914ed05a8c9a57b7c300176f00928"
+out_receiver_commitment = "0x2540128a4787260bc9f7d50d5f08873debbe0829c792ea576411b428d115c214"
+out_owner_value = "0xe8d495cdc0"
+out_owner_bliding = "0xa9fda457d65002013c709fa13c0cb867"
+out_owner_commitment = "0x2b84ee9011ff4036d0d69b60daf7972a2171d31c0507aba5af17f48267a2c6fe"
+out_root = "0x7b0f5595d472cef92832ffe14b5ce77716c20c4cbec6bc59db8a373b2e77041"
+out_subtree_root_path = [
+  "0xb63a53787021a4a962a452c2921b3663aff1ffd8d5510540f8e659e782956f1",
+  "0x2d2440b0c6bcc58f9b7a62d8a968e5b0aafc6c0b659e2ea4df0e851e1471ffde",
+  "0x21f9172d72fdcdafc312eee05cf5092980dda821da5b760a9fb8dbdf607c8a20",
+  "0x2373ea368857ec7af97e7b470d705848e2bf93ed7bef142a490f2119bcf82d8e",
+  "0x120157cfaaa49ce3da30f8b47879114977c24b266d58b0ac18b325d878aafddf",
+  "0x1c28fe1059ae0237b72334700697bdf465e03df03986fe05200cadeda66bd76",
+  "0x2d78ed82f93b61ba718b17c2dfe5b52375b4d37cbbed6f1fc98b47614b0cf21b",
+  "0x67243231eddf4222f3911defbba7705aff06ed45960b27f6f91319196ef97e1",
+  "0x1849b85f3c693693e732dfc4577217acc18295193bede09ce8b97ad910310972",
+  "0x2a775ea761d20435b31fa2c33ff07663e24542ffb9e7b293dfce3042eb104686",
+  "0xf320b0703439a8114f81593de99cd0b8f3b9bf854601abb5b2ea0e8a3dda4a7"
+]
+out_subtree_direction_selector = [
+  false,
+  true,
+  false,
+  false,
+  false,
+  false,
+  false,
+  false,
+  false,
+  false,
+  false
+]

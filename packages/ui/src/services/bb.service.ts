@@ -39,21 +39,26 @@ class BarretenbergService {
         [...randomBytes].map((b) => b.toString(16).padStart(2, "0")).join("")
     );
 
+    const commitment = BigInt(
+      bb
+        .poseidon2Hash([new Fr(toAddress), new Fr(value), new Fr(bliding)])
+        .toString()
+    );
+
+    const encOutput = await CipherService.encrypt(
+      JSON.stringify({
+        bliding: bliding.toString(16),
+        value: value.toString(16),
+      }),
+      toPublicKey
+    );
+
     return {
-      commitment: BigInt(
-        bb
-          .poseidon2Hash([new Fr(toAddress), new Fr(value), new Fr(bliding)])
-          .toString()
-      ),
-      encOutput: await CipherService.encrypt(
-        JSON.stringify({
-          bliding: bliding.toString(16),
-          value: value.toString(16),
-        }),
-        toPublicKey
-      ),
+      commitment,
+      encOutput,
       bliding,
       value,
+
     };
   }
 
