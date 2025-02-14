@@ -6,10 +6,9 @@ import {
 } from "@/shared/config/constants";
 import { AccountService } from "@/services/account.service";
 import { ProofService } from "@/services/proof.service";
-import { stringify } from "@/lib/utils";
-import { CipherService } from "@/services/cipher.service";
 import { ApprovalPayload } from "@/interfaces";
 import { notesService } from "@/services/notes.service";
+import { DefinitionsService } from "@/services/definitions.service";
 
 export const useApprove = () => {
   const [loading, setLoading] = useState(false);
@@ -52,10 +51,11 @@ export const useApprove = () => {
 
         // generate approval payload
 
-        const { notesArray: notes } = await notesService.getNotes();
-
+        // if we don't share the viewing key, we need to specify commitments
         let approvedCommitments: ApprovalPayload["commitments"] = [];
         if (!props.shareViewingKey) {
+          const { notesArray: notes } = await notesService.getNotes();
+
           approvedCommitments = notes.reduce(
             (acc, note) => {
               if (note.value !== undefined && note.spent !== true) {
@@ -77,34 +77,27 @@ export const useApprove = () => {
           }
         }
 
-        const approvalPayload: ApprovalPayload = {
-          allowance: props.amount,
-          view: {
-            privateKey: props.shareViewingKey ? ownerAccount.viewer.privateKey : 0n,
-            publicKey: props.shareViewingKey ? ownerAccount.viewer.publicKey : 0n,
+        // generate approval encrypted payload
+        const encApprovalOutputs = await DefinitionsService.approvalEncOutputs(
+          {
+            allowance: props.amount,
+            view: {
+              privateKey: props.shareViewingKey
+                ? ownerAccount.viewer.privateKey
+                : 0n,
+              publicKey: props.shareViewingKey
+                ? ownerAccount.viewer.publicKey
+                : 0n,
+            },
+            commitments: approvedCommitments,
           },
-          commitments: approvedCommitments,
-        };
-
-        const [encryptedSpenderOutput, encryptedApproverOutput] =
-          await Promise.all([
-            CipherService.encrypt(
-              stringify(approvalPayload),
-              props.spender.publicKey
-            ),
-            CipherService.encrypt(
-              stringify(approvalPayload),
-              ownerAccount.viewer.publicKey
-            ),
-          ]);
+          props.spender.publicKey,
+          ownerAccount.owner.publicKey
+        );
 
         // contract call
-
         const { transaction_hash } = await sendAsync([
-          contract.populate("approve", [
-            generatedProof,
-            [encryptedApproverOutput, encryptedSpenderOutput,]
-          ]),
+          contract.populate("approve", [generatedProof, encApprovalOutputs]),
         ]);
         return transaction_hash;
       } finally {

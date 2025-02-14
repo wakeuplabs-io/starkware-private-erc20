@@ -1,19 +1,12 @@
+import { useAccount } from "@/hooks/use-account";
 import { useCopyToClipboard } from "@/hooks/use-copy";
-import { Account } from "@/interfaces";
 import { formatHex, shortenString } from "@/lib/utils";
-import { AccountService } from "@/services/account.service";
 import { CopyCheckIcon, CopyIcon } from "lucide-react";
-import { useEffect, useMemo, useState } from "react";
+import { useMemo } from "react";
 import QRCode from "react-qr-code";
 
 export const Receive: React.FC = () => {
-  const [account, setAccount] = useState<Account | null>(null);
-
-  useEffect(() => {
-    AccountService.getAccount().then((account) => {
-      setAccount(account);
-    });
-  }, []);
+  const { account } = useAccount();
 
   const qrValue = useMemo(() => {
     if (!account) return "";

@@ -15,7 +15,6 @@ import {
 import { ProofService } from "@/services/proof.service";
 import { Fr } from "@aztec/bb.js";
 import { AccountService } from "@/services/account.service";
-import { BarretenbergService } from "@/services/bb.service";
 import { formatHex, parse, stringify } from "@/lib/utils";
 import { MerkleTree } from "@/lib/merkle-tree";
 import { notesService } from "@/services/notes.service";
@@ -176,14 +175,41 @@ export const useTransferFrom = () => {
         throw new Error("Insufficient funds in notes");
       }
 
-      const inputCommitmentTracker =
-        await DefinitionsService.commitmentTracker(
-          inputNote.commitment,
-          inputNote.bliding!
-        );
+      const inputCommitmentTracker = await DefinitionsService.commitmentTracker(
+        inputNote.commitment,
+        inputNote.bliding!
+      );
 
       // generate proof
       const outOwnerAmount = inputNote.value! - props.amount;
+
+      // generate notes
+      const [outOwnerNote, outReceiverNote] = await Promise.all([
+        DefinitionsService.note(
+          props.from.address,
+          props.from.publicKey,
+          outOwnerAmount
+        ),
+        DefinitionsService.note(
+          props.to.address,
+          props.to.publicKey,
+          props.amount
+        ),
+      ]);
+
+      // generate allowance hashes
+      const [inAllowanceHash, outAllowanceHash] = await Promise.all([
+        DefinitionsService.allowanceHash(
+          props.from.address,
+          spenderAccount.owner.address,
+          allowance.allowance
+        ),
+        DefinitionsService.allowanceHash(
+          props.from.address,
+          spenderAccount.owner.address,
+          allowance.allowance - props.amount
+        ),
+      ]);
 
       // rebuild tree
       const tree = new MerkleTree();
@@ -201,39 +227,11 @@ export const useTransferFrom = () => {
         throw new Error("Input commitment doesn't belong to the tree");
       }
 
-      // generate notes
-      const [outOwnerNote, outReceiverNote] = await Promise.all([
-        DefinitionsService.note(
-          props.from.address,
-          props.from.publicKey,
-          outOwnerAmount
-        ),
-        DefinitionsService.note(
-          props.to.address,
-          props.to.publicKey,
-          props.amount
-        ),
-      ]);
-
       await tree.addCommitment(outOwnerNote.commitment);
       await tree.addCommitment(outReceiverNote.commitment);
 
       const outRoot = tree.getRoot();
       const outPathProof = tree.getProof(outOwnerNote.commitment);
-
-
-
-      const inAllowanceHash = await BarretenbergService.generateHashArray([
-        new Fr(props.from.address),
-        new Fr(spenderAccount.owner.address),
-        new Fr(allowance.allowance),
-      ]);
-
-      const outAllowanceHash = await BarretenbergService.generateHashArray([
-        new Fr(props.from.address),
-        new Fr(spenderAccount.owner.address),
-        new Fr(allowance.allowance - props.amount),
-      ]);
 
       const generatedProof = await ProofService.generateTransferFromProof({
         // account details

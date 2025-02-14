@@ -2,6 +2,7 @@ import { Fr } from "@aztec/bb.js";
 import { CipherService } from "./cipher.service";
 import { BarretenbergService } from "./bb.service";
 import { stringify } from "@/lib/utils";
+import { ApprovalPayload } from "@/interfaces";
 
 export class DefinitionsService {
   static async note(
@@ -72,5 +73,18 @@ export class DefinitionsService {
     ]);
 
     return hash;
+  }
+
+  static async approvalEncOutputs(
+    payload: ApprovalPayload,
+    spenderPublicKey: bigint,
+    ownerPublicKey: bigint
+  ): Promise<string[]> {
+    const [spenderPayload, ownerPayload] = await Promise.all([
+      CipherService.encrypt(stringify(payload), spenderPublicKey),
+      CipherService.encrypt(stringify(payload), ownerPublicKey),
+    ]);
+
+    return [ownerPayload, spenderPayload];
   }
 }
