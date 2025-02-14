@@ -11,6 +11,7 @@ import { useState } from "react";
 import { formatHex } from "@/lib/utils";
 import { notesService } from "@/services/notes.service";
 import { DefinitionsService } from "@/services/definitions.service";
+import { Fr } from "@aztec/bb.js";
 
 export const useTransfer = () => {
   const [loading, setLoading] = useState(false);
@@ -97,8 +98,8 @@ export const useTransfer = () => {
 
       const generatedProof = await ProofService.generateTransferProof({
         // accounts details
-        sender_private_key: formatHex(spenderAccount.owner.privateKey),
-        receiver_account: formatHex(props.to.address),
+        sender_private_key: formatHex(spenderAccount.owner.privateKey % Fr.MODULUS),
+        receiver_account: formatHex(props.to.address % Fr.MODULUS),
         // utxo inputs
         in_commitment_root: formatHex(inRoot),
         in_commitment_path: inputCommitmentProof.path.map((e) => formatHex(e)),
