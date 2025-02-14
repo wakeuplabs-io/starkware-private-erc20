@@ -1,7 +1,7 @@
 // testnet sepolia ========================================================================
 
-pub const TOKEN_NAME: felt252 = 'Privado';
-pub const TOKEN_SYMBOL: felt252 = 'PRV';
+pub const TOKEN_NAME: felt252 = 'Enigma';
+pub const TOKEN_SYMBOL: felt252 = 'ENG';
 pub const TOKEN_DECIMALS: u8 = 6;
 
 // 0x018ec86664d941e659f64bdcbd53d06ab9034b1981a6e5b8181017194e702a66 sepolia mock.
