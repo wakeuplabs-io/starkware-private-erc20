@@ -27,7 +27,7 @@ function Index() {
     <div className="w-full">
       <div className="w-full space-y-8 lg:space-y-4 mb-12">
         <div className="flex justify-between w-full mb-10">
-          <h1 className="text-2xl lg:text-4xl font-bold">Erc20</h1>
+          <h1 className="text-2xl lg:text-4xl font-bold">Enigma</h1>
           <div className="relative">
             <div className="text-3xl lg:text-4xl font-bold">
               {formatTokenAmount(balance)}

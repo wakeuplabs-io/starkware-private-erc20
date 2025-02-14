@@ -19,14 +19,18 @@ fn test_transfer() {
     let out_sender_commitment = 3;
     let out_receiver_commitment = 4;
     let proof = generate_mock_proof(
-        in_commitment_root, out_root, in_commitment_spending_tracker, out_sender_commitment, out_receiver_commitment,
+        in_commitment_root,
+        out_root,
+        in_commitment_spending_tracker,
+        out_sender_commitment,
+        out_receiver_commitment,
     );
     let current_commitment_index = contract.current_commitment_index.read();
 
     let mut spy = spy_events();
 
     // call transfer
-    contract.transfer(proof, "sender_enc_output", "receiver_enc_output");
+    contract.transfer(proof, array!["enc_notes_output_owner", "enc_notes_output_receiver"].span());
 
     // should nullify the in_commitment_spending_tracker
     assert(
@@ -43,7 +47,7 @@ fn test_transfer() {
                     Privado::Event::NewCommitment(
                         Privado::NewCommitment {
                             commitment: out_sender_commitment.into(),
-                            output_enc: "sender_enc_output",
+                            output_enc: "enc_notes_output_owner",
                             index: current_commitment_index,
                         },
                     ),
@@ -53,7 +57,7 @@ fn test_transfer() {
                     Privado::Event::NewCommitment(
                         Privado::NewCommitment {
                             commitment: out_receiver_commitment.into(),
-                            output_enc: "receiver_enc_output",
+                            output_enc: "enc_notes_output_receiver",
                             index: current_commitment_index + 1,
                         },
                     ),
@@ -75,21 +79,25 @@ fn test_transfer() {
 #[should_panic(expected: 'Cannot find your merkle root')]
 fn test_transfer_unknown_root() {
     let (mut contract, _) = get_contract_state_for_testing();
-    
+
     let in_commitment_root = 0;
     let out_root = 1;
     let in_commitment_spending_tracker = 2;
     let out_sender_commitment = 3;
     let out_receiver_commitment = 4;
     let proof = generate_mock_proof(
-        in_commitment_root, out_root, in_commitment_spending_tracker, out_sender_commitment, out_receiver_commitment,
+        in_commitment_root,
+        out_root,
+        in_commitment_spending_tracker,
+        out_sender_commitment,
+        out_receiver_commitment,
     );
 
     // differ from proof
     contract.current_root.write((in_commitment_root + 10).into());
 
     // call transfer
-    contract.transfer(proof, "sender_enc_output", "receiver_enc_output");
+    contract.transfer(proof, array!["enc_notes_output_owner", "enc_notes_output_receiver"].span());
 }
 
 #[test]
@@ -103,14 +111,18 @@ fn test_transfer_double_spent() {
     let out_sender_commitment = 3;
     let out_receiver_commitment = 4;
     let proof = generate_mock_proof(
-        in_commitment_root, out_root, in_commitment_spending_tracker, out_sender_commitment, out_receiver_commitment,
+        in_commitment_root,
+        out_root,
+        in_commitment_spending_tracker,
+        out_sender_commitment,
+        out_receiver_commitment,
     );
 
     // mark the commitment as already spent
     contract.spending_trackers.entry(in_commitment_spending_tracker.into()).write(true);
 
     // call transfer
-    contract.transfer(proof, "sender_enc_output", "receiver_enc_output");
+    contract.transfer(proof, array!["enc_notes_output_owner", "enc_notes_output_receiver"].span());
 }
 
 //
@@ -124,7 +136,8 @@ fn generate_mock_proof(
     sender_commitment: felt252,
     receiver_commitment: felt252,
 ) -> Span<felt252> {
-    array![in_commitment_root, spending_tracker, receiver_commitment, sender_commitment, out_root].span()
+    array![in_commitment_root, spending_tracker, receiver_commitment, sender_commitment, out_root]
+        .span()
 }
 
 fn get_contract_state_for_testing() -> (Privado::ContractState, ContractAddress) {
@@ -136,8 +149,12 @@ fn get_contract_state_for_testing() -> (Privado::ContractState, ContractAddress)
     let approve_verifier_contract = declare("ApproveVerifierMock").unwrap().contract_class();
     let (approve_verifier_address, _) = approve_verifier_contract.deploy(@array![]).unwrap();
 
-    let transfer_from_verifier_contract = declare("TransferFromVerifierMock").unwrap().contract_class();
-    let (transfer_from_verifier_address, _) = transfer_from_verifier_contract.deploy(@array![]).unwrap();
+    let transfer_from_verifier_contract = declare("TransferFromVerifierMock")
+        .unwrap()
+        .contract_class();
+    let (transfer_from_verifier_address, _) = transfer_from_verifier_contract
+        .deploy(@array![])
+        .unwrap();
 
     // initialize metadata
     dispatcher.name.write(TOKEN_NAME);

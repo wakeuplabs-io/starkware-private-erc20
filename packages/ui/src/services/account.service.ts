@@ -1,6 +1,8 @@
 import { Fr } from "@aztec/bb.js";
 import { BarretenbergService } from "./bb.service";
 import sodium from "libsodium-wrappers";
+import { parse, stringify } from "@/lib/utils";
+import { Account } from "@/interfaces";
 
 class AccountService {
   static async getAccount() {
@@ -11,44 +13,40 @@ class AccountService {
     }
   }
 
-  private static async _generate(): Promise<{
-    publicKey: bigint;
-    privateKey: bigint;
-    address: bigint;
-  }> {
+  private static async _generate(): Promise<Account> {
     await sodium.ready;
-    const keypair = await sodium.crypto_box_keypair();
-    const publicKey = BigInt("0x" + sodium.to_hex(keypair.publicKey));
-    const privateKey = BigInt("0x" + sodium.to_hex(keypair.privateKey));
-    const address = await BarretenbergService.generateHashArray([
-      new Fr(privateKey % Fr.MODULUS),
-    ]);
 
-    localStorage.setItem("PrivateKey", "0x" + privateKey.toString(16));
-    localStorage.setItem("PublicKey", "0x" + publicKey.toString(16));
-    localStorage.setItem("Address", "0x" + address.toString(16));
+    const OwnerKeyPair = await sodium.crypto_box_keypair();
+    const ViewerKeyPair = await sodium.crypto_box_keypair();
 
-    return { publicKey, privateKey, address };
+    const account: Account = {
+      owner: {
+        address: await BarretenbergService.generateHashArray([
+          new Fr(
+            BigInt("0x" + sodium.to_hex(OwnerKeyPair.privateKey)) % Fr.MODULUS
+          ),
+        ]),
+        publicKey: BigInt("0x" + sodium.to_hex(OwnerKeyPair.publicKey)),
+        privateKey: BigInt("0x" + sodium.to_hex(OwnerKeyPair.privateKey)),
+      },
+      viewer: {
+        publicKey: BigInt("0x" + sodium.to_hex(ViewerKeyPair.publicKey)),
+        privateKey: BigInt("0x" + sodium.to_hex(ViewerKeyPair.privateKey)),
+      },
+    };
+
+    localStorage.setItem("Account", stringify(account));
+
+    return account;
   }
 
-  private static async _load(): Promise<{
-    publicKey: bigint;
-    privateKey: bigint;
-    address: bigint;
-  }> {
-    const privateKeyString = localStorage.getItem("PrivateKey");
-    const publicKeyString = localStorage.getItem("PublicKey");
-    const addressString = localStorage.getItem("Address");
-
-    if (!privateKeyString || !publicKeyString || !addressString) {
+  private static async _load(): Promise<Account> {
+    const accountStr = localStorage.getItem("Account");
+    if (!accountStr) {
       throw new Error("Could not load account");
     }
 
-    const privateKey = BigInt(privateKeyString);
-    const publicKey = BigInt(publicKeyString);
-    const address = BigInt(addressString);
-
-    return { publicKey, privateKey, address };
+    return parse(accountStr) as Account;
   }
 }
 
