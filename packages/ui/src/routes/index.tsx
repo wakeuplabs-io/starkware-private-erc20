@@ -5,7 +5,7 @@ import { Transfer } from "@/components/transfer";
 import { useBalance } from "@/hooks/use-balance";
 import { cn, formatTokenAmount } from "@/lib/utils";
 import { createFileRoute } from "@tanstack/react-router";
-import { ArrowDown, ArrowUpRight, List } from "lucide-react";
+import { ArrowDown, ArrowUpRight, List, Check } from "lucide-react";
 import { useState } from "react";
 
 export const Route = createFileRoute("/")({
@@ -73,7 +73,7 @@ function Index() {
               }
             )}
           >
-            <ArrowDown className="h-4" /> Receive
+            <Check className="h-4" /> Receive
           </button>
           <button
             onClick={() => setTab(Tab.Approve)}

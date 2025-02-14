@@ -1,4 +1,5 @@
 use starknet::ContractAddress;
+use starknet::syscalls::get_caller_address;
 
 #[starknet::interface]
 pub trait IPrivado<TContractState> {
@@ -53,12 +54,26 @@ pub trait IPrivado<TContractState> {
         ref self: TContractState, proof: Span<felt252>, output_enc_owner: ByteArray, output_enc_spender: ByteArray
     ) -> bool;
 
+    fn deposit(
+        ref self: TContractState, proof: Span<felt252>, receiver_enc_output: ByteArray
+    ) -> bool;
+
 
     /// Reads current_root from contract
     fn current_root(self: @TContractState) -> u256;
 
     /// Reads current_root from contract
     fn current_commitment_index(self: @TContractState) -> u256;
+}
+
+#[starknet::interface]
+pub trait IERC20<TContractState> {
+    fn transfer_from(
+        ref self: TContractState,
+        sender: ContractAddress,
+        recipient: ContractAddress,
+        amount: u256
+    ) -> bool;
 }
 
 
@@ -186,6 +201,13 @@ pub mod Privado {
     pub struct ApproveProofPublicInputs {
         out_allowance_hash: u256,
         out_allowance_relationship: u256,
+    }
+
+    #[derive(Drop)]
+    pub struct TransferFromInputs {
+        sender: ContractAddress,
+        recipient: ContractAddress,
+        amount: u256
     }
 
     //
@@ -340,6 +362,32 @@ pub mod Privado {
             true
         }
 
+        fn deposit(
+            ref self: ContractState, proof: Span<felt252>, receiver_enc_output: ByteArray
+        ) -> bool {
+            let public_inputs = self._verify_transfer_proof(proof);
+            
+            assert(
+                public_inputs.in_commitment_root == self.current_root.read(), Errors::UNKNOWN_ROOT,
+            );
+            
+            self.current_root.write(public_inputs.out_root);
+
+            // Obtener la dirección del usuario que realiza el depósito
+            let caller_address = get_caller_address();
+
+            // Transferir ETH desde el usuario al contrato
+            let eth_contract: IERC20Dispatcher = IERC20Dispatcher {
+                contract_address: ETH_CONTRACT_ADDRESS
+            };
+            eth_contract.transfer_from(caller_address, self.contract_address(), amount).unwrap();
+
+            // Crear la nota real y una nota ficticia
+            self._create_note(public_inputs.out_receiver_commitment, receiver_enc_output);
+            self._create_note(0, "0");
+            
+            true
+        }
 
         fn current_root(self: @ContractState) -> u256 {
             self.current_root.read()
@@ -434,6 +482,26 @@ pub mod Privado {
             let public_inputs = verifier.verify_ultra_keccak_honk_proof(proof).unwrap();
 
             TransferFromProofPublicInputs {
+                in_commitment_root: (*public_inputs.at(0)),
+                in_commitment_spending_tracker: (*public_inputs.at(1)),
+                in_allowance_hash: (*public_inputs.at(2)),
+                in_allowance_relationship: (*public_inputs.at(3)),
+                out_allowance_hash: (*public_inputs.at(4)),
+                out_receiver_commitment: (*public_inputs.at(5)),
+                out_owner_commitment: (*public_inputs.at(6)),
+                out_root: (*public_inputs.at(7)),
+            }
+        }
+
+        fn _transfer_from(
+            ref self: ContractState, sender: ContractAddress, recipient: ContractAddress, amount: u256
+        ) -> TransferFromInputs {
+            let verifier = IERC20Dispatcher {
+                contract_address: self.transfer_from_verifier_address.read(),
+            };
+            let public_inputs = verifier.verify_ultra_keccak_honk_proof(proof).unwrap();
+
+            TransferFromInputs {
                 in_commitment_root: (*public_inputs.at(0)),
                 in_commitment_spending_tracker: (*public_inputs.at(1)),
                 in_allowance_hash: (*public_inputs.at(2)),

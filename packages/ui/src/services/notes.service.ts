@@ -55,7 +55,7 @@ export class NotesService {
     await this.setCachedNullifiers(Array.from(nullifiersMap.values()));
     await this.setCacheLatestBlock(toBlock.block_number);
 
-    return { notesArray, notesMap }
+    return { notesArray, notesMap };
   }
 
   private getCacheLatestBlock(): number {
