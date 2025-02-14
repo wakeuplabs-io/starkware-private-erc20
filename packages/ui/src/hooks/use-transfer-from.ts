@@ -16,7 +16,7 @@ import { ProofService } from "@/services/proof.service";
 import { Fr } from "@aztec/bb.js";
 import { AccountService } from "@/services/account.service";
 import { BarretenbergService } from "@/services/bb.service";
-import { formatHex, parse } from "@/lib/utils";
+import { formatHex, parse, stringify } from "@/lib/utils";
 import { MerkleTree } from "@/lib/merkle-tree";
 import { notesService } from "@/services/notes.service";
 import { hash, num, events as Events, CallData } from "starknet";
@@ -58,7 +58,7 @@ export const useTransferFrom = () => {
       do {
         const res = await provider.getEvents({
           address: PRIVATE_ERC20_CONTRACT_ADDRESS,
-          from_block: { block_number: PRIVATE_ERC20_DEPLOY_BLOCK }, // TODO: avoid fetching all
+          from_block: { block_number: PRIVATE_ERC20_DEPLOY_BLOCK },
           to_block: { block_number: lastBlock.block_number },
           keys: [[num.toHex(hash.starknetKeccak("Approval"))]],
           chunk_size: 10,
@@ -74,7 +74,6 @@ export const useTransferFrom = () => {
 
         const sortedApprovalEvents = parsed.reduce((acc, event) => {
           if (event[PRIVATE_ERC20_EVENT_KEY]) {
-            console.log("event", event[PRIVATE_ERC20_EVENT_KEY]);
             acc.push({
               allowance_hash: event[PRIVATE_ERC20_EVENT_KEY]
                 .allowance_hash as bigint,
@@ -95,14 +94,13 @@ export const useTransferFrom = () => {
         continuationToken = res.continuation_token;
       } while (continuationToken);
 
-      const relationshipId = await BarretenbergService.generateHashArray([
-        new Fr(props.from.address % Fr.MODULUS),
-        new Fr(spenderAccount.owner.address % Fr.MODULUS),
-      ]);
+      const relationshipId = await DefinitionsService.allowanceRelationship(
+        props.from.address,
+        spenderAccount.owner.address
+      );
 
-      console.log("approvalEvents", approvalEvents);
       const approval = approvalEvents
-        // .filter((a) => a.allowance_relationship == relationshipId)
+        .filter((a) => a.allowance_relationship == relationshipId)
         .sort((a, b) => Number(b.timestamp) - Number(a.timestamp))[0];
       if (!approval) {
         throw new Error("No approval found");
@@ -115,7 +113,6 @@ export const useTransferFrom = () => {
           spenderAccount.viewer.privateKey
         )
       );
-      console.log("allowance", allowance);
 
       // check if spender has enough allowance
       if (allowance.allowance < props.amount) {
@@ -129,7 +126,6 @@ export const useTransferFrom = () => {
       let spendableNotes = [];
 
       if (allowance.view.privateKey != 0n) {
-        console.log("notesArray", notesArray);
         const res = await Promise.allSettled(
           notesArray.map(async (n) => {
             if (n.spent) {
@@ -143,14 +139,13 @@ export const useTransferFrom = () => {
                 allowance.view.privateKey
               )
             );
-            
+
             const tracker = await DefinitionsService.generateCommitmentTracker(
               n.commitment,
               decrypted.bliding
             );
-            const trackerHash = await BarretenbergService.generateHash(tracker);
-
-            if (spendingTrackersMap.get(formatHex(trackerHash))) {
+            console.log("trackerHash", tracker.toString(), Array.from(spendingTrackersMap.values()));
+            if (spendingTrackersMap.get(tracker.toString())) {
               throw new Error("Note already spent");
             }
 
@@ -160,11 +155,10 @@ export const useTransferFrom = () => {
               index: n.index,
               value: decrypted.value,
               bliding: decrypted.bliding,
-              trackerHash: trackerHash,
+              trackerHash: tracker,
             };
           })
         );
-        console.log("res", res);
         spendableNotes = res
           .filter((result) => result.status === "fulfilled")
           .map((result) => (result as PromiseFulfilledResult<any>).value);
@@ -175,8 +169,6 @@ export const useTransferFrom = () => {
         });
       }
 
-      console.log("spendableNotes", spendableNotes);
-
       // select note to use for transfer
       const inputNote = spendableNotes
         .sort((a, b) => parseInt((b.value! - a.value!).toString()))
@@ -185,15 +177,11 @@ export const useTransferFrom = () => {
         throw new Error("Insufficient funds in notes");
       }
 
-      console.log("inputNote", inputNote.bliding);
-
       const inputCommitmentTracker =
         await DefinitionsService.generateSpendingTracker(
           inputNote.commitment,
           inputNote.bliding!
         );
-
-      console.log("ABC");
 
       // generate proof
       const outOwnerAmount = inputNote.value! - props.amount;
@@ -204,15 +192,8 @@ export const useTransferFrom = () => {
         parseInt((a.index! - b.index!).toString())
       );
       for (const note of orderedNotes) {
-        console.log("add", note.commitment);
         await tree.addCommitment(note.commitment);
       }
-
-      console.log(
-        "ABC 2",
-        "0xf26f868d58f955ff3217f5124c2d2e083feea132bd700875fd26a3bba0d6d33",
-        tree.getRoot().toString(16)
-      );
 
       // compute input commitment root and path
       const inRoot = tree.getRoot();
@@ -220,8 +201,6 @@ export const useTransferFrom = () => {
       if (!inputCommitmentProof) {
         throw new Error("Input commitment doesn't belong to the tree");
       }
-
-      console.log("ABC 2.1.2");
 
       // generate notes
       const [outOwnerNote, outReceiverNote] = await Promise.all([
@@ -237,12 +216,13 @@ export const useTransferFrom = () => {
         ),
       ]);
 
-      console.log("ABC 2.1");
       await tree.addCommitment(outOwnerNote.commitment);
       await tree.addCommitment(outReceiverNote.commitment);
 
       const outRoot = tree.getRoot();
       const outPathProof = tree.getProof(outOwnerNote.commitment);
+
+
 
       const inAllowanceHash = await BarretenbergService.generateHashArray([
         new Fr(props.from.address),
@@ -250,13 +230,16 @@ export const useTransferFrom = () => {
         new Fr(allowance.allowance),
       ]);
 
+      console.log(
+        "inAllowanceHash",
+        inAllowanceHash, allowance, inputNote
+      );
+
       const outAllowanceHash = await BarretenbergService.generateHashArray([
         new Fr(props.from.address),
         new Fr(spenderAccount.owner.address),
         new Fr(allowance.allowance - props.amount),
       ]);
-
-      console.log("ABC 3");
 
       const generatedProof = await ProofService.generateTransferFromProof({
         // account details
@@ -297,11 +280,29 @@ export const useTransferFrom = () => {
         ),
       });
 
+      const outApprovalPayload: ApprovalPayload = {
+        allowance: allowance.allowance - props.amount,
+        view: allowance.view,
+        commitments: allowance.commitments,
+      };
+
+      const [encryptedSpenderOutput, encryptedApproverOutput] =
+        await Promise.all([
+          CipherService.encrypt(
+            stringify(outApprovalPayload),
+            spenderAccount.viewer.publicKey
+          ),
+          CipherService.encrypt(
+            stringify(outApprovalPayload),
+            props.from.publicKey
+          ),
+        ]);
+
       const { transaction_hash } = await sendAsync([
         contract.populate("transfer_from", [
           generatedProof,
-          outOwnerNote.encOutput,
-          outReceiverNote.encOutput,
+          [outOwnerNote.encOutput, outReceiverNote.encOutput],
+          [encryptedApproverOutput, encryptedSpenderOutput],
         ]),
       ]);
 

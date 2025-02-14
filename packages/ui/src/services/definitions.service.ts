@@ -76,4 +76,15 @@ export class DefinitionsService {
     ]);
     return nullifier;
   }
+
+  static async allowanceRelationship(
+    owner: bigint,
+    spender: bigint
+  ): Promise<bigint> {
+    const relationship = await BarretenbergService.generateHashArray([
+      new Fr(owner % Fr.MODULUS),
+      new Fr(spender % Fr.MODULUS),
+    ]);
+    return relationship;
+  }
 }

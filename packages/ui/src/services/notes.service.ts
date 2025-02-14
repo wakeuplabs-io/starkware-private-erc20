@@ -5,7 +5,6 @@ import {
   PRIVATE_ERC20_ABI,
   PRIVATE_ERC20_CONTRACT_ADDRESS,
 } from "@/shared/config/constants";
-import { BarretenbergService } from "./bb.service";
 import { AccountService } from "./account.service";
 import { CipherService } from "./cipher.service";
 import { provider } from "@/shared/config/rpc";
@@ -46,10 +45,10 @@ export class NotesService {
     // iterate over notes and nullify those that have already been used
     Array.from(notesMap.values())
       .filter(
-        (note) => note.value !== undefined && note.trackerHash !== undefined
+        (note) => note.value !== undefined && note.tracker !== undefined
       )
       .map((note) => {
-        if (spendingTrackersMap.has(note.trackerHash!.toString())) {
+        if (spendingTrackersMap.has(note.tracker!.toString())) {
           notesMap.set(note.commitment, {
             ...note,
             spent: true,
@@ -184,7 +183,6 @@ export class NotesService {
             commitment,
             payload.bliding
           );
-          const trackerHash = await BarretenbergService.generateHash(tracker);
 
           return {
             commitment,
@@ -192,7 +190,7 @@ export class NotesService {
             index,
             value: payload.value,
             bliding: payload.bliding,
-            trackerHash: trackerHash,
+            tracker: tracker,
           };
         } catch (error) {
           const { commitment, encryptedOutput, index }: Note = commitmentEvent;

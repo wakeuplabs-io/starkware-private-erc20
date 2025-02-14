@@ -126,8 +126,7 @@ export const useTransfer = () => {
       const { transaction_hash } = await sendAsync([
         contract.populate("transfer", [
           generatedProof,
-          outSenderNote.encOutput,
-          outReceiverNote.encOutput,
+          [outSenderNote.encOutput, outReceiverNote.encOutput]
         ]),
       ]);
 

@@ -105,8 +105,7 @@ export const useApprove = () => {
         const { transaction_hash } = await sendAsync([
           contract.populate("approve", [
             generatedProof,
-            encryptedApproverOutput,
-            encryptedSpenderOutput,
+            [encryptedApproverOutput, encryptedSpenderOutput,]
           ]),
         ]);
         return transaction_hash;

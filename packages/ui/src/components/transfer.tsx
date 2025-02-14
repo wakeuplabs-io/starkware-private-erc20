@@ -52,7 +52,6 @@ export const Transfer: React.FC = () => {
 
       toast({
         title: "Transfer successful",
-        description: `Transaction hash: ${shortenString(txHash)}`,
         action: (
           <ToastAction
             onClick={() => window.open(buildExplorerUrl(txHash), "_blank")}

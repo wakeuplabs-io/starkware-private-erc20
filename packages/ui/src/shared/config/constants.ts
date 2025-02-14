@@ -4,7 +4,7 @@ export const PRIVATE_ERC20_DEPLOY_BLOCK = 521743;
 export const PRIVATE_ERC20_EVENT_KEY =
   "contracts::privado::privado::Privado::Approval";
 export const PRIVATE_ERC20_CONTRACT_ADDRESS =
-  "0x0258546d08f389bb58f9ce06c28e994157c4943a50f706e2aaa46d6b38d2748d";
+  "0x001782bd503e83475fac46fc3d89fc60c812878ecf00c1e52289bba52d7cadfc";
 export const ZERO_BIG_INT = BigInt(0);
 export const MERKLE_TREE_DEPTH = 12;
 export const DECIMALS = 6n;
@@ -54,6 +54,16 @@ export const PRIVATE_ERC20_ABI: Abi = [
       {
         "name": "pending_word_len",
         "type": "core::integer::u32"
+      }
+    ]
+  },
+  {
+    "name": "core::array::Span::<core::byte_array::ByteArray>",
+    "type": "struct",
+    "members": [
+      {
+        "name": "snapshot",
+        "type": "@core::array::Array::<core::byte_array::ByteArray>"
       }
     ]
   },
@@ -144,12 +154,8 @@ export const PRIVATE_ERC20_ABI: Abi = [
             "type": "core::array::Span::<core::felt252>"
           },
           {
-            "name": "sender_enc_output",
-            "type": "core::byte_array::ByteArray"
-          },
-          {
-            "name": "receiver_enc_output",
-            "type": "core::byte_array::ByteArray"
+            "name": "enc_notes_output",
+            "type": "core::array::Span::<core::byte_array::ByteArray>"
           }
         ],
         "outputs": [
@@ -184,12 +190,12 @@ export const PRIVATE_ERC20_ABI: Abi = [
             "type": "core::array::Span::<core::felt252>"
           },
           {
-            "name": "owner_enc_output",
-            "type": "core::byte_array::ByteArray"
+            "name": "enc_notes_output",
+            "type": "core::array::Span::<core::byte_array::ByteArray>"
           },
           {
-            "name": "receiver_enc_output",
-            "type": "core::byte_array::ByteArray"
+            "name": "enc_approval_output",
+            "type": "core::array::Span::<core::byte_array::ByteArray>"
           }
         ],
         "outputs": [
@@ -208,12 +214,8 @@ export const PRIVATE_ERC20_ABI: Abi = [
             "type": "core::array::Span::<core::felt252>"
           },
           {
-            "name": "output_enc_owner",
-            "type": "core::byte_array::ByteArray"
-          },
-          {
-            "name": "output_enc_spender",
-            "type": "core::byte_array::ByteArray"
+            "name": "enc_approval_output",
+            "type": "core::array::Span::<core::byte_array::ByteArray>"
           }
         ],
         "outputs": [

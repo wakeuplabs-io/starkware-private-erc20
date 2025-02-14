@@ -19,7 +19,7 @@ export interface Note {
   bliding?: bigint;
   value?: bigint;
   spent?: boolean;
-  trackerHash?: bigint;
+  tracker?: bigint;
 }
 
 export interface CommitmentEvent {

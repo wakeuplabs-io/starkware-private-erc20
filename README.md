@@ -338,22 +338,21 @@ Deployment with just command (Same for verifier if needed). First go to `src/pri
 ```bash
 just contracts-declare
 
-# class_hash: 0x01edc9425336ee6d5fd1f718310f23d224aac13f550f652b466964879bf818e4
-# transaction_hash: 0x072b19999cd3283fcc1fa40899807017217f59e51dcce53009100bc90b85eb19
+# class_hash: 0x06ef24466b9d192ef3b23cae43b33383c471f4a137df47949b26ee8d184c086c
+# transaction_hash: 0x06757c795764429aec5f876d0b76d2c8b0861df89e2baad07680e975996d36ad
 
 # To see declaration details, visit:
-# class: https://sepolia.starkscan.co/class/0x01edc9425336ee6d5fd1f718310f23d224aac13f550f652b466964879bf818e4
-# transaction: https://sepolia.starkscan.co/tx/0x072b19999cd3283fcc1fa40899807017217f59e51dcce53009100bc90b85eb19
+# class: https://sepolia.starkscan.co/class/0x06ef24466b9d192ef3b23cae43b33383c471f4a137df47949b26ee8d184c086c
+# transaction: https://sepolia.starkscan.co/tx/0x06757c795764429aec5f876d0b76d2c8b0861df89e2baad07680e975996d36ad
 
-just contracts-deploy 0x01edc9425336ee6d5fd1f718310f23d224aac13f550f652b466964879bf818e4
+just contracts-deploy 0x06ef24466b9d192ef3b23cae43b33383c471f4a137df47949b26ee8d184c086c
 
-# contract_address: 0x0258546d08f389bb58f9ce06c28e994157c4943a50f706e2aaa46d6b38d2748d
-# transaction_hash: 0x02afa3ff1e5051d1fa495c205b3abd448dd3b5c0cfb71ca45c32df817aeb8e7f
+# contract_address: 0x001782bd503e83475fac46fc3d89fc60c812878ecf00c1e52289bba52d7cadfc
+# transaction_hash: 0x07a3ea40076665900c1ae0cfd71d23c45f190fe38b64b62ccaed2f9bb189276a
 
 # To see deployment details, visit:
-# contract: https://sepolia.starkscan.co/contract/0x0258546d08f389bb58f9ce06c28e994157c4943a50f706e2aaa46d6b38d2748d
-# transaction: https://sepolia.starkscan.co/tx/0x02afa3ff1e5051d1fa495c205b3abd448dd3b5c0cfb71ca45c32df817aeb8e7f
-
+# contract: https://sepolia.starkscan.co/contract/0x001782bd503e83475fac46fc3d89fc60c812878ecf00c1e52289bba52d7cadfc
+# transaction: https://sepolia.starkscan.co/tx/0x07a3ea40076665900c1ae0cfd71d23c45f190fe38b64b62ccaed2f9bb189276a
 ```
 
 

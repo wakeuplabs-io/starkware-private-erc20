@@ -4,7 +4,7 @@ use starknet::{
 };
 use snforge_std::{
     spy_events, EventSpyAssertionsTrait, declare, ContractClassTrait, DeclareResultTrait,
-    test_address, EventSpyTrait, start_cheat_block_timestamp,
+    test_address, EventSpyTrait, start_cheat_block_timestamp, stop_cheat_block_timestamp,
 };
 use contracts::privado::{Privado, IPrivado, constants::{TOKEN_NAME, TOKEN_SYMBOL, TOKEN_DECIMALS}};
 
@@ -19,11 +19,12 @@ fn test_approve() {
     let proof = generate_approve_mock_proof(allowance_hash, allowance_relationship);
 
     let mut spy = spy_events();
-    let cheap_timestamp: u64 = 100;
-    start_cheat_block_timestamp(contract_address, cheap_timestamp);
+    let cheat_timestamp: u64 = 100;
+    start_cheat_block_timestamp(contract_address, cheat_timestamp);
 
     // call transfer
-    contract.approve(proof, "owner_enc_output", "spender_enc_output");
+    contract
+        .approve(proof, array!["enc_approval_output_owner", "enc_approval_output_spender"].span());
 
     // should update the allowance_hash
     assert(
@@ -39,24 +40,27 @@ fn test_approve() {
                     contract_address,
                     Privado::Event::Approval(
                         Privado::Approval {
-                            timestamp: cheap_timestamp,
+                            timestamp: cheat_timestamp,
                             allowance_hash: allowance_hash.into(),
                             allowance_relationship: allowance_relationship.into(),
-                            output_enc_owner: "owner_enc_output",
-                            output_enc_spender: "spender_enc_output",
+                            output_enc_owner: "enc_approval_output_owner",
+                            output_enc_spender: "enc_approval_output_spender",
                         },
                     ),
-                )
+                ),
             ],
         );
     assert(spy.get_events().events.len() == 1, 'There should no more events');
+    stop_cheat_block_timestamp(contract_address);
 }
 
 //
 // utilities
 //
 
-fn generate_approve_mock_proof(allowance_hash: felt252, allowance_relationship: felt252) -> Span<felt252> {
+fn generate_approve_mock_proof(
+    allowance_hash: felt252, allowance_relationship: felt252,
+) -> Span<felt252> {
     array![allowance_hash, allowance_relationship].span()
 }
 

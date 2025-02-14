@@ -34,7 +34,6 @@ export const Approve: React.FC = () => {
 
       toast({
         title: "Approve successful",
-        description: `Transaction hash: ${shortenString(txHash)}`,
         action: (
           <ToastAction
             onClick={() => window.open(buildExplorerUrl(txHash), "_blank")}
