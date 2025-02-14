@@ -4,7 +4,7 @@ export const PRIVATE_ERC20_DEPLOY_BLOCK = 521743;
 export const PRIVATE_ERC20_EVENT_KEY =
   "contracts::privado::privado::Privado::Approval";
 export const PRIVATE_ERC20_CONTRACT_ADDRESS =
-  "0x06dcec601f8306580ed8969f9d45b319c4f2b539cfa16ac2667c5558385920ff";
+  "0x0210e7c3fc7ca712d68c43380910bc334ff9fe52ff7b930b400c7469c04b5a8e";
 export const ZERO_BIG_INT = BigInt(0);
 export const MERKLE_TREE_DEPTH = 12;
 export const DECIMALS = 6n;
@@ -292,6 +292,11 @@ export const PRIVATE_ERC20_ABI: Abi = [
     "type": "event",
     "members": [
       {
+        "kind": "key",
+        "name": "allowance_relationship",
+        "type": "core::felt252"
+      },
+      {
         "kind": "data",
         "name": "timestamp",
         "type": "core::integer::u64"
@@ -299,11 +304,6 @@ export const PRIVATE_ERC20_ABI: Abi = [
       {
         "kind": "data",
         "name": "allowance_hash",
-        "type": "core::integer::u256"
-      },
-      {
-        "kind": "key",
-        "name": "allowance_relationship",
         "type": "core::integer::u256"
       },
       {

@@ -7,6 +7,7 @@ import { IDetectedBarcode, Scanner } from "@yudiel/react-qr-scanner";
 import { useTransferFrom } from "@/hooks/use-transfer-from";
 import { useToast } from "@/hooks/use-toast";
 import { ToastAction } from "@radix-ui/react-toast";
+import { buildExplorerUrl, shortenString } from "@/lib/utils";
 
 export const Transfer: React.FC = () => {
   const { toast } = useToast();
@@ -51,12 +52,10 @@ export const Transfer: React.FC = () => {
 
       toast({
         title: "Transfer successful",
-        description: `Transaction hash: ${txHash}`,
+        description: `Transaction hash: ${shortenString(txHash)}`,
         action: (
           <ToastAction
-            onClick={() =>
-              window.open(`https://sepolia.voyager.online/tx/${txHash}`, "_blank")
-            }
+            onClick={() => window.open(buildExplorerUrl(txHash), "_blank")}
             altText="View transaction"
           >
             View transaction
@@ -125,7 +124,9 @@ export const Transfer: React.FC = () => {
                   type="text"
                   placeholder="Sender Address"
                   value={from.address}
-                  onChange={(e) => setFrom({ ...from, address: e.target.value })}
+                  onChange={(e) =>
+                    setFrom({ ...from, address: e.target.value })
+                  }
                 />
 
                 <Input

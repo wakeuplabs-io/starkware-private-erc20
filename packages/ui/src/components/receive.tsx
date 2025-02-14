@@ -1,28 +1,28 @@
 import { useCopyToClipboard } from "@/hooks/use-copy";
-import { formatHex, shortenAddress } from "@/lib/utils";
+import { formatHex, shortenString } from "@/lib/utils";
 import { AccountService } from "@/services/account.service";
 import { CopyCheckIcon, CopyIcon } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import QRCode from "react-qr-code";
 
 export const Receive: React.FC = () => {
-    const [account, setAccount] = useState<{
-        address: bigint;
-        publicKey: bigint;
-        privateKey: bigint;
-    } | null>(null);
+  const [account, setAccount] = useState<{
+    address: bigint;
+    publicKey: bigint;
+    privateKey: bigint;
+  } | null>(null);
 
 
-    useEffect(() => {
-        AccountService.getAccount().then((account) => {
-            setAccount(account);
-        })
-    }, []);
+  useEffect(() => {
+    AccountService.getAccount().then((account) => {
+      setAccount(account);
+    });
+  }, []);
 
-    const qrValue = useMemo(() => {
-        if (!account) return "";
-        return JSON.stringify({ address: formatHex(account.address), publicKey: formatHex(account.publicKey) });
-    }, [account]);
+  const qrValue = useMemo(() => {
+    if (!account) return "";
+    return JSON.stringify({ address: formatHex(account.address), publicKey: formatHex(account.publicKey) });
+  }, [account]);
 
   return (
     <div className="flex flex-col p-12 bg-white rounded-3xl border border-primary">
@@ -47,13 +47,13 @@ const AddressField: React.FC<{ value: string; label: string }> = ({
   value,
   label,
 }) => {
-    const { copyToClipboard, isCopied } = useCopyToClipboard({ timeout: 2000 });
+  const { copyToClipboard, isCopied } = useCopyToClipboard({ timeout: 2000 });
 
   return (
     <button onClick={() => copyToClipboard(value)} disabled={isCopied} className="flex gap-2 items-start justify-center text-muted-foreground bg-transparent">
-      {isCopied? <CopyCheckIcon className="h-5 w-5 m-1" /> : <CopyIcon className="h-5 w-5 m-1" />}
+      {isCopied ? <CopyCheckIcon className="h-5 w-5 m-1" /> : <CopyIcon className="h-5 w-5 m-1" />}
       <div className="text-left">
-        <div className="text-sm">{shortenAddress(value)}</div>
+        <div className="text-sm">{shortenString(value)}</div>
         <div className="text-xs">{label}</div>
       </div>
     </button>

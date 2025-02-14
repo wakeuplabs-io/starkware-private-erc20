@@ -10,7 +10,7 @@ export const formatHex = (value: bigint): string => {
   return "0x" + value.toString(16);
 };
 
-export const shortenAddress = (address: string): string => {
+export const shortenString = (address: string): string => {
   return `${address.slice(0, 6)}...${address.slice(-4)}`;
 };
 
@@ -30,3 +30,8 @@ export const parse = (str: any) =>
   JSON.parse(str, (_, value) =>
     typeof value === "string" && value.startsWith("0x") ? BigInt(value) : value
   );
+
+
+export const buildExplorerUrl = (txHash: string) => {
+  return `${import.meta.env.VITE_EXPLORER_URL}/tx/${txHash}`;
+};
