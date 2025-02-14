@@ -143,12 +143,10 @@ export const useTransferFrom = () => {
                 allowance.view.privateKey
               )
             );
-
-            console.log("decrypted", decrypted, typeof n.commitment, typeof decrypted.bliding);
-
+            
             const tracker = await DefinitionsService.generateCommitmentTracker(
               n.commitment,
-              BigInt("0x" + decrypted.bliding)
+              decrypted.bliding
             );
             const trackerHash = await BarretenbergService.generateHash(tracker);
 
@@ -160,8 +158,8 @@ export const useTransferFrom = () => {
               commitment: n.commitment,
               encryptedOutput: n.encryptedOutput,
               index: n.index,
-              value: BigInt("0x" + decrypted.value),
-              bliding: BigInt("0x" + decrypted.bliding),
+              value: decrypted.value,
+              bliding: decrypted.bliding,
               trackerHash: trackerHash,
             };
           })
@@ -187,7 +185,7 @@ export const useTransferFrom = () => {
         throw new Error("Insufficient funds in notes");
       }
 
-      console.log("inputNote", inputNote)
+      console.log("inputNote", inputNote.bliding);
 
       const inputCommitmentTracker =
         await DefinitionsService.generateSpendingTracker(
@@ -195,7 +193,7 @@ export const useTransferFrom = () => {
           inputNote.bliding!
         );
 
-        console.log("ABC")
+      console.log("ABC");
 
       // generate proof
       const outOwnerAmount = inputNote.value! - props.amount;
@@ -206,10 +204,15 @@ export const useTransferFrom = () => {
         parseInt((a.index! - b.index!).toString())
       );
       for (const note of orderedNotes) {
+        console.log("add", note.commitment);
         await tree.addCommitment(note.commitment);
       }
 
-      console.log("ABC 2")
+      console.log(
+        "ABC 2",
+        "0xf26f868d58f955ff3217f5124c2d2e083feea132bd700875fd26a3bba0d6d33",
+        tree.getRoot().toString(16)
+      );
 
       // compute input commitment root and path
       const inRoot = tree.getRoot();
@@ -218,7 +221,7 @@ export const useTransferFrom = () => {
         throw new Error("Input commitment doesn't belong to the tree");
       }
 
-      console.log("ABC 2.1.2")
+      console.log("ABC 2.1.2");
 
       // generate notes
       const [outOwnerNote, outReceiverNote] = await Promise.all([
@@ -234,7 +237,7 @@ export const useTransferFrom = () => {
         ),
       ]);
 
-      console.log("ABC 2.1")
+      console.log("ABC 2.1");
       await tree.addCommitment(outOwnerNote.commitment);
       await tree.addCommitment(outReceiverNote.commitment);
 
@@ -253,19 +256,21 @@ export const useTransferFrom = () => {
         new Fr(allowance.allowance - props.amount),
       ]);
 
-      console.log("ABC 3")
+      console.log("ABC 3");
 
       const generatedProof = await ProofService.generateTransferFromProof({
         // account details
-        owner_account: formatHex(props.from.address),
-        receiver_account: formatHex(props.to.address),
-        spender_private_key: formatHex(spenderAccount.owner.privateKey),
+        owner_account: formatHex(props.from.address % Fr.MODULUS),
+        receiver_account: formatHex(props.to.address % Fr.MODULUS),
+        spender_private_key: formatHex(
+          spenderAccount.owner.privateKey % Fr.MODULUS
+        ),
         // input commitment details
         in_commitment_root: formatHex(inRoot),
         in_commitment_path: inputCommitmentProof.path.map((e) => formatHex(e)),
         in_commitment_direction_selector:
           inputCommitmentProof.directionSelector,
-        in_commitment_bliding: formatHex(inputNote.bliding!),
+        in_commitment_bliding: formatHex(inputNote.bliding! % Fr.MODULUS),
         in_commitment_value: formatHex(inputNote.value!),
         in_commitment_spending_tracker: formatHex(inputCommitmentTracker),
 

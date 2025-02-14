@@ -21,7 +21,7 @@ export class DefinitionsService {
     );
 
     const commitment = await BarretenbergService.generateHashArray([
-      new Fr(toAddress),
+      new Fr(toAddress % Fr.MODULUS),
       new Fr(value),
       new Fr(bliding),
     ]);

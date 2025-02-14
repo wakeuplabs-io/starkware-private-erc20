@@ -10,6 +10,7 @@ import { AccountService } from "./account.service";
 import { CipherService } from "./cipher.service";
 import { provider } from "@/shared/config/rpc";
 import { DefinitionsService } from "./definitions.service";
+import { parse, stringify } from "@/lib/utils";
 
 export class NotesService {
   private provider: Provider;
@@ -61,7 +62,9 @@ export class NotesService {
 
     // save cache
     await this.setCacheNotes(notesArray);
-    await this.setCachedSpendingTrackers(Array.from(spendingTrackersMap.values()));
+    await this.setCachedSpendingTrackers(
+      Array.from(spendingTrackersMap.values())
+    );
     await this.setCacheLatestBlock(toBlock.block_number);
 
     return { notesArray, notesMap, spendingTrackersMap };
@@ -76,30 +79,19 @@ export class NotesService {
   }
 
   private setCacheNotes(notes: Note[]) {
-    localStorage.setItem(
-      "notes",
-      JSON.stringify(notes, (_, value) =>
-        typeof value === "bigint" ? value.toString() + "n" : value
-      )
-    );
+    localStorage.setItem("notes", stringify(notes));
   }
 
   private setCachedSpendingTrackers(st: string[]) {
-    localStorage.setItem("spendingTrackers", JSON.stringify(st));
+    localStorage.setItem("spendingTrackers", stringify(st));
   }
 
   private async fetchFromLocalStorage(): Promise<{
     notes: Note[];
     spendingTrackers: string[];
   }> {
-    const notes = JSON.parse(
-      localStorage.getItem("notes") || "[]",
-      (_, value) =>
-        typeof value === "string" && value.endsWith("n")
-          ? BigInt(value.slice(0, -1))
-          : value
-    );
-    const spendingTrackers = JSON.parse(
+    const notes = parse(localStorage.getItem("notes") || "[]");
+    const spendingTrackers = parse(
       localStorage.getItem("spendingTrackers") || "[]"
     );
 
@@ -179,17 +171,18 @@ export class NotesService {
         try {
           const { commitment, encryptedOutput, index }: Note = commitmentEvent;
 
-          const decrypted: CommitmentPayload = JSON.parse(
-            await CipherService.decrypt(
-              encryptedOutput,
-              account.viewer.publicKey,
-              account.viewer.privateKey
-            )
+          // recover payload
+          const decrypted = await CipherService.decrypt(
+            encryptedOutput,
+            account.viewer.publicKey,
+            account.viewer.privateKey
           );
+          const payload: CommitmentPayload = parse(decrypted);
 
+          // generate spending tracker
           const tracker = await DefinitionsService.generateCommitmentTracker(
             commitment,
-            decrypted.bliding
+            payload.bliding
           );
           const trackerHash = await BarretenbergService.generateHash(tracker);
 
@@ -197,12 +190,11 @@ export class NotesService {
             commitment,
             encryptedOutput,
             index,
-            value: BigInt("0x" + decrypted.value),
-            bliding: BigInt("0x" + decrypted.bliding),
+            value: payload.value,
+            bliding: payload.bliding,
             trackerHash: trackerHash,
           };
         } catch (error) {
-          console.log("commitment", error);
           const { commitment, encryptedOutput, index }: Note = commitmentEvent;
           return { commitment, encryptedOutput, index };
         }

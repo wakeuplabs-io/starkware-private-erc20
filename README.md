@@ -336,23 +336,23 @@ just circuits-deploy-verifier approve 0x0005ab98bd08bbfc4fac40994f37bab41528ea8e
 Deployment with just command (Same for verifier if needed). First go to `src/privado/constants` and update properly.
 
 ```bash
-just contracts-declare-privado
+just contracts-declare
 
-# class_hash: 0x06675c7179752b0ee52070cb47106b2106826fdae6cb5a04d777844630183afa
-# transaction_hash: 0x009df119eb2470abc37fbb3fe1034f6ecb2fc3545cedff04c7af6bfb7bf2501a
+# class_hash: 0x01edc9425336ee6d5fd1f718310f23d224aac13f550f652b466964879bf818e4
+# transaction_hash: 0x072b19999cd3283fcc1fa40899807017217f59e51dcce53009100bc90b85eb19
 
 # To see declaration details, visit:
-# class: https://sepolia.starkscan.co/class/0x06675c7179752b0ee52070cb47106b2106826fdae6cb5a04d777844630183afa
-# transaction: https://sepolia.starkscan.co/tx/0x009df119eb2470abc37fbb3fe1034f6ecb2fc3545cedff04c7af6bfb7bf2501a
+# class: https://sepolia.starkscan.co/class/0x01edc9425336ee6d5fd1f718310f23d224aac13f550f652b466964879bf818e4
+# transaction: https://sepolia.starkscan.co/tx/0x072b19999cd3283fcc1fa40899807017217f59e51dcce53009100bc90b85eb19
 
-just contracts-deploy-privado 0x06675c7179752b0ee52070cb47106b2106826fdae6cb5a04d777844630183afa
+just contracts-deploy 0x01edc9425336ee6d5fd1f718310f23d224aac13f550f652b466964879bf818e4
 
-# contract_address: 0x038e0c36f8572d6ed0a2c2f7ab884ecd97309d51726bda06852de9635dd31b5c
-# transaction_hash: 0x003ff0042f6c72a80fe56e8367641842c82dd4db4748cf4b28c35653ec25064c
+# contract_address: 0x0258546d08f389bb58f9ce06c28e994157c4943a50f706e2aaa46d6b38d2748d
+# transaction_hash: 0x02afa3ff1e5051d1fa495c205b3abd448dd3b5c0cfb71ca45c32df817aeb8e7f
 
 # To see deployment details, visit:
-# contract: https://sepolia.starkscan.co/contract/0x038e0c36f8572d6ed0a2c2f7ab884ecd97309d51726bda06852de9635dd31b5c
-# transaction: https://sepolia.starkscan.co/tx/0x003ff0042f6c72a80fe56e8367641842c82dd4db4748cf4b28c35653ec25064c
+# contract: https://sepolia.starkscan.co/contract/0x0258546d08f389bb58f9ce06c28e994157c4943a50f706e2aaa46d6b38d2748d
+# transaction: https://sepolia.starkscan.co/tx/0x02afa3ff1e5051d1fa495c205b3abd448dd3b5c0cfb71ca45c32df817aeb8e7f
 
 ```
 
