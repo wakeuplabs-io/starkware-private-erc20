@@ -1,50 +1,95 @@
-import { useTransfer } from "@/hooks/useTransfer";
-import { useCallback, useState } from "react";
-import { Button } from "./ui/button";
+import { useTransfer } from "@/hooks/use-transfer";
+import { useCallback, useEffect, useState } from "react";
+import { Button, buttonVariants } from "./ui/button";
 import { Input } from "./ui/input";
 import { QrCode } from "lucide-react";
 import { IDetectedBarcode, Scanner } from "@yudiel/react-qr-scanner";
+import { useTransferFrom } from "@/hooks/use-transfer-from";
+import { useToast } from "@/hooks/use-toast";
+import { ToastAction } from "@radix-ui/react-toast";
+import { buildExplorerUrl, formatHex } from "@/lib/utils";
+import { Label } from "./ui/label";
+import { useAccount } from "@/hooks/use-account";
 
 export const Transfer: React.FC = () => {
-  const { sendTransfer, loading } = useTransfer();
-  const [recipientAddress, setRecipientAddress] = useState("");
-  const [recipientPublicKey, setRecipientPublicKey] = useState("");
+  const { toast } = useToast();
+  const { account } = useAccount();
+  const { sendTransfer, loading: transferLoading } = useTransfer();
+  const { sendTransferFrom, loading: transferFromLoading } = useTransferFrom();
+  
   const [amount, setAmount] = useState("0");
   const [scan, setScan] = useState(false);
+  const [transferFrom, setTransferFrom] = useState(false);
+  const [from, setFrom] = useState({ address: "", publicKey: "" });
+  const [to, setTo] = useState({ address: "", publicKey: "" });
 
   const onTransfer = useCallback(async () => {
-    sendTransfer({
-      to: {
-        address: BigInt(recipientAddress),
-        publicKey: BigInt(recipientPublicKey),
-      },
-      amount: BigInt((parseFloat(amount) * 10**6).toFixed(0)),
-    })
-      .then(() => {
-        window.alert("Transfer successful");
-      })
-      .catch((error) => {
-        console.error(error);
-        window.alert("Transfer failed");
+    try {
+      const amountBn = BigInt((parseFloat(amount) * 10 ** 6).toFixed(0));
+
+      const txHash = transferFrom
+        ? await sendTransferFrom({
+            amount: amountBn,
+            from: {
+              address: BigInt(from.address),
+              publicKey: BigInt(from.publicKey),
+            },
+            to: {
+              address: BigInt(to.address),
+              publicKey: BigInt(to.publicKey),
+            },
+          })
+        : await sendTransfer({
+            amount: amountBn,
+            to: {
+              address: BigInt(to.address),
+              publicKey: BigInt(to.publicKey),
+            },
+          });
+
+      toast({
+        title: "Transaction sent successfully",
+        action: (
+          <ToastAction
+            className={buttonVariants({ variant: "link", size: "sm" })}
+            onClick={() => window.open(buildExplorerUrl(txHash), "_blank")}
+            altText="View transaction"
+          >
+            View transaction
+          </ToastAction>
+        ),
       });
-  }, [amount, recipientAddress, recipientPublicKey, sendTransfer]);
+    } catch (e) {
+      toast({
+        title: "Something went wrong",
+        description: (e as Error).message,
+        variant: "destructive",
+      });
+    }
+  }, [amount, to, from, sendTransfer]);
 
-  const onScan = useCallback((result: IDetectedBarcode[]) => {
-    const data = JSON.parse(result[0].rawValue);
+  const onScan = useCallback(
+    (result: IDetectedBarcode[]) => {
+      const { address, publicKey } = JSON.parse(result[0].rawValue);
+      setTo({ address, publicKey });
 
-    setRecipientAddress(data.address.startsWith("0x") ? data.address : `0x${data.address}`);
-    setRecipientPublicKey(data.publicKey.startsWith("0x") ? data.publicKey : `0x${data.publicKey}`);
-    setScan(false);
-  }, [setRecipientAddress, setRecipientPublicKey, setScan]);
+      setScan(false);
+    },
+    [setTo, setScan]
+  );
+
+  useEffect(() => {
+    if (account && !transferFrom) {
+      setFrom({
+        address: formatHex(account.owner.address),
+        publicKey: formatHex(account.viewer.publicKey),
+      });
+    }
+  }, [account, transferFrom]);
 
   return (
     <div className="flex flex-col p-6 bg-white rounded-3xl border border-primary">
-      <div className="flex items-center justify-between mb-6">
-        <h1 className="font-semibold">Transfer</h1>
-        <Button onClick={() => setScan(!scan)} size="icon">
-          <QrCode />
-        </Button>
-      </div>
+      <h1 className="font-semibold mb-6">Transfer</h1>
 
       {scan ? (
         <div>
@@ -52,31 +97,113 @@ export const Transfer: React.FC = () => {
         </div>
       ) : (
         <>
-          <div className="space-y-4 mb-12">
-            <Input
-              type="text"
-              placeholder="Recipient Address"
-              value={recipientAddress}
-              onChange={(e) => setRecipientAddress(e.target.value)}
-            />
+          <div className="space-y-8 mb-12">
+            <div className="space-y-4 relative">
+              <div className="absolute -top-2 right-0 ">
+                {transferFrom ? (
+                  <button
+                    className="text-sm bg-transparent text-blue-500 hover:underline"
+                    onClick={() => setTransferFrom(false)}
+                  >
+                    Reset
+                  </button>
+                ) : (
+                  <div className="space-x-2">
+                    <span className="text-nowrap text-sm font-medium">
+                      From: My wallet
+                    </span>
+                    <button
+                      className="text-sm bg-transparent text-blue-500 hover:underline"
+                      onClick={() => setTransferFrom(true)}
+                    >
+                      Edit
+                    </button>
+                  </div>
+                )}
+              </div>
 
-            <Input
-              type="text"
-              placeholder="Recipient Public Key"
-              value={recipientPublicKey}
-              onChange={(e) => setRecipientPublicKey(e.target.value)}
-            />
+              <div className="grid w-full items-center gap-2">
+                <Label htmlFor="from-address">From Address</Label>
+                <Input
+                  id="from-address"
+                  type="text"
+                  placeholder="0x..."
+                  value={from.address}
+                  disabled={!transferFrom}
+                  onChange={(e) =>
+                    setFrom({ ...from, address: e.target.value })
+                  }
+                />
+              </div>
 
-            <Input
-              type="text"
-              placeholder="Amount"
-              value={amount}
-              onChange={(e) => setAmount(e.target.value)}
-            />
+              <div className="grid w-full items-center gap-2">
+                <Label htmlFor="from-public-key">From Public Key</Label>
+                <Input
+                  id="from-public-key"
+                  type="text"
+                  placeholder="0x..."
+                  disabled={!transferFrom}
+                  value={from.publicKey}
+                  onChange={(e) =>
+                    setFrom({ ...from, publicKey: e.target.value })
+                  }
+                />
+              </div>
+            </div>
+
+            <div className="space-y-4 relative">
+              <Button
+                onClick={() => setScan(!scan)}
+                size="icon"
+                variant="ghost"
+                className="absolute -top-2 right-0 h-6 w-6 text-blue-500 bg-transparent"
+              >
+                <QrCode />
+              </Button>
+
+              <div className="grid w-full items-center gap-2">
+                <Label htmlFor="to-address">To Address</Label>
+                <Input
+                  id="to-address"
+                  placeholder="0x..."
+                  type="text"
+                  value={to.address}
+                  onChange={(e) => setTo({ ...to, address: e.target.value })}
+                />
+              </div>
+
+              <div className="grid w-full items-center gap-2">
+                <Label htmlFor="to-public-key">To Public Key</Label>
+                <Input
+                  id="to-public-key"
+                  placeholder="0x..."
+                  type="text"
+                  value={to.publicKey}
+                  onChange={(e) => setTo({ ...to, publicKey: e.target.value })}
+                />
+              </div>
+            </div>
+
+            <div className="grid w-full items-center gap-2">
+              <Label htmlFor="amount">Amount</Label>
+              <Input
+                id="amount"
+                type="text"
+                placeholder="0.0"
+                value={amount}
+                onChange={(e) => setAmount(e.target.value)}
+              />
+            </div>
           </div>
 
-          <Button className="w-full" onClick={onTransfer} disabled={loading}>
-            {loading ? "Transferring..." : "Transfer "}
+          <Button
+            className="w-full"
+            onClick={onTransfer}
+            disabled={transferFromLoading || transferLoading}
+          >
+            {transferFromLoading || transferLoading
+              ? "Transferring..."
+              : "Transfer"}
           </Button>
         </>
       )}

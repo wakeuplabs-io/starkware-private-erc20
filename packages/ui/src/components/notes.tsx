@@ -1,7 +1,7 @@
 import { Eye, EyeClosed } from "lucide-react";
 import { Button } from "./ui/button";
-import { cn, shortenAddress } from "@/lib/utils";
-import { useUserNotes } from "@/hooks/useUserNotes";
+import { cn, shortenString } from "@/lib/utils";
+import { useUserNotes } from "@/hooks/use-user-notes";
 import { useMemo, useState } from "react";
 
 export const Notes: React.FC = () => {
@@ -45,7 +45,7 @@ export const Notes: React.FC = () => {
                   "line-through": note.spent,
                 })}
               >
-                {shortenAddress(note.commitment.toString(16))} (
+                {shortenString(note.commitment.toString(16))} (
                 {note.index.toString()})
               </span>
               <span

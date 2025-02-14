@@ -7,6 +7,6 @@ interface ProvidersWrapperProps {
   children: React.ReactNode;
 }
 
-export default function ProvidersWrapper({ children }: ProvidersWrapperProps) {
+export function ProvidersWrapper({ children }: ProvidersWrapperProps) {
   return <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>;
 }

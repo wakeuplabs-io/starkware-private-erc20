@@ -5,7 +5,7 @@ import { WebWalletConnector } from "starknetkit/webwallet";
 import { sepolia } from "@starknet-react/chains";
 import { StarknetConfig, publicProvider } from "@starknet-react/core";
  
-export default function StarknetProvider({ children }: { children: React.ReactNode }) {
+export function StarknetProvider({ children }: { children: React.ReactNode }) {
   const chains = [sepolia];
  
   const connectors = [

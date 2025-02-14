@@ -1,7 +1,8 @@
+import { Approve } from "@/components/approve";
 import { Notes } from "@/components/notes";
 import { Receive } from "@/components/receive";
 import { Transfer } from "@/components/transfer";
-import { useBalance } from "@/hooks/useBalance";
+import { useBalance } from "@/hooks/use-balance";
 import { cn, formatTokenAmount } from "@/lib/utils";
 import { createFileRoute } from "@tanstack/react-router";
 import { ArrowDown, ArrowUpRight, List } from "lucide-react";
@@ -15,6 +16,7 @@ enum Tab {
   Notes = "notes",
   Send = "send",
   Receive = "receive",
+  Approve = "approve",
 }
 
 function Index() {
@@ -24,19 +26,19 @@ function Index() {
   return (
     <div className="w-full">
       <div className="w-full space-y-8 lg:space-y-4 mb-12">
-        <div className="flex justify-between w-full">
-          <h1 className="text-2xl lg:text-4xl font-bold">Erc20</h1>
+        <div className="flex justify-between w-full mb-10">
+          <h1 className="text-2xl lg:text-4xl font-bold">Enigma</h1>
           <div className="relative">
             <div className="text-3xl lg:text-4xl font-bold">
               {formatTokenAmount(balance)}
             </div>
-            <div className="absolute bottom-0 translate-y-full right-0 text-sm lg:text-base text-nowrap">
+            <div className="absolute bottom-0 translate-y-full right-0 text-sm text-nowrap">
               My balance
             </div>
           </div>
         </div>
 
-        <div className="gap-2 grid grid-cols-3 max-w-sm">
+        <div className="gap-2 grid grid-cols-4">
           <button
             onClick={() => setTab(Tab.Notes)}
             className={cn(
@@ -73,12 +75,25 @@ function Index() {
           >
             <ArrowDown className="h-4" /> Receive
           </button>
+          <button
+            onClick={() => setTab(Tab.Approve)}
+            className={cn(
+              "h-9 px-3 text-sm border border-input hover:bg-accent bg-transparent rounded-lg border-primary flex items-center gap-1",
+              {
+                "bg-gradient-to-r from-[#9A5583] via-[#35269A] to-[#181972] text-white border-none":
+                  tab === Tab.Approve,
+              }
+            )}
+          >
+            <ArrowDown className="h-4" /> Approve
+          </button>
         </div>
       </div>
 
       {tab === Tab.Notes && <Notes />}
       {tab === Tab.Send && <Transfer />}
       {tab === Tab.Receive && <Receive />}
+      {tab === Tab.Approve && <Approve />}
     </div>
   );
 }
