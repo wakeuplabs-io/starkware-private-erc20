@@ -1,8 +1,5 @@
-import {
-  useContract,
-  useSendTransaction,
-} from "@starknet-react/core";
-import { useState } from "react";
+import { useContract, useSendTransaction } from "@starknet-react/core";
+import { useCallback, useState } from "react";
 import {
   PRIVATE_ERC20_ABI,
   PRIVATE_ERC20_CONTRACT_ADDRESS,
@@ -27,81 +24,98 @@ export const useApprove = () => {
     calls: undefined,
   });
 
-
-  const sendApprove = async (props: {
-    spender: {
-      address: bigint;
-      publicKey: bigint;
-    };
-    amount: bigint;
-  }): Promise<string> => {
-    setLoading(true);
-
-    try {
-      if (!contract) {
-        throw new Error("Contract not initialized");
-      }
-
-      const approverAccount = await AccountService.getAccount();
-
-      const { notesArray: notes } = await notesService.getNotes();
-      const senderNotes = notes.filter(
-        (n) => n.value !== undefined && n.spent !== true
-      );
-
-      const outAllowanceHash = await BarretenbergService.generateHashArray([
-        new Fr(approverAccount.address),
-        new Fr(props.spender.address),
-        new Fr(props.amount),
-      ]);
-
-      const outRelationshipId = await BarretenbergService.generateHashArray([
-        new Fr(approverAccount.address),
-        new Fr(props.spender.address),
-      ]);
-
-      const generatedProof = await ProofService.generateApproveProof({
-        in_private_key: formatHex(approverAccount.privateKey % Fr.MODULUS),
-        in_amount: formatHex(props.amount),
-        in_spender: formatHex(props.spender.address % Fr.MODULUS),
-        out_allowance_hash: formatHex(outAllowanceHash),
-        out_relationship_id: formatHex(outRelationshipId),
-      });
-
-      // generate encrypted data
-      const approvalPayload: ApprovalPayload = {
-        allowance: props.amount,
-        commitments: senderNotes.map((note) => ({
-          commitment: note.commitment,
-          value: note.value!,
-          bliding: note.bliding!,
-        })),
+  const sendApprove = useCallback(
+    async (props: {
+      spender: {
+        address: bigint;
+        publicKey: bigint;
       };
+      amount: bigint;
+      shareViewingKey: boolean;
+    }): Promise<string> => {
+      try {
+        if (!contract) {
+          throw new Error("Contract not initialized");
+        }
+        setLoading(true);
 
-      const [encryptedSpenderOutput, encryptedApproverOutput] =
-        await Promise.all([
-          CipherService.encrypt(
-            stringify(approvalPayload),
-            props.spender.publicKey
-          ),
-          CipherService.encrypt(
-            stringify(approvalPayload),
-            approverAccount.publicKey
-          ),
+        const ownerAccount = await AccountService.getAccount();
+
+        // generate approve proof
+
+        const generatedProof = await ProofService.generateApproveProof({
+          owner: {
+            address: ownerAccount.owner.address,
+            privateKey: ownerAccount.owner.privateKey,
+          },
+          spender: { address: props.spender.address },
+          amount: props.amount,
+        });
+
+        // generate approval payload
+
+        const { notesArray: notes } = await notesService.getNotes();
+
+        let approvedCommitments: ApprovalPayload["commitments"] = [];
+        if (!props.shareViewingKey) {
+          approvedCommitments = notes.reduce(
+            (acc, note) => {
+              if (note.value !== undefined && note.spent !== true) {
+                acc.push({
+                  commitment: note.commitment,
+                  value: note.value!,
+                  bliding: note.bliding!,
+                });
+              }
+              return acc;
+            },
+            [] as ApprovalPayload["commitments"]
+          );
+
+          if (approvedCommitments.length === 0) {
+            throw new Error(
+              "No balance to approve. Try sharing viewing key for extended approvals."
+            );
+          }
+        }
+
+        const approvalPayload: ApprovalPayload = {
+          allowance: props.amount,
+          view: {
+            privateKey: props.shareViewingKey ? ownerAccount.viewer.privateKey : 0n,
+            publicKey: props.shareViewingKey ? ownerAccount.viewer.publicKey : 0n,
+          },
+          commitments: approvedCommitments,
+        };
+
+        const [encryptedSpenderOutput, encryptedApproverOutput] =
+          await Promise.all([
+            CipherService.encrypt(
+              stringify(approvalPayload),
+              props.spender.publicKey
+            ),
+            CipherService.encrypt(
+              stringify(approvalPayload),
+              ownerAccount.viewer.publicKey
+            ),
+          ]);
+
+        // contract call
+
+        const { transaction_hash } = await sendAsync([
+          contract.populate("approve", [
+            generatedProof,
+            encryptedApproverOutput,
+            encryptedSpenderOutput,
+          ]),
         ]);
-
-      const { transaction_hash } = await sendAsync([
-        contract.populate("approve", [
-          generatedProof,
-          encryptedApproverOutput,
-          encryptedSpenderOutput,
-        ]),
-      ]);
-      return transaction_hash;
-    } finally {
-      setLoading(false);
-    }
-  };
+        return transaction_hash;
+      } finally {
+        setLoading(false);
+      }
+    },
+    [contract, sendAsync]
+  );
 
   return {
     sendApprove,

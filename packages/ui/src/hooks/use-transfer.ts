@@ -1,10 +1,5 @@
-import { Fr } from "@aztec/bb.js";
 import { ProofService } from "@/services/proof.service";
-import {
-  useContract,
-  useSendTransaction,
-} from "@starknet-react/core";
-import { BarretenbergService } from "@/services/bb.service";
+import { useContract, useSendTransaction } from "@starknet-react/core";
 import {
   PRIVATE_ERC20_ABI,
   PRIVATE_ERC20_CONTRACT_ADDRESS,
@@ -15,6 +10,7 @@ import { MERKLE_TREE_DEPTH } from "@/shared/config/constants";
 import { useState } from "react";
 import { formatHex } from "@/lib/utils";
 import { notesService } from "@/services/notes.service";
+import { DefinitionsService } from "@/services/definitions.service";
 
 export const useTransfer = () => {
   const [loading, setLoading] = useState(false);
@@ -58,12 +54,12 @@ export const useTransfer = () => {
       const outSenderAmount = inputNote.value! - props.amount;
 
       const [outSenderNote, outReceiverNote] = await Promise.all([
-        BarretenbergService.generateNote(
-          spenderAccount.address,
-          spenderAccount.publicKey,
+        DefinitionsService.generateNote(
+          spenderAccount.owner.address,
+          spenderAccount.viewer.publicKey,
           outSenderAmount
         ),
-        BarretenbergService.generateNote(
+        DefinitionsService.generateNote(
           props.to.address,
           props.to.publicKey,
           props.amount
@@ -94,14 +90,14 @@ export const useTransfer = () => {
         throw new Error("Couldn't generate output path proof");
       }
 
-      const spendingTracker = await BarretenbergService.generateSpendingTracker(
+      const spendingTracker = await DefinitionsService.generateSpendingTracker(
         inputNote.commitment,
         inputNote.bliding!
       );
 
       const generatedProof = await ProofService.generateTransferProof({
         // accounts details
-        sender_private_key: formatHex(spenderAccount.privateKey % Fr.MODULUS),
+        sender_private_key: formatHex(spenderAccount.owner.privateKey),
         receiver_account: formatHex(props.to.address),
         // utxo inputs
         in_commitment_root: formatHex(inRoot),

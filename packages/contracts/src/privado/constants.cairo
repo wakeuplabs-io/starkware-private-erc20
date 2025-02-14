@@ -15,11 +15,11 @@ pub const APPROVE_VERIFIER_ADDRESS: felt252 = 0x028236f4aad88c151a9776c3b23427c9
 pub const TRANSFER_FROM_VERIFIER_ADDRESS: felt252 = 0x0086fe3a1c7cab01a7551b4ce095fae9bc5a85ccefb34ce90bea444e281c3949;
 
 // should already include the first commitment
-pub const MERKLE_TREE_INITIAL_ROOT: u256 = 0x15d5bbef432aa62ac897328947dba4035f3602ee8259cb73eb11f44cfd85ab0c; 
+pub const MERKLE_TREE_INITIAL_ROOT: u256 = 0x18f894cfb0d1b9d64ec494cd24e9b15e00e05d27efa450e072d9df7f79b9e81d; 
 pub fn GET_MINT_COMMITMENT() -> (u256, ByteArray) {
     (
-        0x1c028244f99518875102dff733c34fdc80f9be59ef16ecd5befbe7f4e83960b,
-        "xN15gk5bIQlJSo2N44h2v0ATGPDYcW4-zpJaKV0R0lLnT14Q5PdqXnBuDPcuVH82lHEijlx9cxcw2x5t3DmKomsM5z3YLKuNKqOqfnbIE1hNk0g5pyPaojfwG8EtxZP-UygaHw4lwM3Y3qLaRX5c6kOC1A"
+        0x394cd38e24759a46bc2331baf12f338e09243c6a24920e33f9b7a23ee3f5439,
+        "7jSyIVmdtWWXxOoELJ6NozUEuxOmqBpaA2_TkwZDDyN2gehWqeQh7f3OufxyzW78nmCQ9QzmsCzZNV5ScsDRV541Pycn--ZTaxWk57lKH7XrG3DAyR5BwjAFA2DHE0pFOjGj61TI2Fd_zz_HhDylrmY17Q"
     )
 }
 // testnet sepolia ========================================================================

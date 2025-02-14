@@ -7,10 +7,12 @@ import { IDetectedBarcode, Scanner } from "@yudiel/react-qr-scanner";
 import { useToast } from "@/hooks/use-toast";
 import { ToastAction } from "@radix-ui/react-toast";
 import { buildExplorerUrl, shortenString } from "@/lib/utils";
+import { Checkbox } from "./ui/checkbox";
 
 export const Approve: React.FC = () => {
   const { toast } = useToast();
   const { sendApprove, loading } = useApprove();
+  const [shareViewingKey, setShareViewingKey] = useState<boolean>(false);
 
   const [spender, setSpender] = useState({
     address: "",
@@ -27,6 +29,7 @@ export const Approve: React.FC = () => {
           publicKey: BigInt(spender.publicKey),
         },
         amount: BigInt((parseFloat(amount) * 10 ** 6).toFixed(0)),
+        shareViewingKey
       });
 
       toast({
@@ -94,6 +97,16 @@ export const Approve: React.FC = () => {
               value={amount}
               onChange={(e) => setAmount(e.target.value)}
             />
+
+            <div className="flex items-center space-x-2">
+              <Checkbox id="viewing-key" checked={shareViewingKey} onCheckedChange={(e) => setShareViewingKey(e as boolean)} />
+              <label
+                htmlFor="viewing-key"
+                className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+              >
+                Share viewing key
+              </label>
+            </div>
           </div>
 
           <Button className="w-full" onClick={onApprove} disabled={loading}>

@@ -4,7 +4,7 @@ export const PRIVATE_ERC20_DEPLOY_BLOCK = 521743;
 export const PRIVATE_ERC20_EVENT_KEY =
   "contracts::privado::privado::Privado::Approval";
 export const PRIVATE_ERC20_CONTRACT_ADDRESS =
-  "0x0210e7c3fc7ca712d68c43380910bc334ff9fe52ff7b930b400c7469c04b5a8e";
+  "0x038e0c36f8572d6ed0a2c2f7ab884ecd97309d51726bda06852de9635dd31b5c";
 export const ZERO_BIG_INT = BigInt(0);
 export const MERKLE_TREE_DEPTH = 12;
 export const DECIMALS = 6n;

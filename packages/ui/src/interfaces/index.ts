@@ -1,3 +1,17 @@
+export interface Account {
+  // proof ownership of commitments
+  owner: {
+    address: bigint; // this is our sharable address
+    privateKey: bigint;
+    publicKey: bigint;
+  },
+  // decrypts commitments data
+  viewer: {
+    privateKey: bigint; // we optionally share this with third party
+    publicKey: bigint; // this is our sharable public key
+  }
+}
+
 export interface Note {
   index: bigint;
   commitment: bigint;
@@ -5,7 +19,7 @@ export interface Note {
   bliding?: bigint;
   value?: bigint;
   spent?: boolean;
-  nullifierHash?: bigint;
+  trackerHash?: bigint;
 }
 
 export interface CommitmentEvent {
@@ -29,11 +43,15 @@ export interface CommitmentPayload {
 
 export interface ApprovalPayload {
   allowance: bigint;
+  view: {
+    publicKey: bigint;
+    privateKey: bigint;
+  },
   commitments: {
-    commitment: bigint,
-    value: bigint,
-    bliding: bigint
-  }[]
+    commitment: bigint;
+    value: bigint;
+    bliding: bigint;
+  }[];
 }
 
 export interface ReceiverAccount {
@@ -73,34 +91,33 @@ export interface ApproveProofDto {
   out_relationship_id: string;
 }
 
-
 export interface TransferFromProofDto {
   // account details
-  owner_account: string,
-  receiver_account: string,
-  spender_private_key: string,
+  owner_account: string;
+  receiver_account: string;
+  spender_private_key: string;
   // input commitment details
-  in_commitment_root: string,
-  in_commitment_path: string[],
-  in_commitment_direction_selector: boolean[],
-  in_commitment_bliding: string,
-  in_commitment_value: string,
-  in_commitment_spending_tracker: string,
+  in_commitment_root: string;
+  in_commitment_path: string[];
+  in_commitment_direction_selector: boolean[];
+  in_commitment_bliding: string;
+  in_commitment_value: string;
+  in_commitment_spending_tracker: string;
   // allowance utxo details
-  in_allowance_value: string,
-  in_allowance_hash: string,
-  in_allowance_relationship: string,
-  out_allowance_hash: string,
+  in_allowance_value: string;
+  in_allowance_hash: string;
+  in_allowance_relationship: string;
+  out_allowance_hash: string;
   // out receiver commitment detailsa
-  out_receiver_value: string,
-  out_receiver_bliding: string,
-  out_receiver_commitment: string,
+  out_receiver_value: string;
+  out_receiver_bliding: string;
+  out_receiver_commitment: string;
   // out owner commitment details
-  out_owner_value: string,
-  out_owner_bliding: string,
-  out_owner_commitment: string,
+  out_owner_value: string;
+  out_owner_bliding: string;
+  out_owner_commitment: string;
   // output commitment details
-  out_root: string,
-  out_subtree_root_path: string[],
-  out_subtree_direction_selector: boolean[],
+  out_root: string;
+  out_subtree_root_path: string[];
+  out_subtree_direction_selector: boolean[];
 }
