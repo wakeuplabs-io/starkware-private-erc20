@@ -6,9 +6,7 @@ import {
 } from "@/shared/config/constants";
 import { AccountService } from "@/services/account.service";
 import { ProofService } from "@/services/proof.service";
-import { Fr } from "@aztec/bb.js";
-import { formatHex, stringify } from "@/lib/utils";
-import { BarretenbergService } from "@/services/bb.service";
+import { stringify } from "@/lib/utils";
 import { CipherService } from "@/services/cipher.service";
 import { ApprovalPayload } from "@/interfaces";
 import { notesService } from "@/services/notes.service";

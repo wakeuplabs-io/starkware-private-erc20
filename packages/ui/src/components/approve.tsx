@@ -1,12 +1,12 @@
 import { useApprove } from "@/hooks/use-approve";
 import { useCallback, useState } from "react";
-import { Button } from "./ui/button";
+import { Button, buttonVariants } from "./ui/button";
 import { Input } from "./ui/input";
 import { QrCode } from "lucide-react";
 import { IDetectedBarcode, Scanner } from "@yudiel/react-qr-scanner";
 import { useToast } from "@/hooks/use-toast";
 import { ToastAction } from "@radix-ui/react-toast";
-import { buildExplorerUrl, shortenString } from "@/lib/utils";
+import { buildExplorerUrl } from "@/lib/utils";
 import { Checkbox } from "./ui/checkbox";
 
 export const Approve: React.FC = () => {
@@ -29,13 +29,14 @@ export const Approve: React.FC = () => {
           publicKey: BigInt(spender.publicKey),
         },
         amount: BigInt((parseFloat(amount) * 10 ** 6).toFixed(0)),
-        shareViewingKey
+        shareViewingKey,
       });
 
       toast({
-        title: "Approve successful",
+        title: "Transaction sent successfully",
         action: (
           <ToastAction
+            className={buttonVariants({ variant: "link", size: "sm" })}
             onClick={() => window.open(buildExplorerUrl(txHash), "_blank")}
             altText="View transaction"
           >
@@ -43,7 +44,13 @@ export const Approve: React.FC = () => {
           </ToastAction>
         ),
       });
-    } catch (e) {}
+    } catch (e) {
+      toast({
+        title: "Something went wrong",
+        description: (e as Error).message,
+        variant: "destructive",
+      });
+    }
   }, [amount, spender, sendApprove]);
 
   const onScan = useCallback(
@@ -98,7 +105,11 @@ export const Approve: React.FC = () => {
             />
 
             <div className="flex items-center space-x-2">
-              <Checkbox id="viewing-key" checked={shareViewingKey} onCheckedChange={(e) => setShareViewingKey(e as boolean)} />
+              <Checkbox
+                id="viewing-key"
+                checked={shareViewingKey}
+                onCheckedChange={(e) => setShareViewingKey(e as boolean)}
+              />
               <label
                 htmlFor="viewing-key"
                 className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"

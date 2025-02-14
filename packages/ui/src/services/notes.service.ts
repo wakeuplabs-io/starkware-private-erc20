@@ -179,7 +179,7 @@ export class NotesService {
           const payload: CommitmentPayload = parse(decrypted);
 
           // generate spending tracker
-          const tracker = await DefinitionsService.generateCommitmentTracker(
+          const tracker = await DefinitionsService.commitmentTracker(
             commitment,
             payload.bliding
           );

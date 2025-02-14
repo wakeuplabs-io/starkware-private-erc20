@@ -140,11 +140,10 @@ export const useTransferFrom = () => {
               )
             );
 
-            const tracker = await DefinitionsService.generateCommitmentTracker(
+            const tracker = await DefinitionsService.commitmentTracker(
               n.commitment,
               decrypted.bliding
             );
-            console.log("trackerHash", tracker.toString(), Array.from(spendingTrackersMap.values()));
             if (spendingTrackersMap.get(tracker.toString())) {
               throw new Error("Note already spent");
             }
@@ -178,7 +177,7 @@ export const useTransferFrom = () => {
       }
 
       const inputCommitmentTracker =
-        await DefinitionsService.generateSpendingTracker(
+        await DefinitionsService.commitmentTracker(
           inputNote.commitment,
           inputNote.bliding!
         );
@@ -204,12 +203,12 @@ export const useTransferFrom = () => {
 
       // generate notes
       const [outOwnerNote, outReceiverNote] = await Promise.all([
-        DefinitionsService.generateNote(
+        DefinitionsService.note(
           props.from.address,
           props.from.publicKey,
           outOwnerAmount
         ),
-        DefinitionsService.generateNote(
+        DefinitionsService.note(
           props.to.address,
           props.to.publicKey,
           props.amount
@@ -229,11 +228,6 @@ export const useTransferFrom = () => {
         new Fr(spenderAccount.owner.address),
         new Fr(allowance.allowance),
       ]);
-
-      console.log(
-        "inAllowanceHash",
-        inAllowanceHash, allowance, inputNote
-      );
 
       const outAllowanceHash = await BarretenbergService.generateHashArray([
         new Fr(props.from.address),

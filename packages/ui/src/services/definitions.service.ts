@@ -4,7 +4,7 @@ import { BarretenbergService } from "./bb.service";
 import { stringify } from "@/lib/utils";
 
 export class DefinitionsService {
-  static async generateNote(
+  static async note(
     toAddress: bigint,
     toPublicKey: bigint,
     value: bigint
@@ -42,31 +42,7 @@ export class DefinitionsService {
     };
   }
 
-  static async generateCommitmentTracker(
-    commitment: bigint,
-    bliding: bigint
-  ): Promise<bigint> {
-    const tracker = await BarretenbergService.generateHashArray([
-      new Fr(commitment % Fr.MODULUS),
-      new Fr(bliding % Fr.MODULUS),
-    ]);
-    return tracker;
-  }
-
-  static async generateNullifier(
-    commitment: bigint,
-    privateKey: bigint,
-    index: bigint
-  ): Promise<bigint> {
-    const nullifier = await BarretenbergService.generateHashArray([
-      new Fr(commitment % Fr.MODULUS),
-      new Fr(privateKey % Fr.MODULUS),
-      new Fr(index % Fr.MODULUS),
-    ]);
-    return nullifier;
-  }
-
-  static async generateSpendingTracker(
+  static async commitmentTracker(
     commitment: bigint,
     bliding: bigint
   ): Promise<bigint> {
@@ -86,5 +62,15 @@ export class DefinitionsService {
       new Fr(spender % Fr.MODULUS),
     ]);
     return relationship;
+  }
+
+  static async allowanceHash(owner: bigint, spender: bigint, amount: bigint) {
+    const hash = await BarretenbergService.generateHashArray([
+      new Fr(owner % Fr.MODULUS),
+      new Fr(spender % Fr.MODULUS),
+      new Fr(amount),
+    ]);
+
+    return hash;
   }
 }

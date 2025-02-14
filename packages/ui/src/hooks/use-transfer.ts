@@ -54,12 +54,12 @@ export const useTransfer = () => {
       const outSenderAmount = inputNote.value! - props.amount;
 
       const [outSenderNote, outReceiverNote] = await Promise.all([
-        DefinitionsService.generateNote(
+        DefinitionsService.note(
           spenderAccount.owner.address,
           spenderAccount.viewer.publicKey,
           outSenderAmount
         ),
-        DefinitionsService.generateNote(
+        DefinitionsService.note(
           props.to.address,
           props.to.publicKey,
           props.amount
@@ -90,7 +90,7 @@ export const useTransfer = () => {
         throw new Error("Couldn't generate output path proof");
       }
 
-      const spendingTracker = await DefinitionsService.generateSpendingTracker(
+      const spendingTracker = await DefinitionsService.commitmentTracker(
         inputNote.commitment,
         inputNote.bliding!
       );

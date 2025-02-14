@@ -1,13 +1,13 @@
 import { useTransfer } from "@/hooks/use-transfer";
 import { useCallback, useState } from "react";
-import { Button } from "./ui/button";
+import { Button, buttonVariants } from "./ui/button";
 import { Input } from "./ui/input";
 import { QrCode, WalletIcon } from "lucide-react";
 import { IDetectedBarcode, Scanner } from "@yudiel/react-qr-scanner";
 import { useTransferFrom } from "@/hooks/use-transfer-from";
 import { useToast } from "@/hooks/use-toast";
 import { ToastAction } from "@radix-ui/react-toast";
-import { buildExplorerUrl, shortenString } from "@/lib/utils";
+import { buildExplorerUrl } from "@/lib/utils";
 
 export const Transfer: React.FC = () => {
   const { toast } = useToast();
@@ -51,9 +51,10 @@ export const Transfer: React.FC = () => {
           });
 
       toast({
-        title: "Transfer successful",
+        title: "Transaction sent successfully",
         action: (
           <ToastAction
+            className={buttonVariants({ variant: "link", size: "sm" })}
             onClick={() => window.open(buildExplorerUrl(txHash), "_blank")}
             altText="View transaction"
           >
@@ -63,7 +64,7 @@ export const Transfer: React.FC = () => {
       });
     } catch (e) {
       toast({
-        title: "Transfer failed",
+        title: "Something went wrong",
         description: (e as Error).message,
         variant: "destructive",
       });
