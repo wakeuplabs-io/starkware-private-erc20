@@ -44,7 +44,7 @@ export const useDeposit = () => {
         throw new Error("Contract not initialized");
       }
 
-            const approvePopulate = erc20Contract.populate("approve", [
+      const approvePopulate = erc20Contract.populate("approve", [
         ENIGMA_CONTRACT_ADDRESS,
         props.amount * ENG_TO_ETH_RATIO
       ]);
@@ -56,7 +56,7 @@ export const useDeposit = () => {
       const outReceiverNote = await DefinitionsService.note(
         callerAccount.owner.address,
         callerAccount.viewer.publicKey,
-        props.amount * ENG_TO_ETH_RATIO
+        props.amount
       );
 
       const tree = new MerkleTree();
@@ -80,7 +80,7 @@ export const useDeposit = () => {
         receiver_account: formatHex(callerAccount.owner.address),
         // utxo inputs
         in_commitment_root: formatHex(inRoot),
-        in_public_amount: formatHex(props.amount),
+        in_public_amount: formatHex(props.amount / ENG_TO_ETH_RATIO),
         // utxo outputs
         out_receiver_commitment_bliding: formatHex(outReceiverNote.bliding),
         out_receiver_commitment: formatHex(outReceiverNote.commitment),
@@ -94,8 +94,8 @@ export const useDeposit = () => {
       });
 
 
-console.log(enigmaContract.populate("deposit", [generatedProof, outReceiverNote.encOutput]))
-      
+      console.log(enigmaContract.populate("deposit", [generatedProof, outReceiverNote.encOutput]));
+
       const { transaction_hash } = await sendAsync([
         enigmaContract.populate("deposit", [generatedProof, outReceiverNote.encOutput]),
       ]);
