@@ -42,11 +42,11 @@ function RootLayout() {
     return (
       <div className="min-h-screen flex flex-col">
         <header className=" shadow-md">
-          <div className="flex items-center justify-between p-8 sm:px-0 max-w-xl mx-auto w-full">
+          <div className="flex items-center justify-between px-4 py-8 md:px-0 max-w-3xl mx-auto w-full">
             <img
               src="/wakeup-powered.png"
               alt=""
-              className="h-[36px] hidden lg:block"
+              className="h-[36px] hidden md:block"
             />
             <img src="/starknet-logo.png" alt="" className="h-[28px]" />
             <Button onClick={() => disconnect()} className="h-[30px] rounded-full text-xs font-medium">
@@ -55,15 +55,15 @@ function RootLayout() {
           </div>
         </header>
 
-        <main className="px-4 lg:px-8 flex flex-col justify-between items-center bg-muted flex-1 pb-12">
-          <div className="max-w-xl mx-auto w-full pt-8">
+        <main className="px-4 md:px-8 flex flex-col justify-between items-center bg-muted flex-1 pb-12">
+          <div className="max-w-3xl mx-auto w-full pt-8">
             <Outlet />
           </div>
 
           <img
             src="/wakeup-powered.png"
             alt=""
-            className="h-[42px] w-[120px] lg:hidden mt-10"
+            className="h-[42px] w-[120px] md:hidden mt-10"
           />
         </main>
       </div>
@@ -71,8 +71,8 @@ function RootLayout() {
   }
 
   return (
-    <div className="h-screen w-screen px-6 lg:px-24 pt-16 lg:p-0 relative lg:flex lg:justify-center lg:items-center">
-      <div className="rounded-3xl border border-[#35269A] p-8 lg:p-24 pt-12 bg-gradient-to-t from-[#DCE9FF] to-[#F0DBF9] max-w-5xl w-full">
+    <div className="h-screen w-screen px-6 md:px-24 pt-16 md:p-0 relative md:flex md:justify-center md:items-center">
+      <div className="rounded-3xl border border-[#35269A] p-8 md:p-24 pt-12 bg-gradient-to-t from-[#DCE9FF] to-[#F0DBF9] max-w-5xl w-full">
         <img
           src="/starknet-logo.png"
           alt=""
@@ -87,7 +87,7 @@ function RootLayout() {
         <div className="flex justify-between items-end">
           <Button
             onClick={onConnectWallet}
-            className="w-full h-[90px] lg:max-w-80 rounded-lg text-lg"
+            className="w-full h-[90px] md:max-w-80 rounded-lg text-lg"
           >
             Connect Wallet
           </Button>
@@ -95,12 +95,12 @@ function RootLayout() {
           <img
             src="/wakeup-powered.png"
             alt=""
-            className="hidden lg:block h-16"
+            className="hidden md:block h-16"
           />
         </div>
       </div>
 
-      <div className="lg:hidden absolute left-0 right-0 bottom-12  flex justify-center">
+      <div className="md:hidden absolute left-0 right-0 bottom-12  flex justify-center">
         <img src="/wakeup-powered.png" alt="" className="h-10" />
       </div>
     </div>

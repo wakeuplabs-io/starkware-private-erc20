@@ -16,7 +16,7 @@ export const Transfer: React.FC = () => {
   const { account } = useAccount();
   const { sendTransfer, loading: transferLoading } = useTransfer();
   const { sendTransferFrom, loading: transferFromLoading } = useTransferFrom();
-  
+
   const [amount, setAmount] = useState("0");
   const [scan, setScan] = useState(false);
   const [transferFrom, setTransferFrom] = useState(false);
@@ -88,7 +88,7 @@ export const Transfer: React.FC = () => {
   }, [account, transferFrom]);
 
   return (
-    <div className="flex flex-col p-6 bg-white rounded-3xl border border-primary">
+    <div className="flex flex-col p-6 bg-white rounded-3xl border-gradient">
       <h1 className="font-semibold mb-6">Transfer</h1>
 
       {scan ? (
@@ -97,7 +97,7 @@ export const Transfer: React.FC = () => {
         </div>
       ) : (
         <>
-          <div className="space-y-8 mb-12">
+          <div className="grid gap-4 md:grid-cols-2 mb-8">
             <div className="space-y-4 relative">
               <div className="absolute -top-2 right-0 ">
                 {transferFrom ? (
@@ -183,17 +183,17 @@ export const Transfer: React.FC = () => {
                 />
               </div>
             </div>
+          </div>
 
-            <div className="grid w-full items-center gap-2">
-              <Label htmlFor="amount">Amount</Label>
-              <Input
-                id="amount"
-                type="text"
-                placeholder="0.0"
-                value={amount}
-                onChange={(e) => setAmount(e.target.value)}
-              />
-            </div>
+          <div className="grid gap-2 w-full mb-12">
+            <Label htmlFor="amount">Amount</Label>
+            <Input
+              id="amount"
+              type="text"
+              placeholder="0.0"
+              value={amount}
+              onChange={(e) => setAmount(e.target.value)}
+            />
           </div>
 
           <Button

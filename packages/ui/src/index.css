@@ -1,3 +1,6 @@
+@import url('https://fonts.googleapis.com/css2?family=Bakbak+One&display=swap');
+
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -38,6 +41,12 @@
     @apply bg-background text-foreground;
   }
 
+  .bakbak-one-regular {
+    font-family: "Bakbak One", serif;
+    font-weight: 400;
+    font-style: normal;
+  }  
+
   :root {
     --background: 0 0% 100%;
     --foreground: 0 0% 3.9%;
@@ -64,5 +73,31 @@
     --chart-4: 43 74% 66%;
     --chart-5: 27 87% 67%;
     --radius: 0.5rem;
+  }
+}
+
+@layer utilities {
+  .border-gradient {
+    position: relative;
+    border-radius: 12px;
+    z-index: 0;
+  }
+
+  .border-gradient::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    padding: 1px; /* Border thickness */
+    background: linear-gradient(222.99deg, #924af1 8.42%, #83acff 75.88%);
+    border-radius: inherit;
+    mask: 
+      linear-gradient(white 0 0) content-box,
+      linear-gradient(white 0 0);
+    -webkit-mask:
+      linear-gradient(white 0 0) content-box,
+      linear-gradient(white 0 0);
+    -webkit-mask-composite: xor;
+    mask-composite: exclude;
+    z-index: -1;
   }
 }
