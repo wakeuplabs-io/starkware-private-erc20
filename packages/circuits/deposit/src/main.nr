@@ -3,7 +3,7 @@ use common::merkle_tree::{assert_merkle_inclusion};
 use std::hash::poseidon2::Poseidon2::hash;
 
 // TODO: update before deploying. So far haven't found way to override for testing
-global PUBLIC_TO_PRIVATE_FACTOR: Field = 1_000_000_000_000;
+global PUBLIC_TO_PRIVATE_FACTOR: Field = 1_000_000;
 global DEPTH: u32 = 2;
 
 pub fn main(
