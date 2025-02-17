@@ -66,8 +66,8 @@ export interface DepositProofDto {
   receiver_account: string;
   // utxo inputs
   in_commitment_root: string;
+  in_public_amount: string;
   // utxo outputs
-  out_receiver_commitment_value: string;
   out_receiver_commitment_bliding: string;
   out_receiver_commitment: string;
   // updated root

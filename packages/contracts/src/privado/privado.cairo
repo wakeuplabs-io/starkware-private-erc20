@@ -366,6 +366,7 @@ pub mod Privado {
 
             true
         }
+
         fn deposit(
             ref self: ContractState, proof: Span<felt252>, receiver_enc_output: ByteArray,
         ) -> bool {
@@ -379,17 +380,10 @@ pub mod Privado {
             self._create_note(public_inputs.out_receiver_commitment, receiver_enc_output);
             self._create_note(0, "0");
 
-
             let eth_erc20_token = IERC20Dispatcher {
                 contract_address: self.eth_erc20_token.read(),
             };
-
-            let from = get_caller_address();
-            let to = get_contract_address();
-            let amount = public_inputs.in_public_amount;
-            let amount_felt: felt252 = amount.low.into();
-
-            eth_erc20_token.transfer_from(from, to, amount_felt);
+            eth_erc20_token.transfer_from(get_caller_address(), get_contract_address(), public_inputs.in_public_amount);
             
             true
         }

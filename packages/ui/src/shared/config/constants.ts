@@ -1,15 +1,17 @@
 import { Abi } from "starknet";
 
-export const PRIVATE_ERC20_DEPLOY_BLOCK = 524850;
-export const PRIVATE_ERC20_EVENT_KEY = "contracts::privado::privado::Privado::Approval";
-export const PRIVATE_ERC20_CONTRACT_ADDRESS = "0x013f2548d101f4f42a668a1881b7bb6e10ee5ff8868c533467f817c6663b1ef0";
-export const ETH_CONTRACT_ADDRESS = "0x049d36570d4e46f48e99674bd3fcc84644ddd6b96f7c741b1562b82f9e004dc7";
-export const ZERO_BIG_INT = BigInt(0);
+// Enigma contract
+export const ENIGMA_DEPLOY_BLOCK = 524850;
+export const ENIGMA_APPROVAL_EVENT_KEY = "contracts::privado::privado::Privado::Approval";
+export const ENIGMA_CONTRACT_ADDRESS = "0x06bc73b2a2f26a82fcc9feff6c3d0e550426e2f9ec12ebcf5efc26bb6abdfe83";
+export const ENIGMA_DECIMALS = 6n;
 export const MERKLE_TREE_DEPTH = 12;
-export const DECIMALS = 6n;
-export const PRIVATE_TO_PUBLIC_RATIO = 1000000n;
 
-export const PRIVATE_ERC20_ABI: Abi = [
+// deposit
+export const ETH_CONTRACT_ADDRESS = "0x049d36570d4e46f48e99674bd3fcc84644ddd6b96f7c741b1562b82f9e004dc7";
+export const ENG_TO_ETH_RATIO = 1000000n;
+
+export const ENIGMA_ABI: Abi = [
   {
     "name": "PrivadoImpl",
     "type": "impl",
@@ -226,6 +228,26 @@ export const PRIVATE_ERC20_ABI: Abi = [
         "state_mutability": "external"
       },
       {
+        "name": "deposit",
+        "type": "function",
+        "inputs": [
+          {
+            "name": "proof",
+            "type": "core::array::Span::<core::felt252>"
+          },
+          {
+            "name": "receiver_enc_output",
+            "type": "core::byte_array::ByteArray"
+          }
+        ],
+        "outputs": [
+          {
+            "type": "core::bool"
+          }
+        ],
+        "state_mutability": "external"
+      },
+      {
         "name": "current_root",
         "type": "function",
         "inputs": [],
@@ -344,7 +366,7 @@ export const PRIVATE_ERC20_ABI: Abi = [
   }
 ];
 
-export const PUBLIC_ERC20_ABI: Abi = [
+export const ERC20_ABI: Abi = [
   {
     "name": "MintableToken",
     "type": "impl",

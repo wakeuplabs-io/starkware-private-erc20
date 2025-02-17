@@ -3,7 +3,8 @@ import { Notes } from "@/components/notes";
 import { Receive } from "@/components/receive";
 import { Transfer } from "@/components/transfer";
 import { useBalance } from "@/hooks/use-balance";
-import { cn } from "@/lib/utils";
+import { cn, formatTokenAmount } from "@/lib/utils";
+import { ENIGMA_DECIMALS } from "@/shared/config/constants";
 import { createFileRoute } from "@tanstack/react-router";
 import { ArrowDown, ArrowUpRight, List, Check, Eye, EyeOff } from "lucide-react";
 import { useState } from "react";
@@ -32,7 +33,7 @@ function Index() {
 
           <div className="flex flex-col items-end gap-1">
             <span className="text-3xl lg:text-4xl font-bold">
-              {showBalance ? balance.toString(16).slice(1, 6) : "****"}
+              {showBalance ? formatTokenAmount(balance, ENIGMA_DECIMALS, 2) : "****"}
             </span>
 
             <div className="flex items-center gap-1">

@@ -1,4 +1,4 @@
-import { DECIMALS } from "@/shared/config/constants";
+import { ENIGMA_DECIMALS } from "@/shared/config/constants";
 import { clsx, type ClassValue } from "clsx";
 import { twMerge } from "tailwind-merge";
 
@@ -14,7 +14,7 @@ export const shortenString = (address: string): string => {
   return `${address.slice(0, 6)}...${address.slice(-4)}`;
 };
 
-export const formatTokenAmount = (value: bigint, tokenDecimals: bigint = DECIMALS, precision: number = 2): string => {
+export const formatTokenAmount = (value: bigint, tokenDecimals: bigint = ENIGMA_DECIMALS, precision: number = 2): string => {
   const factor = 10n ** tokenDecimals;
   const integerPart = value / factor;
   const decimalPart = value % factor;

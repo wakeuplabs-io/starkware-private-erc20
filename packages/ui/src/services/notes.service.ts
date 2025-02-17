@@ -2,8 +2,8 @@ import { CommitmentEvent, CommitmentPayload, Note } from "@/interfaces";
 import { Provider, selector, events as Events, CallData } from "starknet";
 import { EVENTS_CHUNK } from "node_modules/starknet-types-07/dist/types/api/components";
 import {
-  PRIVATE_ERC20_ABI,
-  PRIVATE_ERC20_CONTRACT_ADDRESS,
+  ENIGMA_ABI,
+  ENIGMA_CONTRACT_ADDRESS,
 } from "@/shared/config/constants";
 import { AccountService } from "./account.service";
 import { CipherService } from "./cipher.service";
@@ -108,7 +108,7 @@ export class NotesService {
     do {
       const eventsResponse: EVENTS_CHUNK =
         await this.provider.channel.getEvents({
-          address: PRIVATE_ERC20_CONTRACT_ADDRESS,
+          address: ENIGMA_CONTRACT_ADDRESS,
           keys: [
             [
               selector.getSelectorFromName("NewCommitment"),
@@ -123,9 +123,9 @@ export class NotesService {
 
       const eventsParsed = Events.parseEvents(
         eventsResponse.events,
-        Events.getAbiEvents(PRIVATE_ERC20_ABI),
-        CallData.getAbiStruct(PRIVATE_ERC20_ABI),
-        CallData.getAbiEnum(PRIVATE_ERC20_ABI)
+        Events.getAbiEvents(ENIGMA_ABI),
+        CallData.getAbiStruct(ENIGMA_ABI),
+        CallData.getAbiEnum(ENIGMA_ABI)
       );
 
       // retrieve commitments

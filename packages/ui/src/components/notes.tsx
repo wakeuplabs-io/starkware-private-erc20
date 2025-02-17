@@ -7,7 +7,7 @@ import { Input } from "./ui/input";
 import { toast } from "@/hooks/use-toast";
 import { ToastAction } from "@radix-ui/react-toast";
 import { useDeposit } from "@/hooks/use-deposit";
-import { PRIVATE_TO_PUBLIC_RATIO } from "@/shared/config/constants";
+import { ENG_TO_ETH_RATIO } from "@/shared/config/constants";
 
 interface NotesProps {
   showBalance: boolean;
@@ -53,8 +53,14 @@ export const Notes: React.FC<NotesProps> = ({ showBalance }: NotesProps) => {
     }
   }, [amount]);
 
-  const ethAmount = useMemo(() => {
-    return BigInt(amount) * PRIVATE_TO_PUBLIC_RATIO
+  const ethAmount: bigint = useMemo(() => {
+    if (!amount) {
+      return 0n
+    }
+
+    const amountBn = BigInt((parseFloat(amount) * 10 ** 6).toFixed(0));
+
+    return BigInt(amountBn) * ENG_TO_ETH_RATIO
   }, [amount]);
 
   return (
