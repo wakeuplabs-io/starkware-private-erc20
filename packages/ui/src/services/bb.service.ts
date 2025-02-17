@@ -1,5 +1,4 @@
 import { Fr, BarretenbergSync } from "@aztec/bb.js";
-import { CipherService } from "./cipher.service";
 
 class BarretenbergService {
   private static instance: BarretenbergSync | null = null;
@@ -19,71 +18,6 @@ class BarretenbergService {
   static async generateHashArray(inputs: Fr[]): Promise<bigint> {
     const bb = await this.getInstance();
     return BigInt(bb.poseidon2Hash(inputs).toString());
-  }
-
-  static async generateNote(
-    toAddress: bigint,
-    toPublicKey: bigint,
-    value: bigint
-  ): Promise<{
-    commitment: bigint;
-    encOutput: string;
-    bliding: bigint;
-    value: bigint;
-  }> {
-    const bb = await this.getInstance();
-
-    const randomBytes = crypto.getRandomValues(new Uint8Array(16)); // 16 bytes for up to 128-bit range
-    const bliding = BigInt(
-      "0x" +
-        [...randomBytes].map((b) => b.toString(16).padStart(2, "0")).join("")
-    );
-
-    const commitment = BigInt(
-      bb
-        .poseidon2Hash([new Fr(toAddress), new Fr(value), new Fr(bliding)])
-        .toString()
-    );
-
-    const encOutput = await CipherService.encrypt(
-      JSON.stringify({
-        bliding: bliding.toString(16),
-        value: value.toString(16),
-      }),
-      toPublicKey
-    );
-
-    return {
-      commitment,
-      encOutput,
-      bliding,
-      value,
-
-    };
-  }
-
-  static async generateNullifier(
-    commitment: bigint,
-    privateKey: bigint,
-    index: bigint
-  ): Promise<bigint> {
-    const nullifier = await BarretenbergService.generateHashArray([
-      new Fr(commitment % Fr.MODULUS),
-      new Fr(privateKey % Fr.MODULUS),
-      new Fr(index % Fr.MODULUS),
-    ]);
-    return nullifier;
-  }
-
-  static async generateSpendingTracker(
-    commitment: bigint,
-    bliding: bigint
-  ): Promise<bigint> {
-    const nullifier = await BarretenbergService.generateHashArray([
-      new Fr(commitment % Fr.MODULUS),
-      new Fr(bliding % Fr.MODULUS),
-    ]);
-    return nullifier;
   }
 }
 

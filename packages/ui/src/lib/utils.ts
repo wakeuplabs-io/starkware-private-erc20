@@ -33,5 +33,5 @@ export const parse = (str: any) =>
 
 
 export const buildExplorerUrl = (txHash: string) => {
-  return `${import.meta.env.VITE_EXPLORER_URL}/tx/${txHash}`;
+  return `${import.meta.env.VITE_EXPLORER_BASE_URL}/tx/${txHash}`;
 };

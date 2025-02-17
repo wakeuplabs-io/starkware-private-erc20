@@ -32,10 +32,7 @@ pub trait IPrivado<TContractState> {
     ///
     /// Emits a `NewCommitment` event.
     fn transfer(
-        ref self: TContractState,
-        proof: Span<felt252>,
-        sender_enc_output: ByteArray,
-        receiver_enc_output: ByteArray,
+        ref self: TContractState, proof: Span<felt252>, enc_notes_output: Span<ByteArray>,
     ) -> bool;
 
     /// Returns the allowance_hash for the relationship_hash
@@ -45,14 +42,14 @@ pub trait IPrivado<TContractState> {
     fn transfer_from(
         ref self: TContractState,
         proof: Span<felt252>,
-        owner_enc_output: ByteArray,
-        receiver_enc_output: ByteArray,
+        enc_notes_output: Span<ByteArray>,
+        enc_approval_output: Span<ByteArray>,
     ) -> bool;
 
 
     /// Sets `amount` as the allowance of `spender` over the caller’s tokens.
     fn approve(
-        ref self: TContractState, proof: Span<felt252>, output_enc_owner: ByteArray, output_enc_spender: ByteArray
+        ref self: TContractState, proof: Span<felt252>, enc_approval_output: Span<ByteArray>,
     ) -> bool;
 
     fn deposit(
@@ -96,9 +93,7 @@ pub mod Privado {
         GET_MINT_COMMITMENT,
     };
     use starknet::get_block_timestamp;
-    use core::poseidon::PoseidonTrait;
-    use core::hash::{HashStateTrait, HashStateExTrait};
-    
+
 
     //
     // Storage
@@ -153,7 +148,7 @@ pub mod Privado {
     #[derive(Drop, starknet::Event)]
     pub struct Approval {
         #[key]
-        pub allowance_relationship: felt252, 
+        pub allowance_relationship: u256,
         pub timestamp: u64,
         pub allowance_hash: u256,
         pub output_enc_owner: ByteArray,
@@ -271,10 +266,7 @@ pub mod Privado {
         }
 
         fn transfer(
-            ref self: ContractState,
-            proof: Span<felt252>,
-            sender_enc_output: ByteArray,
-            receiver_enc_output: ByteArray,
+            ref self: ContractState, proof: Span<felt252>, enc_notes_output: Span<ByteArray>,
         ) -> bool {
             // verify proof and that public inputs match
             let public_inputs = self._verify_transfer_proof(proof);
@@ -289,17 +281,17 @@ pub mod Privado {
             self._spend_note(public_inputs.in_commitment_spending_tracker);
 
             // create new notes for receiver and sender
-            self._create_note(public_inputs.out_sender_commitment, sender_enc_output);
-            self._create_note(public_inputs.out_receiver_commitment, receiver_enc_output);
+            self._create_note(public_inputs.out_sender_commitment, enc_notes_output.at(0).clone());
+            self
+                ._create_note(
+                    public_inputs.out_receiver_commitment, enc_notes_output.at(1).clone(),
+                );
 
             true
         }
 
         fn approve(
-            ref self: ContractState, 
-            proof: Span<felt252>, 
-            output_enc_owner: ByteArray,
-            output_enc_spender: ByteArray,
+            ref self: ContractState, proof: Span<felt252>, enc_approval_output: Span<ByteArray>,
         ) -> bool {
             let public_inputs = self._verify_approve_proof(proof);
 
@@ -310,15 +302,16 @@ pub mod Privado {
                 .write(public_inputs.out_allowance_hash);
 
             // emit approval event for each encryption provided
-            self.emit(
-                Approval {
-                    allowance_relationship: PoseidonTrait::new().update_with(public_inputs.out_allowance_relationship).finalize(),
-                    allowance_hash: public_inputs.out_allowance_hash,
-                    timestamp: get_block_timestamp(),
-                    output_enc_owner: output_enc_owner.clone(),
-                    output_enc_spender: output_enc_spender.clone()
-                }
-            );
+            self
+                .emit(
+                    Approval {
+                        allowance_relationship: public_inputs.out_allowance_relationship,
+                        allowance_hash: public_inputs.out_allowance_hash,
+                        timestamp: get_block_timestamp(),
+                        output_enc_owner: enc_approval_output.at(0).clone(),
+                        output_enc_spender: enc_approval_output.at(1).clone(),
+                    },
+                );
 
             true
         }
@@ -331,8 +324,8 @@ pub mod Privado {
         fn transfer_from(
             ref self: ContractState,
             proof: Span<felt252>,
-            owner_enc_output: ByteArray,
-            receiver_enc_output: ByteArray,
+            enc_notes_output: Span<ByteArray>,
+            enc_approval_output: Span<ByteArray>,
         ) -> bool {
             // verify proof and that public inputs match
             let public_inputs = self._verify_transfer_from_proof(proof);
@@ -361,8 +354,23 @@ pub mod Privado {
             self._spend_note(public_inputs.in_commitment_spending_tracker);
 
             // create new notes for receiver and sender
-            self._create_note(public_inputs.out_owner_commitment, owner_enc_output);
-            self._create_note(public_inputs.out_receiver_commitment, receiver_enc_output);
+            self._create_note(public_inputs.out_owner_commitment, enc_notes_output.at(0).clone());
+            self
+                ._create_note(
+                    public_inputs.out_receiver_commitment, enc_notes_output.at(1).clone(),
+                );
+
+            // emit approval event with latest data
+            self
+                .emit(
+                    Approval {
+                        allowance_relationship: public_inputs.in_allowance_relationship,
+                        allowance_hash: public_inputs.out_allowance_hash,
+                        timestamp: get_block_timestamp(),
+                        output_enc_owner: enc_approval_output.at(0).clone(),
+                        output_enc_spender: enc_approval_output.at(1).clone(),
+                    },
+                );
 
             true
         }
@@ -433,11 +441,13 @@ pub mod Privado {
         ///
         /// Requirements:
         ///
-        /// - `spending_tracker` 
+        /// - `spending_tracker`
         ///
         /// Emits a `NewSpendingTracker` event.
         fn _spend_note(ref self: ContractState, spending_tracker: u256) {
-            assert(self.spending_trackers.entry(spending_tracker).read() == false, Errors::SPENT_NOTE);
+            assert(
+                self.spending_trackers.entry(spending_tracker).read() == false, Errors::SPENT_NOTE,
+            );
 
             self.spending_trackers.entry(spending_tracker).write(true);
             self.emit(NewSpendingTracker { spending_tracker });

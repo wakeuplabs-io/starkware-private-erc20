@@ -52,20 +52,11 @@ contracts-test:
 contracts-fmt:
     (cd {{CONTRACTS_ROOT}} && scarb fmt)
 
-contracts-deploy:
-    (cd {{CONTRACTS_ROOT}} && sncast --account deployer script run deploy --url {{RPC_URL}} --package deploy)
-
-contracts-declare-privado:
+contracts-declare:
     (cd {{CONTRACTS_ROOT}} && sncast --account deployer declare --url {{RPC_URL}} --contract-name Privado --fee-token ETH)
 
-contracts-deploy-privado class_hash:
+contracts-deploy class_hash:
     (cd {{CONTRACTS_ROOT}} && sncast --account deployer deploy --url {{RPC_URL}} --class-hash {{class_hash}} --fee-token ETH)
-
-contracts-declare-verifier:
-   (cd {{CONTRACTS_ROOT}} && sncast --account deployer declare --url {{RPC_URL}} --contract-name TransferVerifierMock --fee-token ETH)
-
-contracts-deploy-verifier class_hash:
-   (cd {{CONTRACTS_ROOT}} && sncast --account deployer deploy --url {{RPC_URL}} --class-hash {{class_hash}} --fee-token ETH)
 
 contracts-deployer-account-create:
     (cd {{CONTRACTS_ROOT}} && sncast account create -n deployer --url {{RPC_URL}})

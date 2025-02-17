@@ -4,7 +4,7 @@ use starknet::{
 };
 use snforge_std::{
     spy_events, EventSpyAssertionsTrait, declare, ContractClassTrait, DeclareResultTrait,
-    test_address, EventSpyTrait,
+    test_address, EventSpyTrait, start_cheat_block_timestamp, stop_cheat_block_timestamp,
 };
 use contracts::privado::{Privado, IPrivado, constants::{TOKEN_NAME, TOKEN_SYMBOL, TOKEN_DECIMALS}};
 
@@ -34,12 +34,19 @@ fn test_transfer_from() {
     let current_commitment_index = contract.current_commitment_index.read();
 
     let mut spy = spy_events();
+    let cheat_timestamp: u64 = 100;
+    start_cheat_block_timestamp(contract_address, cheat_timestamp);
 
     // fabricate allowance
     contract.allowances.entry(in_allowance_relationship.into()).write(in_allowance_hash.into());
 
     // call transfer_from
-    contract.transfer_from(proof, "owner_enc_output", "receiver_enc_output");
+    contract
+        .transfer_from(
+            proof,
+            array!["enc_notes_output_owner", "enc_notes_output_receiver"].span(),
+            array!["enc_approval_output_owner", "enc_approval_output_spender"].span(),
+        );
 
     // should nullify the in_commitment_spending_tracker
     assert(
@@ -66,7 +73,7 @@ fn test_transfer_from() {
                     Privado::Event::NewCommitment(
                         Privado::NewCommitment {
                             commitment: out_owner_commitment.into(),
-                            output_enc: "owner_enc_output",
+                            output_enc: "enc_notes_output_owner",
                             index: current_commitment_index,
                         },
                     ),
@@ -76,7 +83,7 @@ fn test_transfer_from() {
                     Privado::Event::NewCommitment(
                         Privado::NewCommitment {
                             commitment: out_receiver_commitment.into(),
-                            output_enc: "receiver_enc_output",
+                            output_enc: "enc_notes_output_receiver",
                             index: current_commitment_index + 1,
                         },
                     ),
@@ -89,9 +96,22 @@ fn test_transfer_from() {
                         },
                     ),
                 ),
+                (
+                    contract_address,
+                    Privado::Event::Approval(
+                        Privado::Approval {
+                            timestamp: cheat_timestamp,
+                            allowance_hash: out_allowance_hash.into(),
+                            allowance_relationship: in_allowance_relationship.into(),
+                            output_enc_owner: "enc_approval_output_owner",
+                            output_enc_spender: "enc_approval_output_spender",
+                        },
+                    ),
+                ),
             ],
         );
-    assert(spy.get_events().events.len() == 3, 'There should no more events');
+    assert(spy.get_events().events.len() == 4, 'There should no more events');
+    stop_cheat_block_timestamp(contract_address);
 }
 
 #[test]
@@ -125,7 +145,12 @@ fn test_transfer_from_unknown_root() {
     contract.current_root.write((in_commitment_root + 10).into());
 
     // call transfer
-    contract.transfer_from(proof, "owner_enc_output", "receiver_enc_output");
+    contract
+        .transfer_from(
+            proof,
+            array!["enc_notes_output_owner", "enc_notes_output_receiver"].span(),
+            array!["enc_approval_output_owner", "enc_approval_output_spender"].span(),
+        );
 }
 
 #[test]
@@ -159,7 +184,12 @@ fn test_transfer_double_spent() {
     contract.spending_trackers.entry(in_commitment_spending_tracker.into()).write(true);
 
     // call transfer
-    contract.transfer_from(proof, "owner_enc_output", "receiver_enc_output");
+    contract
+        .transfer_from(
+            proof,
+            array!["enc_notes_output_owner", "enc_notes_output_receiver"].span(),
+            array!["enc_approval_output_owner", "enc_approval_output_spender"].span(),
+        );
 }
 
 #[test]
@@ -187,10 +217,18 @@ fn test_unknown_allowance_hash() {
     );
 
     // fabricate difference in allowance
-    contract.allowances.entry(in_allowance_relationship.into()).write((in_allowance_hash + 10).into());
+    contract
+        .allowances
+        .entry(in_allowance_relationship.into())
+        .write((in_allowance_hash + 10).into());
 
     // call transfer
-    contract.transfer_from(proof, "owner_enc_output", "receiver_enc_output");
+    contract
+        .transfer_from(
+            proof,
+            array!["enc_notes_output_owner", "enc_notes_output_receiver"].span(),
+            array!["enc_approval_output_owner", "enc_approval_output_spender"].span(),
+        );
 }
 
 
