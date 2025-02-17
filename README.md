@@ -21,8 +21,8 @@ The user's wallet consists of 2 asymmetric keypairs built with sodium Curve25519
 In summary, there're 2 Keypairs for each user, a Viewing Keypair, used to encrypt access data that will be published onchain. And an Owner Keypair that will be used to proof ownership of a zk address.
 
 And so user sharable wallet looks something like this
-- Public key: PublicKey(ViewingKeypair)
-- Address: Hash(OwnerPrivateKey)
+- Public key: `PublicKey(ViewingKeypair)`
+- Address: `Hash(OwnerPrivateKey)`
 
 ### Relayer
 
@@ -96,7 +96,7 @@ Some clarifications:
 
 `transfer_from` works pretty similar to `transfer`. 2 Notes will be created (one for the receiver and 1 for the change of the owner) and one nullified. The main difference with `transfer` is the limit on how much we can transfer and who actually does this transfer. 
 
-As per the limit of amount we store an `allowance_hash` onchain. This is the `hash(owner_address, spender_address, amount)` and we verify through circuits this hashes transition is correct.
+As per the limit of amount we store an `allowance_hash` onchain. This is the `hash(owner_address, spender_address, amount)` and we verify through circuits this hashes transition is correct. We store this associated to `hash(owner_address, spender_address)`.
 
 As per allowing a third party to do the transfers we'll do that by verifying spender owns `spender_address` specified in the `allowance_hash`. We also need to allow spender to know which commitments to use for payment to properly assemble the output commitments and nullifiers. For this last thing we have 2 options:
 - Sharing with spender specific commitment details. This is the most private option but also the most limited, if new commitments were coming in, spender won't be capable fo using them, or if user uses the shared commitments same. Also requires having enough balance at the moment of the approval.
@@ -131,6 +131,10 @@ sequenceDiagram
     Blockchain->>Blockchain: emit NewNullifier, NewCommitment x 2
     Blockchain->>-Spender: tx_hash
 ```
+
+Abbreviations:
+- `ah` = `allowance_hash`
+- `ri` = `relationship_id`
 
 Some clarifications:
 - An easy improvement for current system and probable a necessary one we're skipping in this POC is to use indexers like [thegraph.com](https://thegraph.com) to query events
@@ -178,15 +182,15 @@ Some clarifications:
 
 ### Transfer
 
-Current ux goes like this (In this example we show sender in the left and receiver in the right, not necessary in the same machine but just for demo porpoises):
+In this example we show sender in the left and receiver in the right, not necessary in the same machine but just for demo porpoises. Full video available at `/assets/demo/transfer/demo.mov`
 
 User connects argent wallet to pay for transaction gas. A new zk wallet is generated for the user per browser or one is recovered from local storage
 
-![User connects wallet](./assets/demo/transfer/image/transfer/image.png)
+![User connects wallet](./assets/demo/transfer/image.png)
 
 User can inspect the commitments that form their balance
 
-![Commitments before transfer](./transfer/image/transfer/image-1.png)
+![Commitments before transfer](./assets/demo/transfer/image-1.png)
 
 Sender scans receiver qr code and so automatically filling address and public key
 
