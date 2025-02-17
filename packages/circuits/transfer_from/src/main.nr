@@ -1,6 +1,4 @@
-use common::definitions::{
-    account, allowance_hash, allowance_relationship, commitment, nullifier,
-};
+use common::definitions::{account, allowance_hash, allowance_relationship, commitment, nullifier};
 use common::merkle_tree::assert_merkle_inclusion;
 use std::hash::poseidon2::Poseidon2::hash;
 

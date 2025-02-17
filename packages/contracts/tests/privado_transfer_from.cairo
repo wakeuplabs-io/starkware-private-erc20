@@ -91,9 +91,7 @@ fn test_transfer_from() {
                 (
                     contract_address,
                     Privado::Event::NewNullifier(
-                        Privado::NewNullifier {
-                            nullifier: in_commitment_nullifier.into(),
-                        },
+                        Privado::NewNullifier { nullifier: in_commitment_nullifier.into() },
                     ),
                 ),
                 (

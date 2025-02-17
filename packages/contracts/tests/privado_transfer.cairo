@@ -65,9 +65,7 @@ fn test_transfer() {
                 (
                     contract_address,
                     Privado::Event::NewNullifier(
-                        Privado::NewNullifier {
-                            nullifier: in_commitment_nullifier.into(),
-                        },
+                        Privado::NewNullifier { nullifier: in_commitment_nullifier.into() },
                     ),
                 ),
             ],
@@ -136,8 +134,7 @@ fn generate_mock_proof(
     sender_commitment: felt252,
     receiver_commitment: felt252,
 ) -> Span<felt252> {
-    array![in_commitment_root, nullifier, receiver_commitment, sender_commitment, out_root]
-        .span()
+    array![in_commitment_root, nullifier, receiver_commitment, sender_commitment, out_root].span()
 }
 
 fn get_contract_state_for_testing() -> (Privado::ContractState, ContractAddress) {

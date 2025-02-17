@@ -1,7 +1,4 @@
-use starknet::{
-    storage::{StoragePointerWriteAccess, StoragePathEntry, StoragePointerReadAccess},
-    ContractAddress,
-};
+use starknet::{storage::{StoragePointerWriteAccess, StoragePointerReadAccess}, ContractAddress};
 use snforge_std::{
     spy_events, EventSpyAssertionsTrait, declare, ContractClassTrait, DeclareResultTrait,
     test_address, EventSpyTrait,
@@ -18,17 +15,13 @@ fn test_deposit() {
     let out_receiver_commitment = 2;
     let out_root = 3;
     let proof = generate_mock_proof(
-        in_commitment_root,
-        in_public_amount,
-        out_receiver_commitment,
-        out_root,
+        in_commitment_root, in_public_amount, out_receiver_commitment, out_root,
     );
     let current_commitment_index = contract.current_commitment_index.read();
     let mut spy = spy_events();
 
     // call transfer
     contract.deposit(proof, "enc_notes_output_owner");
-
 
     // should emit notes events to rebuild tree locally
     spy
@@ -65,10 +58,7 @@ fn test_transfer_unknown_root() {
     let out_receiver_commitment = 2;
     let out_root = 3;
     let proof = generate_mock_proof(
-        in_commitment_root,
-        in_public_amount,
-        out_receiver_commitment,
-        out_root,
+        in_commitment_root, in_public_amount, out_receiver_commitment, out_root,
     );
 
     // differ from proof
@@ -88,8 +78,7 @@ fn generate_mock_proof(
     out_receiver_commitment: felt252,
     out_root: felt252,
 ) -> Span<felt252> {
-    array![in_commitment_root, in_public_amount, out_receiver_commitment, out_root]
-        .span()
+    array![in_commitment_root, in_public_amount, out_receiver_commitment, out_root].span()
 }
 
 fn get_contract_state_for_testing() -> (Privado::ContractState, ContractAddress) {

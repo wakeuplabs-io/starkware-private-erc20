@@ -74,16 +74,16 @@ pub mod Privado {
         ITransferVerifierContractDispatcherTrait, ITransferVerifierContractDispatcher,
         IApproveVerifierContractDispatcherTrait, IApproveVerifierContractDispatcher,
         ITransferFromVerifierContractDispatcherTrait, ITransferFromVerifierContractDispatcher,
-        IDepositVerifierContractDispatcherTrait, IDepositVerifierContractDispatcher 
+        IDepositVerifierContractDispatcherTrait, IDepositVerifierContractDispatcher,
     };
     use contracts::erc20::{IERC20Dispatcher, IERC20DispatcherTrait};
     use contracts::privado::constants::{
         TOKEN_NAME, TOKEN_SYMBOL, TOKEN_DECIMALS, MERKLE_TREE_INITIAL_ROOT,
         TRANSFER_VERIFIER_ADDRESS, APPROVE_VERIFIER_ADDRESS, TRANSFER_FROM_VERIFIER_ADDRESS,
-        DEPOSIT_VERIFIER_ADDRESS, ETH_ERC20_TOKEN, GET_MINT_COMMITMENT
+        DEPOSIT_VERIFIER_ADDRESS, ETH_ERC20_TOKEN, GET_MINT_COMMITMENT,
     };
     use starknet::{get_block_timestamp, get_caller_address, get_contract_address};
-    
+
     //
     // Storage
     //
@@ -385,8 +385,11 @@ pub mod Privado {
             let eth_erc20_token = IERC20Dispatcher {
                 contract_address: self.eth_erc20_token.read(),
             };
-            eth_erc20_token.transfer_from(get_caller_address(), get_contract_address(), public_inputs.in_public_amount);
-            
+            eth_erc20_token
+                .transfer_from(
+                    get_caller_address(), get_contract_address(), public_inputs.in_public_amount,
+                );
+
             true
         }
 
@@ -433,9 +436,7 @@ pub mod Privado {
         ///
         /// Emits a `NewNullifier` event.
         fn _spend_note(ref self: ContractState, nullifier: u256) {
-            assert(
-                self.nullifiers.entry(nullifier).read() == false, Errors::SPENT_NOTE,
-            );
+            assert(self.nullifiers.entry(nullifier).read() == false, Errors::SPENT_NOTE);
 
             self.nullifiers.entry(nullifier).write(true);
             self.emit(NewNullifier { nullifier });
@@ -499,7 +500,6 @@ pub mod Privado {
         fn _verify_deposit_proof(
             ref self: ContractState, proof: Span<felt252>,
         ) -> DepositProofInputs {
-
             let verifier = IDepositVerifierContractDispatcher {
                 contract_address: self.deposit_verifier_address.read(),
             };

@@ -23,7 +23,7 @@ pub mod DepositVerifierMock {
                 arr.append((*full_proof_with_hints.at(1)).into());
                 arr.append((*full_proof_with_hints.at(2)).into());
                 arr.append((*full_proof_with_hints.at(3)).into());
-                
+
                 Option::Some(arr.span())
             } else {
                 Option::None
