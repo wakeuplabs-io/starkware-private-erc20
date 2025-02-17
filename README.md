@@ -141,7 +141,7 @@ Some clarifications:
 
 ### Application
 
-There're several packages in the overall app and they interact this way:
+There're several packages that form the application and they interact this way:
 
 ```mermaid
 sequenceDiagram
@@ -154,8 +154,8 @@ sequenceDiagram
     ui->>ui: Load or generate user zk wallet
 
     %% rebuild user balance
-    ui->>contracts: Fetch commitments/nullifiers
-    contracts->>ui: commitments/nullifiers
+    ui->>+contracts: Fetch commitments/nullifiers
+    contracts->>-ui: commitments/nullifiers
     ui->>ui: build user balance and display
 
     %% build proof 
@@ -169,10 +169,11 @@ sequenceDiagram
     contracts->>+circuits: verify(proof)
     circuits->>-contracts: ok
     contracts->>contracts: update root, emit events, spend note
-    contracts->>ui: tx_hash
+    contracts->>-ui: tx_hash
 ```
 
 Some clarifications:
+- This is overall the same flow for all methods
 - In this context, "circuits" refers to the deployed verifier generated using Garaga.
 - The API is ideally not necessary and serves merely as a workaround of current garaga version 0.15.3 not supporting honk vk/proof calldata encoding. This seems to have been introduced in this pr https://github.com/keep-starknet-strange/garaga/pull/288 recently. Not yet published but we can try incorporating it.
 - An easy improvement for current system and probable a necessary one we're skipping in this POC is to use indexers like [thegraph.com](https://thegraph.com) to query events
