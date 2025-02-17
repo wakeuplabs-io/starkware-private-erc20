@@ -99,7 +99,7 @@ export const Transfer: React.FC = () => {
         <>
           <div className="grid gap-4 md:grid-cols-2 mb-8">
             <div className="space-y-4 relative">
-              <div className="absolute -top-2 right-0 ">
+              <div className="absolute top-2 right-0 ">
                 {transferFrom ? (
                   <button
                     className="text-sm bg-transparent text-blue-500 hover:underline"
@@ -108,22 +108,17 @@ export const Transfer: React.FC = () => {
                     Reset
                   </button>
                 ) : (
-                  <div className="space-x-2">
-                    <span className="text-nowrap text-sm font-medium">
-                      From: My wallet
-                    </span>
-                    <button
-                      className="text-sm bg-transparent text-blue-500 hover:underline"
-                      onClick={() => setTransferFrom(true)}
-                    >
-                      Edit
-                    </button>
-                  </div>
+                  <button
+                    className="text-sm bg-transparent text-blue-500 hover:underline"
+                    onClick={() => setTransferFrom(true)}
+                  >
+                    Edit
+                  </button>
                 )}
               </div>
 
               <div className="grid w-full items-center gap-2">
-                <Label htmlFor="from-address">From Address</Label>
+                <Label htmlFor="from-address">{transferFrom ? "From Address" : "From My Address"}</Label>
                 <Input
                   id="from-address"
                   type="text"
@@ -137,7 +132,7 @@ export const Transfer: React.FC = () => {
               </div>
 
               <div className="grid w-full items-center gap-2">
-                <Label htmlFor="from-public-key">From Public Key</Label>
+                <Label htmlFor="from-public-key">{transferFrom ? "From Public Key" : "From My Public Key"}</Label>
                 <Input
                   id="from-public-key"
                   type="text"
@@ -156,7 +151,7 @@ export const Transfer: React.FC = () => {
                 onClick={() => setScan(!scan)}
                 size="icon"
                 variant="ghost"
-                className="absolute -top-2 right-0 h-6 w-6 text-blue-500 bg-transparent"
+                className="absolute top-2 right-0 h-6 w-6 text-blue-500 bg-transparent"
               >
                 <QrCode />
               </Button>
