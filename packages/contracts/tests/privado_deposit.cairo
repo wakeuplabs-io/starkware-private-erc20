@@ -27,7 +27,7 @@ fn test_deposit() {
     let mut spy = spy_events();
 
     // call transfer
-    contract.deposit(proof,  array!["enc_notes_output_owner", "enc_notes_output_receiver"].span());
+    contract.deposit(proof, "enc_notes_output_owner");
 
 
     // should emit notes events to rebuild tree locally
@@ -75,7 +75,7 @@ fn test_transfer_unknown_root() {
     contract.current_root.write((in_commitment_root + 10).into());
 
     // call transfer
-    contract.deposit(proof, array!["enc_notes_output_owner"].span());
+    contract.deposit(proof, "enc_notes_output_owner");
 }
 
 //

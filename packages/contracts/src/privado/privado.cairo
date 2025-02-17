@@ -51,7 +51,7 @@ pub trait IPrivado<TContractState> {
     ) -> bool;
 
     fn deposit(
-        ref self: TContractState, proof: Span<felt252>, receiver_enc_output: Span<ByteArray>,
+        ref self: TContractState, proof: Span<felt252>, receiver_enc_output: ByteArray,
     ) -> bool;
 
 
@@ -366,30 +366,30 @@ pub mod Privado {
 
             true
         }
-
         fn deposit(
-            ref self: ContractState, proof: Span<felt252>, receiver_enc_output: Span<ByteArray>,
+            ref self: ContractState, proof: Span<felt252>, receiver_enc_output: ByteArray,
         ) -> bool {
             let public_inputs = self._verify_deposit_proof(proof);
+
+            assert(
+                public_inputs.in_commitment_root == self.current_root.read(), Errors::UNKNOWN_ROOT,
+            );
+            self.current_root.write(public_inputs.out_root);
+
+            self._create_note(public_inputs.out_receiver_commitment, receiver_enc_output);
+            self._create_note(0, "0");
+
+
+            let eth_erc20_token = IERC20Dispatcher {
+                contract_address: self.eth_erc20_token.read(),
+            };
 
             let from = get_caller_address();
             let to = get_contract_address();
             let amount = public_inputs.in_public_amount;
             let amount_felt: felt252 = amount.low.into();
-            assert(
-                public_inputs.in_commitment_root == self.current_root.read(), Errors::UNKNOWN_ROOT,
-            );
-            
 
-            let eth_erc20_token = IERC20Dispatcher {
-                contract_address: self.eth_erc20_token.read(),
-            };
             eth_erc20_token.transfer_from(from, to, amount_felt);
-
-            self.current_root.write(public_inputs.out_root);
-
-            self._create_note(public_inputs.out_receiver_commitment, receiver_enc_output.at(0).clone(),);
-            self._create_note(0, "0");
             
             true
         }
