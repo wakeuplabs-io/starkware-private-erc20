@@ -37,9 +37,7 @@ function Index() {
     <div className="w-full">
       <div className="w-full">
         <div className="flex justify-between items-center w-full mb-8 md:mb-2">
-          <h1 className="bakbak-one-regular text-[36px] text-primary md:text-4xl">
-            Enigma
-          </h1>
+          <img src="/enigma-logo.png" alt="" className="h-[44px]" />
 
           <div className="relative">
             <span className="bakbak-one-regular text-[40px] text-primary md:text-[56px] md:h-[78px] ">
