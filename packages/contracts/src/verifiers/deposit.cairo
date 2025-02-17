@@ -17,7 +17,7 @@ pub mod DepositVerifierMock {
         fn verify_ultra_keccak_honk_proof(
             self: @ContractState, full_proof_with_hints: Span<felt252>,
         ) -> Option<Span<u256>> {
-            if full_proof_with_hints.len() == 2 {
+            if full_proof_with_hints.len() == 4 {
                 let mut arr: Array<u256> = ArrayTrait::new();
                 arr.append((*full_proof_with_hints.at(0)).into());
                 arr.append((*full_proof_with_hints.at(1)).into());

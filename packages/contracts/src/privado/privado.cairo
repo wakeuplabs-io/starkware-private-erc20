@@ -371,18 +371,11 @@ pub mod Privado {
             ref self: ContractState, proof: Span<felt252>, receiver_enc_output: Span<ByteArray>,
         ) -> bool {
             let public_inputs = self._verify_deposit_proof(proof);
+
             let from = get_caller_address();
             let to = get_contract_address();
             let amount = public_inputs.in_public_amount;
             let amount_felt: felt252 = amount.low.into();
-            println!("Hello world!");
-            println!("Hello world!");
-            println!("Hello world!");
-            println!("Hello world!");
-            println!("Hello world!");
-            println!("Hello world!");
-            println!("Hello world!");
-            println!("Hello world!");
             assert(
                 public_inputs.in_commitment_root == self.current_root.read(), Errors::UNKNOWN_ROOT,
             );
@@ -510,16 +503,18 @@ pub mod Privado {
         fn _verify_deposit_proof(
             ref self: ContractState, proof: Span<felt252>,
         ) -> DepositProofInputs {
+
             let verifier = IDepositVerifierContractDispatcher {
                 contract_address: self.deposit_verifier_address.read(),
             };
+
             let public_inputs = verifier.verify_ultra_keccak_honk_proof(proof).unwrap();
 
             DepositProofInputs {
                 in_commitment_root: (*public_inputs.at(0)),
-                in_public_amount: (*public_inputs.at(2)),
-                out_receiver_commitment: (*public_inputs.at(5)),
-                out_root: (*public_inputs.at(7)),
+                in_public_amount: (*public_inputs.at(1)),
+                out_receiver_commitment: (*public_inputs.at(2)),
+                out_root: (*public_inputs.at(3)),
             }
         }
     }

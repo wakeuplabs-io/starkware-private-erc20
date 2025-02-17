@@ -24,7 +24,6 @@ fn test_deposit() {
         out_root,
     );
     let current_commitment_index = contract.current_commitment_index.read();
-
     let mut spy = spy_events();
 
     // call transfer
@@ -53,7 +52,7 @@ fn test_deposit() {
                 ),
             ],
         );
-    assert(spy.get_events().events.len() == 3, 'There should no more events');
+    assert(spy.get_events().events.len() == 2, 'There should no more events');
 }
 
 #[test]
