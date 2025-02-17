@@ -366,7 +366,7 @@ export const ENIGMA_ABI: Abi = [
   }
 ];
 
-export const ERC20_ABI: Abi = [
+export const ETH_ABI: Abi = [
   {
     "name": "MintableToken",
     "type": "impl",

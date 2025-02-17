@@ -1,5 +1,6 @@
 import { ProofService } from "@/services/proof.service";
 import {
+  useAccount,
   useContract,
   useSendTransaction,
 } from "@starknet-react/core";
@@ -7,7 +8,7 @@ import {
   ENIGMA_ABI,
   ENIGMA_CONTRACT_ADDRESS,
   ENG_TO_ETH_RATIO,
-  ERC20_ABI,
+  ETH_ABI,
   ETH_CONTRACT_ADDRESS,
 } from "@/shared/config/constants";
 import { MerkleTree } from "@/lib/merkle-tree";
@@ -21,13 +22,15 @@ import { DefinitionsService } from "@/services/definitions.service";
 export const useDeposit = () => {
   const [loading, setLoading] = useState(false);
 
+  const { address } = useAccount();
+
   const { contract: enigmaContract } = useContract({
     abi: ENIGMA_ABI,
     address: ENIGMA_CONTRACT_ADDRESS,
   });
 
-  const { contract: erc20Contract } = useContract({
-    abi: ERC20_ABI,
+  const { contract: ethContract } = useContract({
+    abi: ETH_ABI,
     address: ETH_CONTRACT_ADDRESS,
   });
 
@@ -35,29 +38,36 @@ export const useDeposit = () => {
     calls: undefined,
   });
 
-  const sendDeposit = async (props: {
-    amount: bigint;
-  }): Promise<string> => {
+  const sendDeposit = async (props: { amount: bigint }): Promise<string> => {
     setLoading(true);
     try {
-      if (!enigmaContract || !erc20Contract) {
+      if (!enigmaContract || !ethContract) {
         throw new Error("Contract not initialized");
       }
 
-            const approvePopulate = erc20Contract.populate("approve", [
+      const ethAmount = props.amount * ENG_TO_ETH_RATIO;
+
+      // approve ETH
+      const allowance = await ethContract.call("allowance", [
+        address,
         ENIGMA_CONTRACT_ADDRESS,
-        props.amount * ENG_TO_ETH_RATIO
       ]);
-      await sendAsync([approvePopulate]);
+      if (allowance < ethAmount) {
+        await sendAsync([
+          ethContract.populate("approve", [ENIGMA_CONTRACT_ADDRESS, ethAmount]),
+        ]);
+      }
 
+      // build deposit note
       const callerAccount = await AccountService.getAccount();
-      const { notesArray: notes } = await notesService.getNotes();
-
       const outReceiverNote = await DefinitionsService.note(
         callerAccount.owner.address,
         callerAccount.viewer.publicKey,
-        props.amount * ENG_TO_ETH_RATIO
+        ethAmount
       );
+
+      // generate deposit proof
+      const { notesArray: notes } = await notesService.getNotes();
 
       const tree = new MerkleTree();
 
@@ -75,7 +85,7 @@ export const useDeposit = () => {
       const outRoot = tree.getRoot();
       const outPathProof = tree.getProof(outReceiverNote.commitment);
 
-      const generatedProof = await ProofService.generateDepositProof({
+      const depositProof = await ProofService.generateDepositProof({
         // accounts details
         receiver_account: formatHex(callerAccount.owner.address),
         // utxo inputs
@@ -93,11 +103,11 @@ export const useDeposit = () => {
           outPathProof.directionSelector.slice(1, MERKLE_TREE_DEPTH),
       });
 
-
-console.log(enigmaContract.populate("deposit", [generatedProof, outReceiverNote.encOutput]))
-      
       const { transaction_hash } = await sendAsync([
-        enigmaContract.populate("deposit", [generatedProof, outReceiverNote.encOutput]),
+        enigmaContract.populate("deposit", [
+          depositProof,
+          outReceiverNote.encOutput,
+        ]),
       ]);
 
       return transaction_hash;
