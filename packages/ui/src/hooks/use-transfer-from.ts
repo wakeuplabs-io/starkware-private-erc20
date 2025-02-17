@@ -213,8 +213,9 @@ export const useTransferFrom = () => {
 
       // rebuild tree
       const tree = new MerkleTree();
-      const orderedNotes = notesArray.sort((a, b) =>
-        parseInt((a.index! - b.index!).toString())
+      const orderedNotes = notesArray.sort((a, b) =>{
+        return  parseInt((a.index - b.index).toString())
+      }
       );
       for (const note of orderedNotes) {
         await tree.addCommitment(note.commitment);

@@ -15,11 +15,7 @@ import { useDeposit } from "@/hooks/use-deposit";
 import { ENG_TO_ETH_RATIO } from "@/shared/config/constants";
 import { Label } from "./ui/label";
 
-interface NotesProps {
-  showBalance: boolean;
-}
-
-export const Notes: React.FC<NotesProps> = ({ showBalance }: NotesProps) => {
+export const Notes: React.FC<{ show: boolean }> = ({ show }) => {
   const { notes } = useUserNotes();
   const [showBuy, setShowBuy] = useState(false);
   const [amount, setAmount] = useState("");
@@ -115,12 +111,17 @@ export const Notes: React.FC<NotesProps> = ({ showBalance }: NotesProps) => {
         <div className="flex flex-col px-6 py-2 bg-white rounded-3xl border border-primary">
           <div className="flex justify-between items-center py-2">
             <h1 className="font-semibold">Notes</h1>
-            <Button onClick={() => setShowBuy(true)} variant="outline" size="sm" className="rounded-full">
+            <Button
+              onClick={() => setShowBuy(true)}
+              variant="outline"
+              size="sm"
+              className="rounded-full"
+            >
               <Plus className="h-4 text-black" /> Buy
             </Button>
           </div>
 
-          {sortedNotes.length > 0 ? (
+          {show && (
             <ul className="divide-y border-t">
               {sortedNotes.map((note) => (
                 <li
@@ -132,15 +133,17 @@ export const Notes: React.FC<NotesProps> = ({ showBalance }: NotesProps) => {
                     {note.index.toString()})
                   </span>
                   <span className={cn({ "line-through": note.spent })}>
-                    {showBalance ? note.value?.toString() : "****"}
+                    {note.value?.toString()}
                   </span>
                 </li>
               ))}
+
+              {sortedNotes.length === 0 && (
+                <li className="flex justify-between py-6 pr-2">
+                  <span className="text-muted-foreground">No notes</span>
+                </li>
+              )}
             </ul>
-          ) : (
-            <li className="flex justify-between py-6 pr-2">
-              <span className="text-muted-foreground">No notes</span>
-            </li>
           )}
         </div>
       )}

@@ -39,17 +39,17 @@ export class NotesService {
     ];
 
     // turn into map and back to array to avoid duplicates
-    const notesMap = new Map(notes.map((note) => [note.commitment, note]));
+    const notesMapByIndex = new Map(notes.map((note) => [note.index, note]));
     const nullifiersMap = new Map(nullifiers.map((st) => [st, st]));
 
     // iterate over notes and nullify those that have already been used
-    Array.from(notesMap.values())
+    Array.from(notesMapByIndex.values())
       .filter(
         (note) => note.value !== undefined && note.nullifier !== undefined
       )
       .map((note) => {
         if (nullifiersMap.has(note.nullifier!.toString())) {
-          notesMap.set(note.commitment, {
+          notesMapByIndex.set(note.index, {
             ...note,
             spent: true,
           });
@@ -57,7 +57,8 @@ export class NotesService {
       });
 
     // back to array
-    const notesArray = Array.from(notesMap.values());
+    const notesArray = Array.from(notesMapByIndex.values());
+    const notesMap = new Map(notesArray.map((note) => [note.commitment, note]));
 
     // save cache
     await this.setCacheNotes(notesArray);

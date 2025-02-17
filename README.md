@@ -263,7 +263,7 @@ We can continue doing transfers until spending all the allowance but we can neve
 Sepolia deployment
 
 - UI: [https://enigma.wakeuplabs.link](https://enigma.wakeuplabs.link)
-- TOKEN_ADDRESS: `0x034c08f6f2273d9b0dbb37335483d67a885b464b61e3389d2949ca78a7bc28c2`
+- TOKEN_ADDRESS: `0x00ff4641b2fac61707fbc04766ec0986606d68e5dca02d688c1ce839d7a41396`
 - TRANSFER_VERIFIER_ADDRESS: `0x024c512b2b7649ce7fb4ecc26e161312a5fb07b4253bcf0fa2dd250a430cd467`
 - APPROVE_VERIFIER_ADDRESS: `0x028236f4aad88c151a9776c3b23427c96e841e8d1f3885f94d5fd8d8039f7371`
 - TRANSFER_FROM_VERIFIER_ADDRESS: `0x0086fe3a1c7cab01a7551b4ce095fae9bc5a85ccefb34ce90bea444e281c3949`
@@ -505,21 +505,21 @@ Deployment with just command (Same for verifier if needed). First go to `src/pri
 ```bash
 just contracts-declare
 
-# class_hash: 0x06f4f526451bf6a47460abb618ab54c3fb2ad12ddf5888dd5cbfbde7f21a1d42
-# transaction_hash: 0x00f50be5dbcdda555e68985ff7b2be7e879db9cae6681c538709b0cbcb345d7c
+# class_hash: 0x06a2164257164a059c1263961c2ca647c7e10a7461f24eb210f989b2d39760c2
+# transaction_hash: 0x02d9cd0540433f6999d6b93d3b0c1b478661ae65c1af0816e24dfb02485f6e23
 
 # To see declaration details, visit:
-# class: https://sepolia.starkscan.co/class/0x06f4f526451bf6a47460abb618ab54c3fb2ad12ddf5888dd5cbfbde7f21a1d42
-# transaction: https://sepolia.starkscan.co/tx/0x00f50be5dbcdda555e68985ff7b2be7e879db9cae6681c538709b0cbcb345d7c
+# class: https://sepolia.starkscan.co/class/0x06a2164257164a059c1263961c2ca647c7e10a7461f24eb210f989b2d39760c2
+# transaction: https://sepolia.starkscan.co/tx/0x02d9cd0540433f6999d6b93d3b0c1b478661ae65c1af0816e24dfb02485f6e23
 
-just contracts-deploy 0x06f4f526451bf6a47460abb618ab54c3fb2ad12ddf5888dd5cbfbde7f21a1d42
+just contracts-deploy 0x06a2164257164a059c1263961c2ca647c7e10a7461f24eb210f989b2d39760c2
 
-# contract_address: 0x06bc73b2a2f26a82fcc9feff6c3d0e550426e2f9ec12ebcf5efc26bb6abdfe83
-# transaction_hash: 0x031e329109bad088c9b84b221e075dd1f2868bb9ec2b48f7117e6a8700745b5e
+# contract_address: 0x00ff4641b2fac61707fbc04766ec0986606d68e5dca02d688c1ce839d7a41396
+# transaction_hash: 0x0745420cb230a89c51e60e8abbb2c848db33c0ea18d08718ed6d84dafdae7926
 
 # To see deployment details, visit:
-# contract: https://sepolia.starkscan.co/contract/0x06bc73b2a2f26a82fcc9feff6c3d0e550426e2f9ec12ebcf5efc26bb6abdfe83
-# transaction: https://sepolia.starkscan.co/tx/0x031e329109bad088c9b84b221e075dd1f2868bb9ec2b48f7117e6a8700745b5e
+# contract: https://sepolia.starkscan.co/contract/0x00ff4641b2fac61707fbc04766ec0986606d68e5dca02d688c1ce839d7a41396
+# transaction: https://sepolia.starkscan.co/tx/0x0745420cb230a89c51e60e8abbb2c848db33c0ea18d08718ed6d84dafdae7926
 ```
 
 

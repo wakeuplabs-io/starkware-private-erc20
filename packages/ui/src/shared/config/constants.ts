@@ -3,7 +3,7 @@ import { Abi } from "starknet";
 // Enigma contract
 export const ENIGMA_DEPLOY_BLOCK = 524850;
 export const ENIGMA_APPROVAL_EVENT_KEY = "contracts::privado::privado::Privado::Approval";
-export const ENIGMA_CONTRACT_ADDRESS = "0x06bc73b2a2f26a82fcc9feff6c3d0e550426e2f9ec12ebcf5efc26bb6abdfe83";
+export const ENIGMA_CONTRACT_ADDRESS = "0x00ff4641b2fac61707fbc04766ec0986606d68e5dca02d688c1ce839d7a41396";
 export const ENIGMA_DECIMALS = 6n;
 export const MERKLE_TREE_DEPTH = 12;
 
@@ -11,7 +11,7 @@ export const MERKLE_TREE_DEPTH = 12;
 export const ETH_CONTRACT_ADDRESS = "0x049d36570d4e46f48e99674bd3fcc84644ddd6b96f7c741b1562b82f9e004dc7";
 export const ENG_TO_ETH_RATIO = 1000000n;
 
-export const ENIGMA_ABI: Abi = [
+export const ENIGMA_ABI: Abi =[
   {
     "name": "PrivadoImpl",
     "type": "impl",
@@ -300,12 +300,12 @@ export const ENIGMA_ABI: Abi = [
   },
   {
     "kind": "struct",
-    "name": "contracts::privado::privado::Privado::NewSpendingTracker",
+    "name": "contracts::privado::privado::Privado::NewNullifier",
     "type": "event",
     "members": [
       {
         "kind": "data",
-        "name": "spending_tracker",
+        "name": "nullifier",
         "type": "core::integer::u256"
       }
     ]
@@ -354,8 +354,8 @@ export const ENIGMA_ABI: Abi = [
       },
       {
         "kind": "nested",
-        "name": "NewSpendingTracker",
-        "type": "contracts::privado::privado::Privado::NewSpendingTracker"
+        "name": "NewNullifier",
+        "type": "contracts::privado::privado::Privado::NewNullifier"
       },
       {
         "kind": "nested",
