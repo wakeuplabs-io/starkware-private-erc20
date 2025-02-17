@@ -62,7 +62,7 @@ export const Approve: React.FC = () => {
   );
 
   return (
-    <div className="flex flex-col p-6 bg-white rounded-3xl border border-primary">
+    <div className="flex flex-col p-6 bg-white rounded-3xl border-gradient">
       <h1 className="font-semibold mb-6">Approve</h1>
 
       {scan ? (
@@ -72,7 +72,7 @@ export const Approve: React.FC = () => {
       ) : (
         <>
           <div className="space-y-8 mb-12">
-            <div className="space-y-4 relative">
+            <div className="gap-4 relative grid md:grid-cols-2">
               <Button
                 onClick={() => setScan(!scan)}
                 size="icon"

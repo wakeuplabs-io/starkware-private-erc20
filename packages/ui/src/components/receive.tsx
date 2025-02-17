@@ -18,17 +18,19 @@ export const Receive: React.FC = () => {
   }, [account]);
 
   return (
-    <div className="flex flex-col p-12 bg-white rounded-3xl border border-primary">
-      <div className="flex flex-col items-center mb-12">
+    <div className="flex flex-col p-14 md:flex-row md:justify-evenly md:items-center bg-white border-gradient rounded-3xl">
+      <div className="flex justify-center mb-12 md:mb-0">
         <QRCode
-          size={215}
+          size={230}
           style={{ height: "auto", maxWidth: "215px", width: "100%" }}
+          fgColor="#1C1B78"
+
           value={qrValue}
           viewBox={`0 0 256 256`}
         />
       </div>
 
-      <div className="grid grid-cols-2 gap-4">
+      <div className="flex gap-4 justify-center md:flex-col md:gap-9">
         <AddressField
           value={formatHex(account?.owner.address ?? 0n)}
           label={"Address"}

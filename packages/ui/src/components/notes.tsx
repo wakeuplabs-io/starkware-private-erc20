@@ -1,12 +1,9 @@
-import { Eye, EyeClosed } from "lucide-react";
-import { Button } from "./ui/button";
 import { cn, shortenString } from "@/lib/utils";
 import { useUserNotes } from "@/hooks/use-user-notes";
-import { useMemo, useState } from "react";
+import { useMemo } from "react";
 
-export const Notes: React.FC = () => {
+export const Notes: React.FC<{ show: boolean }> = ({ show }) => {
   const { notes } = useUserNotes();
-  const [show, setShow] = useState(false);
 
   const sortedNotes = useMemo(
     () => notes.sort((a, b) => parseInt((b.index - a.index).toString())),
@@ -14,21 +11,13 @@ export const Notes: React.FC = () => {
   );
 
   return (
-    <div className="flex flex-col px-6 py-2 bg-white rounded-3xl border border-primary">
-      <div className="flex justify-between items-center py-2">
+    <div className="flex flex-col px-6 py-4 bg-white rounded-3xl border border-gradient">
+      <div className="flex justify-between items-center">
         <h1 className="font-semibold">Notes</h1>
-        <Button
-          size="icon"
-          variant="ghost"
-          className="bg-white"
-          onClick={() => setShow(!show)}
-        >
-          {show ? <Eye /> : <EyeClosed />}
-        </Button>
       </div>
 
       {sortedNotes && show && (
-        <ul className="divide-y border-t">
+        <ul className="divide-y border-t mt-4">
           {sortedNotes.length === 0 && (
             <li className="flex justify-between py-6 pr-2">
               <span className="text-muted-foreground">No notes</span>
