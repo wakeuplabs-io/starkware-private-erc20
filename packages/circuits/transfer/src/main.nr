@@ -1,4 +1,4 @@
-use common::definitions::{account, commitment, commitment_tracker};
+use common::definitions::{account, commitment, nullifier};
 use common::merkle_tree::{assert_merkle_inclusion};
 use std::hash::poseidon2::Poseidon2::hash;
 
@@ -15,7 +15,7 @@ pub fn main(
     in_commitment_direction_selector: [bool; DEPTH],
     in_commitment_value: Field,
     in_commitment_bliding: Field,
-    in_commitment_spending_tracker: pub Field,
+    in_commitment_nullifier: pub Field,
     // utxo outputs
     out_receiver_commitment_value: Field,
     out_receiver_commitment_bliding: Field,
@@ -38,7 +38,7 @@ pub fn main(
         in_commitment,
         "Input commitment doesn't belong to tree",
     );
-    assert_eq(in_commitment_spending_tracker, commitment_tracker(in_commitment, in_commitment_bliding), "Invalid commitment tracker");
+    assert_eq(in_commitment_nullifier, nullifier(in_commitment, in_commitment_bliding), "Invalid commitment nullifier");
 
     // check utxo
     assert_eq(
@@ -94,7 +94,7 @@ fn test_allowed_transfer() {
     // generate commitment
     let in_commitment_bliding = 2;
     let in_commitment = commitment(sender_account, in_commitment_value, in_commitment_bliding);
-    let in_commitment_spending_tracker = commitment_tracker(in_commitment, in_commitment_bliding);
+    let in_commitment_nullifier = nullifier(in_commitment, in_commitment_bliding);
 
     // output commitment generation
     let receiver_account = account(100);
@@ -126,7 +126,7 @@ fn test_allowed_transfer() {
         in_commitment_direction_selector,
         in_commitment_value,
         in_commitment_bliding,
-        in_commitment_spending_tracker,
+        in_commitment_nullifier,
         out_receiver_commitment_value,
         out_receiver_commitment_bliding,
         out_receiver_commitment,
@@ -153,7 +153,7 @@ fn test_invalid_utxo_amounts() {
     // generate commitment
     let in_commitment_bliding = 2;
     let in_commitment = commitment(sender_account, in_commitment_value, in_commitment_bliding);
-    let in_commitment_spending_tracker = commitment_tracker(in_commitment, in_commitment_bliding);
+    let in_commitment_nullifier = nullifier(in_commitment, in_commitment_bliding);
 
     // output commitment generation
     let receiver_account = account(100);
@@ -185,7 +185,7 @@ fn test_invalid_utxo_amounts() {
         in_commitment_direction_selector,
         in_commitment_value,
         in_commitment_bliding,
-        in_commitment_spending_tracker,
+        in_commitment_nullifier,
         out_receiver_commitment_value,
         out_receiver_commitment_bliding,
         out_receiver_commitment,
@@ -212,7 +212,7 @@ fn test_unlinked_root() {
     // generate commitment
     let in_commitment_bliding = 2;
     let in_commitment = commitment(sender_account, in_commitment_value, in_commitment_bliding);
-    let in_commitment_spending_tracker = commitment_tracker(in_commitment, in_commitment_bliding);
+    let in_commitment_nullifier = nullifier(in_commitment, in_commitment_bliding);
 
     // output commitment generation
     let receiver_account = account(100);
@@ -244,7 +244,7 @@ fn test_unlinked_root() {
         in_commitment_direction_selector,
         in_commitment_value,
         in_commitment_bliding,
-        in_commitment_spending_tracker,
+        in_commitment_nullifier,
         out_receiver_commitment_value,
         out_receiver_commitment_bliding,
         out_receiver_commitment,
@@ -271,7 +271,7 @@ fn test_missing_new_commits() {
     // generate commitment
     let in_commitment_bliding = 2;
     let in_commitment = commitment(sender_account, in_commitment_value, in_commitment_bliding);
-    let in_commitment_spending_tracker = commitment_tracker(in_commitment, in_commitment_bliding);
+    let in_commitment_nullifier = nullifier(in_commitment, in_commitment_bliding);
 
     // output commitment generation
     let receiver_account = account(100);
@@ -303,7 +303,7 @@ fn test_missing_new_commits() {
         in_commitment_direction_selector,
         in_commitment_value,
         in_commitment_bliding,
-        in_commitment_spending_tracker,
+        in_commitment_nullifier,
         out_receiver_commitment_value,
         out_receiver_commitment_bliding,
         out_receiver_commitment,

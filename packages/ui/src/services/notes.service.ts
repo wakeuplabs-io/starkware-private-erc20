@@ -21,34 +21,34 @@ export class NotesService {
   async getNotes(): Promise<{
     notesArray: Note[];
     notesMap: Map<bigint, Note>;
-    spendingTrackersMap: Map<string, string>;
+    nullifiersMap: Map<string, string>;
   }> {
     const toBlock = await this.provider.getBlock("latest");
     const fromBlock = await this.getCacheLatestBlock();
 
     // fetch new events and merge with cache
-    const { notes: cachedNotes, spendingTrackers: cachedSpendingTrackers } =
+    const { notes: cachedNotes, nullifiers: cachedNullifiers } =
       await this.fetchFromLocalStorage();
-    const { notes: newNotes, spendingTrackers: newSpendingTrackers } =
+    const { notes: newNotes, nullifiers: newNullifiers } =
       await this.fetchFromBlockchain(fromBlock, toBlock.block_number);
 
     const notes = [...cachedNotes, ...newNotes];
-    const spendingTrackers = [
-      ...cachedSpendingTrackers,
-      ...newSpendingTrackers,
+    const nullifiers = [
+      ...cachedNullifiers,
+      ...newNullifiers,
     ];
 
     // turn into map and back to array to avoid duplicates
     const notesMap = new Map(notes.map((note) => [note.commitment, note]));
-    const spendingTrackersMap = new Map(spendingTrackers.map((st) => [st, st]));
+    const nullifiersMap = new Map(nullifiers.map((st) => [st, st]));
 
     // iterate over notes and nullify those that have already been used
     Array.from(notesMap.values())
       .filter(
-        (note) => note.value !== undefined && note.tracker !== undefined
+        (note) => note.value !== undefined && note.nullifier !== undefined
       )
       .map((note) => {
-        if (spendingTrackersMap.has(note.tracker!.toString())) {
+        if (nullifiersMap.has(note.nullifier!.toString())) {
           notesMap.set(note.commitment, {
             ...note,
             spent: true,
@@ -61,12 +61,12 @@ export class NotesService {
 
     // save cache
     await this.setCacheNotes(notesArray);
-    await this.setCachedSpendingTrackers(
-      Array.from(spendingTrackersMap.values())
+    await this.setCachedNullifiers(
+      Array.from(nullifiersMap.values())
     );
     await this.setCacheLatestBlock(toBlock.block_number);
 
-    return { notesArray, notesMap, spendingTrackersMap };
+    return { notesArray, notesMap, nullifiersMap };
   }
 
   private getCacheLatestBlock(): number {
@@ -81,28 +81,28 @@ export class NotesService {
     localStorage.setItem("notes", stringify(notes));
   }
 
-  private setCachedSpendingTrackers(st: string[]) {
-    localStorage.setItem("spendingTrackers", stringify(st));
+  private setCachedNullifiers(st: string[]) {
+    localStorage.setItem("nullifiers", stringify(st));
   }
 
   private async fetchFromLocalStorage(): Promise<{
     notes: Note[];
-    spendingTrackers: string[];
+    nullifiers: string[];
   }> {
     const notes = parse(localStorage.getItem("notes") || "[]");
-    const spendingTrackers = parse(
-      localStorage.getItem("spendingTrackers") || "[]"
+    const nullifiers = parse(
+      localStorage.getItem("nullifiers") || "[]"
     );
 
-    return { notes, spendingTrackers };
+    return { notes, nullifiers };
   }
 
   private async fetchFromBlockchain(
     fromBlock: number,
     toBlock: number
-  ): Promise<{ notes: Note[]; spendingTrackers: string[] }> {
+  ): Promise<{ notes: Note[]; nullifiers: string[] }> {
     const commitments: CommitmentEvent[] = [];
-    const spendingTrackers: string[] = [];
+    const nullifiers: string[] = [];
     let continuationToken: string | undefined;
 
     do {
@@ -112,7 +112,7 @@ export class NotesService {
           keys: [
             [
               selector.getSelectorFromName("NewCommitment"),
-              selector.getSelectorFromName("NewSpendingTracker"),
+              selector.getSelectorFromName("NewNullifier"),
             ],
           ],
           from_block: { block_number: fromBlock },
@@ -144,20 +144,20 @@ export class NotesService {
           };
         });
 
-      // retrieve spending trackers
-      const partialSpendingTrackers = eventsParsed
+      // retrieve spending nullifiers
+      const partialNullifiers = eventsParsed
         .filter(
           (event) =>
-            event["contracts::privado::privado::Privado::NewSpendingTracker"]
+            event["contracts::privado::privado::Privado::NewNullifier"]
         )
         .map((event) => {
           const data =
-            event["contracts::privado::privado::Privado::NewSpendingTracker"];
-          return data.spending_tracker?.toString() || "";
+            event["contracts::privado::privado::Privado::NewNullifier"];
+          return data.nullifier?.toString() || "";
         });
 
       commitments.push(...partialNewCommitments);
-      spendingTrackers.push(...partialSpendingTrackers);
+      nullifiers.push(...partialNullifiers);
 
       continuationToken = eventsResponse.continuation_token;
     } while (continuationToken);
@@ -178,8 +178,8 @@ export class NotesService {
           );
           const payload: CommitmentPayload = parse(decrypted);
 
-          // generate spending tracker
-          const tracker = await DefinitionsService.commitmentTracker(
+          // generate nullifier
+          const nullifier = await DefinitionsService.nullifier(
             commitment,
             payload.bliding
           );
@@ -190,7 +190,7 @@ export class NotesService {
             index,
             value: payload.value,
             bliding: payload.bliding,
-            tracker: tracker,
+            nullifier: nullifier,
           };
         } catch (error) {
           const { commitment, encryptedOutput, index }: Note = commitmentEvent;
@@ -199,7 +199,7 @@ export class NotesService {
       })
     );
 
-    return { notes: notesExpanded, spendingTrackers };
+    return { notes: notesExpanded, nullifiers };
   }
 }
 

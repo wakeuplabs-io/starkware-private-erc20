@@ -1,5 +1,6 @@
 use starknet::ContractAddress;
 
+
 #[starknet::interface]
 pub trait IPrivado<TContractState> {
     /// Returns the name of the token.
@@ -50,10 +51,10 @@ pub trait IPrivado<TContractState> {
         ref self: TContractState, proof: Span<felt252>, enc_approval_output: Span<ByteArray>,
     ) -> bool;
 
+    /// Takes `eth` from user and mints note with equivalent in ENG
     fn deposit(
         ref self: TContractState, proof: Span<felt252>, receiver_enc_output: ByteArray,
     ) -> bool;
-
 
     /// Reads current_root from contract
     fn current_root(self: @TContractState) -> u256;
@@ -82,6 +83,7 @@ pub mod Privado {
         DEPOSIT_VERIFIER_ADDRESS, ETH_ERC20_TOKEN, GET_MINT_COMMITMENT
     };
     use starknet::{get_block_timestamp, get_caller_address, get_contract_address};
+    
     //
     // Storage
     //
@@ -94,7 +96,7 @@ pub mod Privado {
         // commitments tree
         pub current_root: u256,
         pub current_commitment_index: u256,
-        pub spending_trackers: Map<u256, bool>,
+        pub nullifiers: Map<u256, bool>,
         // allowances
         pub allowances: Map<u256, u256>,
         // verifier addresses
@@ -113,7 +115,7 @@ pub mod Privado {
     #[derive(Drop, starknet::Event)]
     pub enum Event {
         NewCommitment: NewCommitment,
-        NewSpendingTracker: NewSpendingTracker,
+        NewNullifier: NewNullifier,
         Approval: Approval,
     }
 
@@ -128,8 +130,8 @@ pub mod Privado {
 
     /// Emitted when a a note is nullified
     #[derive(Drop, starknet::Event)]
-    pub struct NewSpendingTracker {
-        pub spending_tracker: u256,
+    pub struct NewNullifier {
+        pub nullifier: u256,
     }
 
     /// Emitted when user Approves external entity
@@ -168,7 +170,7 @@ pub mod Privado {
     #[derive(Drop)]
     pub struct TransferProofPublicInputs {
         in_commitment_root: u256,
-        in_commitment_spending_tracker: u256,
+        in_commitment_nullifier: u256,
         out_sender_commitment: u256,
         out_receiver_commitment: u256,
         out_root: u256,
@@ -177,7 +179,7 @@ pub mod Privado {
     #[derive(Drop)]
     pub struct TransferFromProofPublicInputs {
         in_commitment_root: u256,
-        in_commitment_spending_tracker: u256,
+        in_commitment_nullifier: u256,
         in_allowance_hash: u256,
         in_allowance_relationship: u256,
         out_allowance_hash: u256,
@@ -270,7 +272,7 @@ pub mod Privado {
             self.current_root.write(public_inputs.out_root);
 
             // spend the notes
-            self._spend_note(public_inputs.in_commitment_spending_tracker);
+            self._spend_note(public_inputs.in_commitment_nullifier);
 
             // create new notes for receiver and sender
             self._create_note(public_inputs.out_sender_commitment, enc_notes_output.at(0).clone());
@@ -343,7 +345,7 @@ pub mod Privado {
                 .write(public_inputs.out_allowance_hash);
 
             // spend the notes
-            self._spend_note(public_inputs.in_commitment_spending_tracker);
+            self._spend_note(public_inputs.in_commitment_nullifier);
 
             // create new notes for receiver and sender
             self._create_note(public_inputs.out_owner_commitment, enc_notes_output.at(0).clone());
@@ -427,16 +429,16 @@ pub mod Privado {
         ///
         /// Requirements:
         ///
-        /// - `spending_tracker`
+        /// - `nullifier`
         ///
-        /// Emits a `NewSpendingTracker` event.
-        fn _spend_note(ref self: ContractState, spending_tracker: u256) {
+        /// Emits a `NewNullifier` event.
+        fn _spend_note(ref self: ContractState, nullifier: u256) {
             assert(
-                self.spending_trackers.entry(spending_tracker).read() == false, Errors::SPENT_NOTE,
+                self.nullifiers.entry(nullifier).read() == false, Errors::SPENT_NOTE,
             );
 
-            self.spending_trackers.entry(spending_tracker).write(true);
-            self.emit(NewSpendingTracker { spending_tracker });
+            self.nullifiers.entry(nullifier).write(true);
+            self.emit(NewNullifier { nullifier });
         }
 
 
@@ -451,7 +453,7 @@ pub mod Privado {
 
             TransferProofPublicInputs {
                 in_commitment_root: (*public_inputs.at(0)),
-                in_commitment_spending_tracker: (*public_inputs.at(1)),
+                in_commitment_nullifier: (*public_inputs.at(1)),
                 out_receiver_commitment: (*public_inputs.at(2)),
                 out_sender_commitment: (*public_inputs.at(3)),
                 out_root: (*public_inputs.at(4)),
@@ -484,7 +486,7 @@ pub mod Privado {
 
             TransferFromProofPublicInputs {
                 in_commitment_root: (*public_inputs.at(0)),
-                in_commitment_spending_tracker: (*public_inputs.at(1)),
+                in_commitment_nullifier: (*public_inputs.at(1)),
                 in_allowance_hash: (*public_inputs.at(2)),
                 in_allowance_relationship: (*public_inputs.at(3)),
                 out_allowance_hash: (*public_inputs.at(4)),

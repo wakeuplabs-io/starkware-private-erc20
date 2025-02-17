@@ -32,7 +32,7 @@ in_commitment_direction_selector = [
 ]
 in_commitment_bliding = "0x9c54a59cf62f8368d4c87b82adfeb753"
 in_commitment_value = "0xe8d4a51000"
-in_commitment_spending_tracker = "0x16954883b8ec70cbf0bf90ce4e76747609641e717a34fb1b81b212e8c3035626"
+in_commitment_nullifier = "0x16954883b8ec70cbf0bf90ce4e76747609641e717a34fb1b81b212e8c3035626"
 in_allowance_value = "0xbebc200"
 in_allowance_hash = "0x1342ae7ca8319fe5b5ef0ef59c0fe7e5d27ba6fe84bc7c23c37a47726f499da2"
 in_allowance_relationship = "0x280c2a33f20f560f449b16a1ff045707c687269a12bce3315dbb942da45b43e0"

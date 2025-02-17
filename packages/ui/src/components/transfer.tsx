@@ -29,23 +29,23 @@ export const Transfer: React.FC = () => {
 
       const txHash = transferFrom
         ? await sendTransferFrom({
-          amount: amountBn,
-          from: {
-            address: BigInt(from.address),
-            publicKey: BigInt(from.publicKey),
-          },
-          to: {
-            address: BigInt(to.address),
-            publicKey: BigInt(to.publicKey),
-          },
-        })
+            amount: amountBn,
+            from: {
+              address: BigInt(from.address),
+              publicKey: BigInt(from.publicKey),
+            },
+            to: {
+              address: BigInt(to.address),
+              publicKey: BigInt(to.publicKey),
+            },
+          })
         : await sendTransfer({
-          amount: amountBn,
-          to: {
-            address: BigInt(to.address),
-            publicKey: BigInt(to.publicKey),
-          },
-        });
+            amount: amountBn,
+            to: {
+              address: BigInt(to.address),
+              publicKey: BigInt(to.publicKey),
+            },
+          });
 
       toast({
         title: "Transaction sent successfully",
@@ -88,7 +88,7 @@ export const Transfer: React.FC = () => {
   }, [account, transferFrom]);
 
   return (
-    <div className="flex flex-col p-6 bg-white rounded-3xl border border-primary">
+    <div className="flex flex-col p-6 bg-white rounded-3xl border-gradient">
       <h1 className="font-semibold mb-6">Transfer</h1>
 
       {scan ? (
@@ -97,9 +97,9 @@ export const Transfer: React.FC = () => {
         </div>
       ) : (
         <>
-          <div className="space-y-8 mb-12">
+          <div className="grid gap-4 md:grid-cols-2 mb-8">
             <div className="space-y-4 relative">
-              <div className="absolute -top-2 right-0 ">
+              <div className="absolute top-2 right-0 ">
                 {transferFrom ? (
                   <button
                     className="text-sm bg-transparent text-blue-500 hover:underline"
@@ -108,22 +108,17 @@ export const Transfer: React.FC = () => {
                     Reset
                   </button>
                 ) : (
-                  <div className="space-x-2">
-                    <span className="text-nowrap text-sm font-medium">
-                      From: My wallet
-                    </span>
-                    <button
-                      className="text-sm bg-transparent text-blue-500 hover:underline"
-                      onClick={() => setTransferFrom(true)}
-                    >
-                      Edit
-                    </button>
-                  </div>
+                  <button
+                    className="text-sm bg-transparent text-blue-500 hover:underline"
+                    onClick={() => setTransferFrom(true)}
+                  >
+                    Edit
+                  </button>
                 )}
               </div>
 
               <div className="grid w-full items-center gap-2">
-                <Label htmlFor="from-address">From Address</Label>
+                <Label htmlFor="from-address">{transferFrom ? "From Address" : "From My Address"}</Label>
                 <Input
                   id="from-address"
                   type="text"
@@ -137,7 +132,7 @@ export const Transfer: React.FC = () => {
               </div>
 
               <div className="grid w-full items-center gap-2">
-                <Label htmlFor="from-public-key">From Public Key</Label>
+                <Label htmlFor="from-public-key">{transferFrom ? "From Public Key" : "From My Public Key"}</Label>
                 <Input
                   id="from-public-key"
                   type="text"
@@ -156,7 +151,7 @@ export const Transfer: React.FC = () => {
                 onClick={() => setScan(!scan)}
                 size="icon"
                 variant="ghost"
-                className="absolute -top-2 right-0 h-6 w-6 text-blue-500 bg-transparent"
+                className="absolute top-2 right-0 h-6 w-6 text-blue-500 bg-transparent"
               >
                 <QrCode />
               </Button>
@@ -183,17 +178,17 @@ export const Transfer: React.FC = () => {
                 />
               </div>
             </div>
+          </div>
 
-            <div className="grid w-full items-center gap-2">
-              <Label htmlFor="amount">Amount</Label>
-              <Input
-                id="amount"
-                type="text"
-                placeholder="0.0"
-                value={amount}
-                onChange={(e) => setAmount(e.target.value)}
-              />
-            </div>
+          <div className="grid gap-2 w-full mb-12">
+            <Label htmlFor="amount">Amount</Label>
+            <Input
+              id="amount"
+              type="text"
+              placeholder="0.0"
+              value={amount}
+              onChange={(e) => setAmount(e.target.value)}
+            />
           </div>
 
           <Button

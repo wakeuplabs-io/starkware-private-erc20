@@ -43,7 +43,7 @@ export class DefinitionsService {
     };
   }
 
-  static async commitmentTracker(
+  static async nullifier(
     commitment: bigint,
     bliding: bigint
   ): Promise<bigint> {

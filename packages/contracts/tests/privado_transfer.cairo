@@ -14,14 +14,14 @@ fn test_transfer() {
     let (mut contract, contract_address) = get_contract_state_for_testing();
 
     let in_commitment_root = 0;
-    let in_commitment_spending_tracker = 2;
+    let in_commitment_nullifier = 2;
     let out_root = 1;
     let out_sender_commitment = 3;
     let out_receiver_commitment = 4;
     let proof = generate_mock_proof(
         in_commitment_root,
         out_root,
-        in_commitment_spending_tracker,
+        in_commitment_nullifier,
         out_sender_commitment,
         out_receiver_commitment,
     );
@@ -32,9 +32,9 @@ fn test_transfer() {
     // call transfer
     contract.transfer(proof, array!["enc_notes_output_owner", "enc_notes_output_receiver"].span());
 
-    // should nullify the in_commitment_spending_tracker
+    // should nullify the in_commitment_nullifier
     assert(
-        contract.spending_trackers.entry(in_commitment_spending_tracker.into()).read() == true,
+        contract.nullifiers.entry(in_commitment_nullifier.into()).read() == true,
         'Sender commitment not nullified',
     );
 
@@ -64,9 +64,9 @@ fn test_transfer() {
                 ),
                 (
                     contract_address,
-                    Privado::Event::NewSpendingTracker(
-                        Privado::NewSpendingTracker {
-                            spending_tracker: in_commitment_spending_tracker.into(),
+                    Privado::Event::NewNullifier(
+                        Privado::NewNullifier {
+                            nullifier: in_commitment_nullifier.into(),
                         },
                     ),
                 ),
@@ -82,13 +82,13 @@ fn test_transfer_unknown_root() {
 
     let in_commitment_root = 0;
     let out_root = 1;
-    let in_commitment_spending_tracker = 2;
+    let in_commitment_nullifier = 2;
     let out_sender_commitment = 3;
     let out_receiver_commitment = 4;
     let proof = generate_mock_proof(
         in_commitment_root,
         out_root,
-        in_commitment_spending_tracker,
+        in_commitment_nullifier,
         out_sender_commitment,
         out_receiver_commitment,
     );
@@ -107,19 +107,19 @@ fn test_transfer_double_spent() {
 
     let in_commitment_root = 0;
     let out_root = 1;
-    let in_commitment_spending_tracker = 2;
+    let in_commitment_nullifier = 2;
     let out_sender_commitment = 3;
     let out_receiver_commitment = 4;
     let proof = generate_mock_proof(
         in_commitment_root,
         out_root,
-        in_commitment_spending_tracker,
+        in_commitment_nullifier,
         out_sender_commitment,
         out_receiver_commitment,
     );
 
     // mark the commitment as already spent
-    contract.spending_trackers.entry(in_commitment_spending_tracker.into()).write(true);
+    contract.nullifiers.entry(in_commitment_nullifier.into()).write(true);
 
     // call transfer
     contract.transfer(proof, array!["enc_notes_output_owner", "enc_notes_output_receiver"].span());
@@ -132,11 +132,11 @@ fn test_transfer_double_spent() {
 fn generate_mock_proof(
     in_commitment_root: felt252,
     out_root: felt252,
-    spending_tracker: felt252,
+    nullifier: felt252,
     sender_commitment: felt252,
     receiver_commitment: felt252,
 ) -> Span<felt252> {
-    array![in_commitment_root, spending_tracker, receiver_commitment, sender_commitment, out_root]
+    array![in_commitment_root, nullifier, receiver_commitment, sender_commitment, out_root]
         .span()
 }
 
