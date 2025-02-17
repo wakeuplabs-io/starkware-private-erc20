@@ -141,42 +141,43 @@ Some clarifications:
 
 ### Deposit
 
-A deposit works similarly to a regular transfer, except that the user transfers ETH to the contract. Conceptually, you can think of it as “burning” ETH from the user’s balance and creating a new commitment in the Enigma platform.
+A deposit works similarly to a regular transfer, except that there's only one note being created and no notes being nullified. Conceptually, you can think of it as “burning” ETH from the user’s balance and creating a new commitment in the Enigma contract.
 
 ```mermaid
 sequenceDiagram
-    participant Receiver
+    participant Buyer
     participant Relayer as Relayer/Sender
     participant Enigma Contract
     participant ERC20 Contract
 
     %% generate transaction
-    Receiver->>ERC20 Contract: approve(Enigma Contract, amount)
-    Receiver->>Receiver: Generate output commitments (sender, receiver)
-    Receiver->>Receiver: Generate zk proof
+    Buyer->>+ERC20 Contract: approve(Enigma Contract, amount)
+    ERC20 Contract->>-Buyer: tx_hash
+    Buyer->>Buyer: Generate deposit commitment
+    Buyer->>Buyer: Generate zk proof
 
     %% submit transaction
-    Receiver->>+Relayer: deposit(proof, enc_outputs) tx
+    Buyer->>+Relayer: deposit(proof, enc_outputs) tx
     Relayer->>+Enigma Contract: deposit(proof, enc_outputs)
-    Enigma Contract->>Enigma Contract: emit NewCommitment x2
-    Enigma Contract->>ERC20 Contract: transfer_from(Receiver, Enigma contract, amount)
+    Enigma Contract->>Enigma Contract: emit NewCommitment 
+    Enigma Contract->>+ERC20 Contract: transfer_from(Buyer, Enigma contract, amount)
+    ERC20 Contract->>-Enigma Contract: ok
     Enigma Contract->>-Relayer: tx_hash
-    Relayer->>-Receiver: tx_hash
+    Relayer->>-Buyer: tx_hash
 
-    %% receiver discovers new balance
-    Receiver->>+Enigma Contract: Fetch Commitment events
-    Enigma Contract->>-Receiver: Commitments
-    Receiver->>Receiver: Discover new commitment from deposit
+    %% Buyer discovers new balance
+    Buyer->>+Enigma Contract: Fetch Commitment events
+    Enigma Contract->>-Buyer: Commitments
+    Buyer->>Buyer: Discover new commitment from deposit
 ```
 
 Circuit checks
-- The receiver commitment are correct, including the amount and owner of each.
+- The buyer commitment is correct, including the correct amount and owner.
 - The new root does not remove any elements from the tree.
-- The new root contains both the new commitments.
+- The new root contains the new commitment.
 
 Some clarifications:
-
-- For each 1 ETH deposited, the user receives 1,000,000 internal tokens in the platform. These tokens are minted within the private pool to represent the user’s deposit.
+- For each 1 ETH deposited, the user receives 1,000,000 ENG
 
 ### Compliance proposition
 
