@@ -1,5 +1,5 @@
 use common::definitions::{account, commitment, nullifier};
-use common::merkle_tree::{assert_merkle_inclusion};
+use common::merkle_tree::assert_merkle_inclusion;
 use std::hash::poseidon2::Poseidon2::hash;
 
 // TODO: update before deploying. So far haven't found way to override for testing
@@ -38,7 +38,11 @@ pub fn main(
         in_commitment,
         "Input commitment doesn't belong to tree",
     );
-    assert_eq(in_commitment_nullifier, nullifier(in_commitment, in_commitment_bliding), "Invalid commitment nullifier");
+    assert_eq(
+        in_commitment_nullifier,
+        nullifier(in_commitment, in_commitment_bliding),
+        "Invalid commitment nullifier",
+    );
 
     // check utxo
     assert_eq(
@@ -49,14 +53,22 @@ pub fn main(
 
     // validate commitment amounts and receivers are correct
     assert_eq(
-        commitment(sender_account, out_sender_commitment_value, out_sender_commitment_bliding),
+        commitment(
+            sender_account,
+            out_sender_commitment_value,
+            out_sender_commitment_bliding,
+        ),
         out_sender_commitment,
-          "Invalid out sender commitment",
+        "Invalid out sender commitment",
     );
     assert_eq(
-        commitment(receiver_account, out_receiver_commitment_value, out_receiver_commitment_bliding),
+        commitment(
+            receiver_account,
+            out_receiver_commitment_value,
+            out_receiver_commitment_bliding,
+        ),
         out_receiver_commitment,
-            "Invalid out receiver commitment",
+        "Invalid out receiver commitment",
     );
 
     // check we're inserting in a previously empty subtree
@@ -100,9 +112,16 @@ fn test_allowed_transfer() {
     let receiver_account = account(100);
     let out_sender_commitment_bliding = 3;
     let out_receiver_commitment_bliding = 3;
-    let out_receiver_commitment =
-        commitment(receiver_account, out_receiver_commitment_value, out_receiver_commitment_bliding);
-    let out_sender_commitment = commitment(sender_account, out_sender_commitment_value, out_sender_commitment_bliding);
+    let out_receiver_commitment = commitment(
+        receiver_account,
+        out_receiver_commitment_value,
+        out_receiver_commitment_bliding,
+    );
+    let out_sender_commitment = commitment(
+        sender_account,
+        out_sender_commitment_value,
+        out_sender_commitment_bliding,
+    );
 
     // old tree
     let old_first_level_l = hash([in_commitment, 1], 2);
@@ -159,9 +178,16 @@ fn test_invalid_utxo_amounts() {
     let receiver_account = account(100);
     let out_sender_commitment_bliding = 3;
     let out_receiver_commitment_bliding = 3;
-    let out_receiver_commitment =
-        commitment(receiver_account, out_receiver_commitment_value, out_receiver_commitment_bliding);
-    let out_sender_commitment = commitment(sender_account, out_sender_commitment_value, out_sender_commitment_bliding);
+    let out_receiver_commitment = commitment(
+        receiver_account,
+        out_receiver_commitment_value,
+        out_receiver_commitment_bliding,
+    );
+    let out_sender_commitment = commitment(
+        sender_account,
+        out_sender_commitment_value,
+        out_sender_commitment_bliding,
+    );
 
     // old tree
     let old_first_level_l = hash([in_commitment, 1], 2);
@@ -218,9 +244,16 @@ fn test_unlinked_root() {
     let receiver_account = account(100);
     let out_sender_commitment_bliding = 3;
     let out_receiver_commitment_bliding = 3;
-    let out_receiver_commitment =
-        commitment(receiver_account, out_receiver_commitment_value, out_receiver_commitment_bliding);
-    let out_sender_commitment = commitment(sender_account, out_sender_commitment_value, out_sender_commitment_bliding);
+    let out_receiver_commitment = commitment(
+        receiver_account,
+        out_receiver_commitment_value,
+        out_receiver_commitment_bliding,
+    );
+    let out_sender_commitment = commitment(
+        sender_account,
+        out_sender_commitment_value,
+        out_sender_commitment_bliding,
+    );
 
     // old tree
     let old_first_level_l = hash([in_commitment, 1], 2);
@@ -277,9 +310,16 @@ fn test_missing_new_commits() {
     let receiver_account = account(100);
     let out_sender_commitment_bliding = 3;
     let out_receiver_commitment_bliding = 3;
-    let out_receiver_commitment =
-        commitment(receiver_account, out_receiver_commitment_value, out_receiver_commitment_bliding);
-    let out_sender_commitment = commitment(sender_account, out_sender_commitment_value, out_sender_commitment_bliding);
+    let out_receiver_commitment = commitment(
+        receiver_account,
+        out_receiver_commitment_value,
+        out_receiver_commitment_bliding,
+    );
+    let out_sender_commitment = commitment(
+        sender_account,
+        out_sender_commitment_value,
+        out_sender_commitment_bliding,
+    );
 
     // old tree
     let old_first_level_l = hash([in_commitment, 1], 2);

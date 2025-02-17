@@ -2,8 +2,8 @@ import { CommitmentEvent, CommitmentPayload, Note } from "@/interfaces";
 import { Provider, selector, events as Events, CallData } from "starknet";
 import { EVENTS_CHUNK } from "node_modules/starknet-types-07/dist/types/api/components";
 import {
-  PRIVATE_ERC20_ABI,
-  PRIVATE_ERC20_CONTRACT_ADDRESS,
+  ENIGMA_ABI,
+  ENIGMA_CONTRACT_ADDRESS,
 } from "@/shared/config/constants";
 import { AccountService } from "./account.service";
 import { CipherService } from "./cipher.service";
@@ -39,17 +39,17 @@ export class NotesService {
     ];
 
     // turn into map and back to array to avoid duplicates
-    const notesMap = new Map(notes.map((note) => [note.commitment, note]));
+    const notesMapByIndex = new Map(notes.map((note) => [note.index, note]));
     const nullifiersMap = new Map(nullifiers.map((st) => [st, st]));
 
     // iterate over notes and nullify those that have already been used
-    Array.from(notesMap.values())
+    Array.from(notesMapByIndex.values())
       .filter(
         (note) => note.value !== undefined && note.nullifier !== undefined
       )
       .map((note) => {
         if (nullifiersMap.has(note.nullifier!.toString())) {
-          notesMap.set(note.commitment, {
+          notesMapByIndex.set(note.index, {
             ...note,
             spent: true,
           });
@@ -57,7 +57,8 @@ export class NotesService {
       });
 
     // back to array
-    const notesArray = Array.from(notesMap.values());
+    const notesArray = Array.from(notesMapByIndex.values());
+    const notesMap = new Map(notesArray.map((note) => [note.commitment, note]));
 
     // save cache
     await this.setCacheNotes(notesArray);
@@ -108,7 +109,7 @@ export class NotesService {
     do {
       const eventsResponse: EVENTS_CHUNK =
         await this.provider.channel.getEvents({
-          address: PRIVATE_ERC20_CONTRACT_ADDRESS,
+          address: ENIGMA_CONTRACT_ADDRESS,
           keys: [
             [
               selector.getSelectorFromName("NewCommitment"),
@@ -123,9 +124,9 @@ export class NotesService {
 
       const eventsParsed = Events.parseEvents(
         eventsResponse.events,
-        Events.getAbiEvents(PRIVATE_ERC20_ABI),
-        CallData.getAbiStruct(PRIVATE_ERC20_ABI),
-        CallData.getAbiEnum(PRIVATE_ERC20_ABI)
+        Events.getAbiEvents(ENIGMA_ABI),
+        CallData.getAbiStruct(ENIGMA_ABI),
+        CallData.getAbiEnum(ENIGMA_ABI)
       );
 
       // retrieve commitments
@@ -162,7 +163,7 @@ export class NotesService {
       continuationToken = eventsResponse.continuation_token;
     } while (continuationToken);
 
-    // process notes and nullifiers
+    // process notes and spendingTrackers
     const account = await AccountService.getAccount();
 
     const notesExpanded: Note[] = await Promise.all(

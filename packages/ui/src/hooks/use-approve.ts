@@ -1,8 +1,8 @@
 import { useContract, useSendTransaction } from "@starknet-react/core";
 import { useCallback, useState } from "react";
 import {
-  PRIVATE_ERC20_ABI,
-  PRIVATE_ERC20_CONTRACT_ADDRESS,
+  ENIGMA_ABI,
+  ENIGMA_CONTRACT_ADDRESS,
 } from "@/shared/config/constants";
 import { AccountService } from "@/services/account.service";
 import { ProofService } from "@/services/proof.service";
@@ -13,8 +13,8 @@ import { DefinitionsService } from "@/services/definitions.service";
 export const useApprove = () => {
   const [loading, setLoading] = useState(false);
   const { contract } = useContract({
-    abi: PRIVATE_ERC20_ABI,
-    address: PRIVATE_ERC20_CONTRACT_ADDRESS,
+    abi: ENIGMA_ABI,
+    address: ENIGMA_CONTRACT_ADDRESS,
   });
 
   const { sendAsync } = useSendTransaction({

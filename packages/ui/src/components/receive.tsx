@@ -26,7 +26,7 @@ export const Receive: React.FC = () => {
           fgColor="#1C1B78"
 
           value={qrValue}
-          viewBox={`0 0 256 256`}
+          viewBox={"0 0 256 256"}
         />
       </div>
 

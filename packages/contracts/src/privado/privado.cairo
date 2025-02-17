@@ -51,6 +51,10 @@ pub trait IPrivado<TContractState> {
         ref self: TContractState, proof: Span<felt252>, enc_approval_output: Span<ByteArray>,
     ) -> bool;
 
+    /// Takes `eth` from user and mints note with equivalent in ENG
+    fn deposit(
+        ref self: TContractState, proof: Span<felt252>, receiver_enc_output: ByteArray,
+    ) -> bool;
 
     /// Reads current_root from contract
     fn current_root(self: @TContractState) -> u256;
@@ -58,7 +62,6 @@ pub trait IPrivado<TContractState> {
     /// Reads current_root from contract
     fn current_commitment_index(self: @TContractState) -> u256;
 }
-
 
 #[starknet::contract]
 pub mod Privado {
@@ -71,14 +74,15 @@ pub mod Privado {
         ITransferVerifierContractDispatcherTrait, ITransferVerifierContractDispatcher,
         IApproveVerifierContractDispatcherTrait, IApproveVerifierContractDispatcher,
         ITransferFromVerifierContractDispatcherTrait, ITransferFromVerifierContractDispatcher,
+        IDepositVerifierContractDispatcherTrait, IDepositVerifierContractDispatcher,
     };
+    use contracts::erc20::{IERC20Dispatcher, IERC20DispatcherTrait};
     use contracts::privado::constants::{
         TOKEN_NAME, TOKEN_SYMBOL, TOKEN_DECIMALS, MERKLE_TREE_INITIAL_ROOT,
         TRANSFER_VERIFIER_ADDRESS, APPROVE_VERIFIER_ADDRESS, TRANSFER_FROM_VERIFIER_ADDRESS,
-        GET_MINT_COMMITMENT,
+        DEPOSIT_VERIFIER_ADDRESS, ETH_ERC20_TOKEN, GET_MINT_COMMITMENT,
     };
-    use starknet::get_block_timestamp;
-
+    use starknet::{get_block_timestamp, get_caller_address, get_contract_address};
 
     //
     // Storage
@@ -99,6 +103,8 @@ pub mod Privado {
         pub transfer_verifier_address: ContractAddress,
         pub approve_verifier_address: ContractAddress,
         pub transfer_from_verifier_address: ContractAddress,
+        pub deposit_verifier_address: ContractAddress,
+        pub eth_erc20_token: ContractAddress,
     }
 
     //
@@ -188,6 +194,14 @@ pub mod Privado {
         out_allowance_relationship: u256,
     }
 
+    #[derive(Drop)]
+    pub struct DepositProofInputs {
+        in_commitment_root: u256,
+        in_public_amount: u256,
+        out_receiver_commitment: u256,
+        out_root: u256,
+    }
+
     //
     // Constructor
     //
@@ -204,6 +218,8 @@ pub mod Privado {
         self
             .transfer_from_verifier_address
             .write(TRANSFER_FROM_VERIFIER_ADDRESS.try_into().unwrap());
+        self.deposit_verifier_address.write(DEPOSIT_VERIFIER_ADDRESS.try_into().unwrap());
+        self.eth_erc20_token.write(ETH_ERC20_TOKEN.try_into().unwrap());
 
         // current root already includes initial mint
         self.current_root.write(MERKLE_TREE_INITIAL_ROOT);
@@ -353,6 +369,29 @@ pub mod Privado {
             true
         }
 
+        fn deposit(
+            ref self: ContractState, proof: Span<felt252>, receiver_enc_output: ByteArray,
+        ) -> bool {
+            let public_inputs = self._verify_deposit_proof(proof);
+
+            assert(
+                public_inputs.in_commitment_root == self.current_root.read(), Errors::UNKNOWN_ROOT,
+            );
+            self.current_root.write(public_inputs.out_root);
+
+            self._create_note(public_inputs.out_receiver_commitment, receiver_enc_output);
+            self._create_note(0, "0");
+
+            let eth_erc20_token = IERC20Dispatcher {
+                contract_address: self.eth_erc20_token.read(),
+            };
+            eth_erc20_token
+                .transfer_from(
+                    get_caller_address(), get_contract_address(), public_inputs.in_public_amount,
+                );
+
+            true
+        }
 
         fn current_root(self: @ContractState) -> u256 {
             self.current_root.read()
@@ -397,9 +436,7 @@ pub mod Privado {
         ///
         /// Emits a `NewNullifier` event.
         fn _spend_note(ref self: ContractState, nullifier: u256) {
-            assert(
-                self.nullifiers.entry(nullifier).read() == false, Errors::SPENT_NOTE,
-            );
+            assert(self.nullifiers.entry(nullifier).read() == false, Errors::SPENT_NOTE);
 
             self.nullifiers.entry(nullifier).write(true);
             self.emit(NewNullifier { nullifier });
@@ -457,6 +494,23 @@ pub mod Privado {
                 out_receiver_commitment: (*public_inputs.at(5)),
                 out_owner_commitment: (*public_inputs.at(6)),
                 out_root: (*public_inputs.at(7)),
+            }
+        }
+
+        fn _verify_deposit_proof(
+            ref self: ContractState, proof: Span<felt252>,
+        ) -> DepositProofInputs {
+            let verifier = IDepositVerifierContractDispatcher {
+                contract_address: self.deposit_verifier_address.read(),
+            };
+
+            let public_inputs = verifier.verify_ultra_keccak_honk_proof(proof).unwrap();
+
+            DepositProofInputs {
+                in_commitment_root: (*public_inputs.at(0)),
+                in_public_amount: (*public_inputs.at(1)),
+                out_receiver_commitment: (*public_inputs.at(2)),
+                out_root: (*public_inputs.at(3)),
             }
         }
     }

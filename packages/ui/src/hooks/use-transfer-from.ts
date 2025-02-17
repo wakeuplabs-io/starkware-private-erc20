@@ -2,10 +2,10 @@ import { useState } from "react";
 import { useContract, useSendTransaction } from "@starknet-react/core";
 import {
   MERKLE_TREE_DEPTH,
-  PRIVATE_ERC20_ABI,
-  PRIVATE_ERC20_CONTRACT_ADDRESS,
-  PRIVATE_ERC20_DEPLOY_BLOCK,
-  PRIVATE_ERC20_EVENT_KEY,
+  ENIGMA_ABI,
+  ENIGMA_CONTRACT_ADDRESS,
+  ENIGMA_DEPLOY_BLOCK,
+  ENIGMA_APPROVAL_EVENT_KEY,
 } from "@/shared/config/constants";
 import {
   ApprovalEvent,
@@ -27,8 +27,8 @@ export const useTransferFrom = () => {
   const [loading, setLoading] = useState(false);
 
   const { contract } = useContract({
-    abi: PRIVATE_ERC20_ABI,
-    address: PRIVATE_ERC20_CONTRACT_ADDRESS,
+    abi: ENIGMA_ABI,
+    address: ENIGMA_CONTRACT_ADDRESS,
   });
 
   const { sendAsync } = useSendTransaction({
@@ -56,8 +56,8 @@ export const useTransferFrom = () => {
       // TODO: query all this with indexer instead
       do {
         const res = await provider.getEvents({
-          address: PRIVATE_ERC20_CONTRACT_ADDRESS,
-          from_block: { block_number: PRIVATE_ERC20_DEPLOY_BLOCK },
+          address: ENIGMA_CONTRACT_ADDRESS,
+          from_block: { block_number: ENIGMA_DEPLOY_BLOCK },
           to_block: { block_number: lastBlock.block_number },
           keys: [[num.toHex(hash.starknetKeccak("Approval"))]],
           chunk_size: 10,
@@ -66,23 +66,23 @@ export const useTransferFrom = () => {
 
         const parsed = Events.parseEvents(
           res.events,
-          Events.getAbiEvents(PRIVATE_ERC20_ABI),
-          CallData.getAbiStruct(PRIVATE_ERC20_ABI),
-          CallData.getAbiEnum(PRIVATE_ERC20_ABI)
+          Events.getAbiEvents(ENIGMA_ABI),
+          CallData.getAbiStruct(ENIGMA_ABI),
+          CallData.getAbiEnum(ENIGMA_ABI)
         );
 
         const sortedApprovalEvents = parsed.reduce((acc, event) => {
-          if (event[PRIVATE_ERC20_EVENT_KEY]) {
+          if (event[ENIGMA_APPROVAL_EVENT_KEY]) {
             acc.push({
-              allowance_hash: event[PRIVATE_ERC20_EVENT_KEY]
+              allowance_hash: event[ENIGMA_APPROVAL_EVENT_KEY]
                 .allowance_hash as bigint,
-              allowance_relationship: event[PRIVATE_ERC20_EVENT_KEY]
+              allowance_relationship: event[ENIGMA_APPROVAL_EVENT_KEY]
                 .allowance_relationship as bigint,
-              output_enc_owner: event[PRIVATE_ERC20_EVENT_KEY]
+              output_enc_owner: event[ENIGMA_APPROVAL_EVENT_KEY]
                 .output_enc_owner as string,
-              output_enc_spender: event[PRIVATE_ERC20_EVENT_KEY]
+              output_enc_spender: event[ENIGMA_APPROVAL_EVENT_KEY]
                 .output_enc_spender as string,
-              timestamp: event[PRIVATE_ERC20_EVENT_KEY].timestamp as bigint,
+              timestamp: event[ENIGMA_APPROVAL_EVENT_KEY].timestamp as bigint,
             });
           }
           return acc;
@@ -213,8 +213,9 @@ export const useTransferFrom = () => {
 
       // rebuild tree
       const tree = new MerkleTree();
-      const orderedNotes = notesArray.sort((a, b) =>
-        parseInt((a.index! - b.index!).toString())
+      const orderedNotes = notesArray.sort((a, b) =>{
+        return  parseInt((a.index - b.index).toString())
+      }
       );
       for (const note of orderedNotes) {
         await tree.addCommitment(note.commitment);

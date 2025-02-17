@@ -1,5 +1,5 @@
+use common::definitions::{account, allowance_hash, allowance_relationship};
 use std::hash::poseidon2::Poseidon2::hash;
-use common::definitions::{allowance_relationship, allowance_hash, account};
 
 fn main(
     in_private_key: Field,
@@ -23,7 +23,13 @@ fn test_correct_allowance() {
     let out_allowance_hash = hash([owner_address, in_spender, in_amount], 3);
     let out_relationship_id = hash([owner_address, in_spender], 2);
 
-    main(owner_private_key, in_amount, in_spender, out_allowance_hash, out_relationship_id);
+    main(
+        owner_private_key,
+        in_amount,
+        in_spender,
+        out_allowance_hash,
+        out_relationship_id,
+    );
 }
 
 #[test(should_fail)]
@@ -38,7 +44,13 @@ fn test_incorrect_amount() {
     );
     let out_relationship_id = hash([owner_address, in_spender], 2);
 
-    main(owner_private_key, in_amount, in_spender, out_allowance_hash, out_relationship_id);
+    main(
+        owner_private_key,
+        in_amount,
+        in_spender,
+        out_allowance_hash,
+        out_relationship_id,
+    );
 }
 
 #[test(should_fail)]
@@ -53,5 +65,11 @@ fn test_incorrect_owner() {
     );
     let out_relationship_id = hash([owner_address, in_spender], 2);
 
-    main(owner_private_key, in_amount, in_spender, out_allowance_hash, out_relationship_id);
+    main(
+        owner_private_key,
+        in_amount,
+        in_spender,
+        out_allowance_hash,
+        out_relationship_id,
+    );
 }

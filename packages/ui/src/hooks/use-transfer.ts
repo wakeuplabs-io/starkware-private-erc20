@@ -1,8 +1,8 @@
 import { ProofService } from "@/services/proof.service";
 import { useContract, useSendTransaction } from "@starknet-react/core";
 import {
-  PRIVATE_ERC20_ABI,
-  PRIVATE_ERC20_CONTRACT_ADDRESS,
+  ENIGMA_ABI,
+  ENIGMA_CONTRACT_ADDRESS,
 } from "@/shared/config/constants";
 import { MerkleTree } from "@/lib/merkle-tree";
 import { AccountService } from "@/services/account.service";
@@ -17,8 +17,8 @@ export const useTransfer = () => {
   const [loading, setLoading] = useState(false);
 
   const { contract } = useContract({
-    abi: PRIVATE_ERC20_ABI,
-    address: PRIVATE_ERC20_CONTRACT_ADDRESS,
+    abi: ENIGMA_ABI,
+    address: ENIGMA_CONTRACT_ADDRESS,
   });
 
   const { sendAsync } = useSendTransaction({
