@@ -257,6 +257,31 @@ We can continue doing transfers until spending all the allowance but we can neve
 ![Attempt higher than allowed transfer_from](./assets/demo/approve/image-9.png)
 
 
+
+### Deposit / Buy
+
+Now we'll showcase the user experience while acquiring tokens. You can find the full video at `./assets/demo/deposit/demo.mov`
+
+In this case only one wallet is required for the demo. We'll note the user balance is 999999.0 ENG and click on "Buy".
+
+![Before state](./assets/demo/deposit/image.png)
+
+Then enter amount we want to "Buy", noting the amount of eth required
+
+![alt text](./assets/demo/deposit/image-1.png)
+
+Approve eth for the contract
+
+![Approve eth](./assets/demo/deposit/image-2.png)
+
+Then the buy operation itself
+
+![Send buy transaction](./assets/demo/deposit/image-3.png)
+
+And lastly just wait for the transaction to be mined and the new balance to be reflected
+
+![Result](./assets/demo/deposit/image-4.png)
+
 # Deployments
 
 
