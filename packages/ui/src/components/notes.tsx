@@ -8,7 +8,11 @@ import { Input } from "./ui/input";
 import { toast } from "@/hooks/use-toast";
 import { ToastAction } from "@radix-ui/react-toast";
 
-export const Notes: React.FC = () => {
+interface NotesProps {
+  showBalance: boolean;
+}
+
+export const Notes: React.FC<NotesProps> = ({ showBalance }) => {
   const { notes } = useUserNotes();
   const { sendDeposit, loading: depositLoading } = useDeposit();
 
@@ -71,8 +75,6 @@ export const Notes: React.FC = () => {
         </div>
       </div>
 
-
-
       <div className="flex flex-col px-6 py-2 bg-white rounded-3xl border border-primary">
         <div className="flex justify-between items-center py-2">
           <h1 className="font-semibold">Notes</h1>
@@ -95,24 +97,20 @@ export const Notes: React.FC = () => {
             )}
 
             {sortedNotes.map((note) => (
-              <li
-                key={note.commitment}
-                className="flex justify-between py-6 pr-2"
-              >
+              <li key={note.commitment} className="flex justify-between py-6 pr-2">
                 <span
                   className={cn({
                     "line-through": note.spent,
                   })}
                 >
-                  {shortenString(note.commitment.toString(16))} (
-                  {note.index.toString()})
+                  {shortenString(note.commitment.toString(16))} ({note.index.toString()})
                 </span>
                 <span
                   className={cn({
                     "line-through": note.spent,
                   })}
                 >
-                  {note.value?.toString()}
+                  {showBalance ? note.value?.toString() : "****"}
                 </span>
               </li>
             ))}
@@ -120,6 +118,5 @@ export const Notes: React.FC = () => {
         )}
       </div>
     </div>
-
   );
 };

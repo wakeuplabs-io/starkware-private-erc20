@@ -1,5 +1,4 @@
 use starknet::ContractAddress;
-use starknet::syscalls::get_caller_address;
 
 
 #[starknet::interface]
@@ -63,17 +62,6 @@ pub trait IPrivado<TContractState> {
     /// Reads current_root from contract
     fn current_commitment_index(self: @TContractState) -> u256;
 }
-
-#[starknet::interface]
-pub trait IERC20<TContractState> {
-    fn transfer_from(
-        ref self: TContractState,
-        sender: ContractAddress,
-        recipient: ContractAddress,
-        amount: u256
-    ) -> bool;
-}
-
 
 #[starknet::contract]
 pub mod Privado {

@@ -13,3 +13,9 @@ pub mod verifiers {
     pub mod transfer_from;
     pub use transfer_from::*;
 }
+
+pub mod erc20 {
+    pub mod eth;
+    pub use eth::*;
+}
+
