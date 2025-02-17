@@ -12,6 +12,8 @@ pub mod verifiers {
     pub use transfer::*;
     pub mod transfer_from;
     pub use transfer_from::*;
+    pub mod deposit;
+    pub use deposit::*;
 }
 
 pub mod erc20 {

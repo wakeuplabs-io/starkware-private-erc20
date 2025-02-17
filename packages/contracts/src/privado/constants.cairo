@@ -14,6 +14,12 @@ pub const APPROVE_VERIFIER_ADDRESS: felt252 = 0x028236f4aad88c151a9776c3b23427c9
 // 0x0086fe3a1c7cab01a7551b4ce095fae9bc5a85ccefb34ce90bea444e281c3949 sepolia
 pub const TRANSFER_FROM_VERIFIER_ADDRESS: felt252 = 0x0086fe3a1c7cab01a7551b4ce095fae9bc5a85ccefb34ce90bea444e281c3949;
 
+// TBD
+pub const DEPOSIT_VERIFIER_ADDRESS: felt252 = 0x0;
+
+// 0x049d36570d4e46f48e99674bd3fcc84644ddd6b96f7c741b1562b82f9e004dc7
+pub const ETH_ERC20_TOKEN: felt252 = 0x049d36570d4e46f48e99674bd3fcc84644ddd6b96f7c741b1562b82f9e004dc7;
+
 // should already include the first commitment
 pub const MERKLE_TREE_INITIAL_ROOT: u256 = 0x27420ad1d0dfacbbe88a1c7b10ee82e1a0d60251199b207123dabfe0a6cb7880;
 pub fn GET_MINT_COMMITMENT() -> (u256, ByteArray) {

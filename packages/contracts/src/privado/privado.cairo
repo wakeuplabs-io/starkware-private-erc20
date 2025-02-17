@@ -1,6 +1,5 @@
 use starknet::ContractAddress;
 
-
 #[starknet::interface]
 pub trait IPrivado<TContractState> {
     /// Returns the name of the token.
@@ -52,7 +51,7 @@ pub trait IPrivado<TContractState> {
     ) -> bool;
 
     fn deposit(
-        ref self: TContractState, proof: Span<felt252>, receiver_enc_output: ByteArray
+        ref self: TContractState, proof: Span<felt252>, receiver_enc_output: Span<ByteArray>,
     ) -> bool;
 
 
@@ -74,15 +73,15 @@ pub mod Privado {
         ITransferVerifierContractDispatcherTrait, ITransferVerifierContractDispatcher,
         IApproveVerifierContractDispatcherTrait, IApproveVerifierContractDispatcher,
         ITransferFromVerifierContractDispatcherTrait, ITransferFromVerifierContractDispatcher,
+        IDepositVerifierContractDispatcherTrait, IDepositVerifierContractDispatcher 
     };
+    use contracts::erc20::{IERC20Dispatcher, IERC20DispatcherTrait};
     use contracts::privado::constants::{
         TOKEN_NAME, TOKEN_SYMBOL, TOKEN_DECIMALS, MERKLE_TREE_INITIAL_ROOT,
         TRANSFER_VERIFIER_ADDRESS, APPROVE_VERIFIER_ADDRESS, TRANSFER_FROM_VERIFIER_ADDRESS,
-        GET_MINT_COMMITMENT,
+        DEPOSIT_VERIFIER_ADDRESS, ETH_ERC20_TOKEN, GET_MINT_COMMITMENT
     };
-    use starknet::get_block_timestamp;
-
-
+    use starknet::{get_block_timestamp, get_caller_address, get_contract_address};
     //
     // Storage
     //
@@ -102,6 +101,8 @@ pub mod Privado {
         pub transfer_verifier_address: ContractAddress,
         pub approve_verifier_address: ContractAddress,
         pub transfer_from_verifier_address: ContractAddress,
+        pub deposit_verifier_address: ContractAddress,
+        pub eth_erc20_token: ContractAddress,
     }
 
     //
@@ -192,10 +193,11 @@ pub mod Privado {
     }
 
     #[derive(Drop)]
-    pub struct TransferFromInputs {
-        sender: ContractAddress,
-        recipient: ContractAddress,
-        amount: u256
+    pub struct DepositProofInputs {
+        in_commitment_root: u256,
+        in_public_amount: u256,
+        out_receiver_commitment: u256,
+        out_root: u256,
     }
 
     //
@@ -214,6 +216,8 @@ pub mod Privado {
         self
             .transfer_from_verifier_address
             .write(TRANSFER_FROM_VERIFIER_ADDRESS.try_into().unwrap());
+        self.deposit_verifier_address.write(DEPOSIT_VERIFIER_ADDRESS.try_into().unwrap());
+        self.eth_erc20_token.write(ETH_ERC20_TOKEN.try_into().unwrap());
 
         // current root already includes initial mint
         self.current_root.write(MERKLE_TREE_INITIAL_ROOT);
@@ -364,28 +368,35 @@ pub mod Privado {
         }
 
         fn deposit(
-            ref self: ContractState, proof: Span<felt252>, receiver_enc_output: ByteArray
+            ref self: ContractState, proof: Span<felt252>, receiver_enc_output: Span<ByteArray>,
         ) -> bool {
-            let public_inputs = self._verify_transfer_proof(proof);
-            
+            let public_inputs = self._verify_deposit_proof(proof);
+            let from = get_caller_address();
+            let to = get_contract_address();
+            let amount = public_inputs.in_public_amount;
+            let amount_felt: felt252 = amount.low.into();
+            println!("Hello world!");
+            println!("Hello world!");
+            println!("Hello world!");
+            println!("Hello world!");
+            println!("Hello world!");
+            println!("Hello world!");
+            println!("Hello world!");
+            println!("Hello world!");
             assert(
                 public_inputs.in_commitment_root == self.current_root.read(), Errors::UNKNOWN_ROOT,
             );
             
-            // self.current_root.write(public_inputs.out_root);
 
-            // // Obtener la dirección del usuario que realiza el depósito
-            // let caller_address = get_caller_address();
+            let eth_erc20_token = IERC20Dispatcher {
+                contract_address: self.eth_erc20_token.read(),
+            };
+            eth_erc20_token.transfer_from(from, to, amount_felt);
 
-            // // Transferir ETH desde el usuario al contrato
-            // let eth_contract: IERC20Dispatcher = IERC20Dispatcher {
-            //     contract_address: ETH_CONTRACT_ADDRESS
-            // };
-            // eth_contract.transfer_from(caller_address, self.contract_address(), amount).unwrap();
+            self.current_root.write(public_inputs.out_root);
 
-            // // Crear la nota real y una nota ficticia
-            // self._create_note(public_inputs.out_receiver_commitment, receiver_enc_output);
-            // self._create_note(0, "0");
+            self._create_note(public_inputs.out_receiver_commitment, receiver_enc_output.at(0).clone(),);
+            self._create_note(0, "0");
             
             true
         }
@@ -496,23 +507,19 @@ pub mod Privado {
             }
         }
 
-        fn _transfer_from(
-            ref self: ContractState, sender: ContractAddress, recipient: ContractAddress, amount: u256
-        ) -> TransferFromInputs {
-            let verifier = IERC20Dispatcher {
-                contract_address: self.transfer_from_verifier_address.read(),
+        fn _verify_deposit_proof(
+            ref self: ContractState, proof: Span<felt252>,
+        ) -> DepositProofInputs {
+            let verifier = IDepositVerifierContractDispatcher {
+                contract_address: self.deposit_verifier_address.read(),
             };
             let public_inputs = verifier.verify_ultra_keccak_honk_proof(proof).unwrap();
 
-            TransferFromInputs {
-                // in_commitment_root: (*public_inputs.at(0)),
-                // in_commitment_spending_tracker: (*public_inputs.at(1)),
-                // in_allowance_hash: (*public_inputs.at(2)),
-                // in_allowance_relationship: (*public_inputs.at(3)),
-                // out_allowance_hash: (*public_inputs.at(4)),
-                // out_receiver_commitment: (*public_inputs.at(5)),
-                // out_owner_commitment: (*public_inputs.at(6)),
-                // out_root: (*public_inputs.at(7)),
+            DepositProofInputs {
+                in_commitment_root: (*public_inputs.at(0)),
+                in_public_amount: (*public_inputs.at(2)),
+                out_receiver_commitment: (*public_inputs.at(5)),
+                out_root: (*public_inputs.at(7)),
             }
         }
     }
