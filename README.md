@@ -139,6 +139,44 @@ Abbreviations:
 Some clarifications:
 - An easy improvement for current system and probable a necessary one we're skipping in this POC is to use indexers like [thegraph.com](https://thegraph.com) to query events
 
+### Deposit
+
+A deposit works similarly to a regular transfer, except that the user transfers ETH to the contract. Conceptually, you can think of it as “burning” ETH from the user’s balance and creating a new commitment in the Enigma platform.
+
+```mermaid
+sequenceDiagram
+    participant Receiver
+    participant Relayer as Relayer/Sender
+    participant Enigma Contract
+    participant ERC20 Contract
+
+    %% generate transaction
+    Receiver->>ERC20 Contract: approve(Enigma Contract, amount)
+    Receiver->>Receiver: Generate output commitments (sender, receiver)
+    Receiver->>Receiver: Generate zk proof
+
+    %% submit transaction
+    Receiver->>+Relayer: deposit(proof, enc_outputs) tx
+    Relayer->>+Enigma Contract: deposit(proof, enc_outputs)
+    Enigma Contract->>Enigma Contract: emit NewCommitment x2
+    Enigma Contract->>ERC20 Contract: transfer_from(Receiver, Enigma contract, amount)
+    Enigma Contract->>-Relayer: tx_hash
+    Relayer->>-Receiver: tx_hash
+
+    %% receiver discovers new balance
+    Receiver->>+Enigma Contract: Fetch Commitment events
+    Enigma Contract->>-Receiver: Commitments
+    Receiver->>Receiver: Discover new commitment from deposit
+```
+
+Circuit checks
+- The receiver commitment are correct, including the amount and owner of each.
+- The new root does not remove any elements from the tree.
+- The new root contains both the new commitments.
+
+Some clarifications:
+
+- For each 1 ETH deposited, the user receives 1,000,000 internal tokens in the platform. These tokens are minted within the private pool to represent the user’s deposit.
 
 ### Compliance proposition
 
