@@ -139,6 +139,17 @@ Abbreviations:
 Some clarifications:
 - An easy improvement for current system and probable a necessary one we're skipping in this POC is to use indexers like [thegraph.com](https://thegraph.com) to query events
 
+
+### Compliance proposition
+
+The simplest and most direct approach to addressing compliance is by implementing a backdoor that allows the contract owner to disclose user information to authorities when required. This can be achieved by mandating all users to share viewing keys with the entity managing the contract.
+
+A practical method for this is asymmetric encryption, where users encrypt their viewing private key using the entity’s public key before submitting them. To ensure correctness, we could validate the encryption through zk circuits and restrict contract functionality to only those accounts that have shared their keys—both for senders and receivers.
+
+With this setup, the entity can maintain a cold wallet, ensuring that all data remains private while still being accessible when necessary.
+
+Another alternatives can be using algorithmic checks on wallets at the moment of entering and exiting the pool, similar to what [Railway](https://www.railway.xyz/) does with [Railgun](https://docs.railgun.org/wiki/assurance/private-proofs-of-innocence). 
+
 ### Application
 
 There're several packages that form the application and they interact this way:
@@ -247,6 +258,16 @@ We can continue doing transfers until spending all the allowance but we can neve
 
 
 # Deployments
+
+
+Sepolia deployment
+
+- UI: [https://enigma.wakeuplabs.link](https://enigma.wakeuplabs.link)
+- TOKEN_ADDRESS: `0x01b79110567378b515895d95afdd8c88ace6ed81b582972d8bbdd5656e7c654e`
+- TRANSFER_VERIFIER_ADDRESS: `0x024c512b2b7649ce7fb4ecc26e161312a5fb07b4253bcf0fa2dd250a430cd467`
+- APPROVE_VERIFIER_ADDRESS: `0x028236f4aad88c151a9776c3b23427c96e841e8d1f3885f94d5fd8d8039f7371`
+- TRANSFER_FROM_VERIFIER_ADDRESS: `0x0086fe3a1c7cab01a7551b4ce095fae9bc5a85ccefb34ce90bea444e281c3949`
+
 
 ## Deployments setup
 
