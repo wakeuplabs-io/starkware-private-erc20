@@ -2,7 +2,7 @@ import { Abi } from "starknet";
 
 export const PRIVATE_ERC20_DEPLOY_BLOCK = 524850;
 export const PRIVATE_ERC20_EVENT_KEY = "contracts::privado::privado::Privado::Approval";
-export const PRIVATE_ERC20_CONTRACT_ADDRESS = "0x01b79110567378b515895d95afdd8c88ace6ed81b582972d8bbdd5656e7c654e";
+export const PRIVATE_ERC20_CONTRACT_ADDRESS = "0x034c08f6f2273d9b0dbb37335483d67a885b464b61e3389d2949ca78a7bc28c2";
 export const ZERO_BIG_INT = BigInt(0);
 export const MERKLE_TREE_DEPTH = 12;
 export const DECIMALS = 6n;
