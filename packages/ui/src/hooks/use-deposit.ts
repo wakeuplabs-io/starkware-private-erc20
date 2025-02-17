@@ -8,7 +8,7 @@ import {
   PRIVATE_ERC20_CONTRACT_ADDRESS,
   PRIVATE_TO_PUBLIC_RATIO,
   PUBLIC_ERC20_ABI,
-  PUBLIC_ERC20_CONTRACT_ADDRESS,
+  ETH_CONTRACT_ADDRESS,
 } from "@/shared/config/constants";
 import { MerkleTree } from "@/lib/merkle-tree";
 import { AccountService } from "@/services/account.service";
@@ -28,7 +28,7 @@ export const useDeposit = () => {
 
   const { contract: erc20Contract } = useContract({
     abi: PUBLIC_ERC20_ABI,
-    address: PUBLIC_ERC20_CONTRACT_ADDRESS,
+    address: ETH_CONTRACT_ADDRESS,
   });
 
   const { sendAsync } = useSendTransaction({
@@ -108,7 +108,7 @@ export const useDeposit = () => {
 
       const approvePopulate = erc20Contract.populate("approve", [
         PRIVATE_ERC20_CONTRACT_ADDRESS,
-        props.amount * 10n ** PRIVATE_TO_PUBLIC_RATIO
+        props.amount * PRIVATE_TO_PUBLIC_RATIO
       ]);
 
       await sendAsync([approvePopulate]);

@@ -2,12 +2,13 @@ import { Abi } from "starknet";
 
 export const PRIVATE_ERC20_DEPLOY_BLOCK = 524850;
 export const PRIVATE_ERC20_EVENT_KEY = "contracts::privado::privado::Privado::Approval";
-export const PRIVATE_ERC20_CONTRACT_ADDRESS = "0x01b79110567378b515895d95afdd8c88ace6ed81b582972d8bbdd5656e7c654e";
-export const PUBLIC_ERC20_CONTRACT_ADDRESS = "0x049d36570d4e46f48e99674bd3fcc84644ddd6b96f7c741b1562b82f9e004dc7";
+export const PRIVATE_ERC20_CONTRACT_ADDRESS = "0x013f2548d101f4f42a668a1881b7bb6e10ee5ff8868c533467f817c6663b1ef0";
+export const ETH_CONTRACT_ADDRESS = "0x049d36570d4e46f48e99674bd3fcc84644ddd6b96f7c741b1562b82f9e004dc7";
 export const ZERO_BIG_INT = BigInt(0);
 export const MERKLE_TREE_DEPTH = 12;
 export const DECIMALS = 6n;
-export const PRIVATE_TO_PUBLIC_RATIO = 6n;
+export const PRIVATE_TO_PUBLIC_RATIO = 1000000n;
+
 export const PRIVATE_ERC20_ABI: Abi = [
   {
     "name": "PrivadoImpl",

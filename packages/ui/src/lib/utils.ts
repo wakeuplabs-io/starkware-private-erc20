@@ -14,11 +14,11 @@ export const shortenString = (address: string): string => {
   return `${address.slice(0, 6)}...${address.slice(-4)}`;
 };
 
-export const formatTokenAmount = (value: bigint): string => {
-  const factor = 10n ** DECIMALS;
+export const formatTokenAmount = (value: bigint, tokenDecimals: bigint = DECIMALS, precision: number = 2): string => {
+  const factor = 10n ** tokenDecimals;
   const integerPart = value / factor;
   const decimalPart = value % factor;
-  return `${integerPart}.${decimalPart.toString().padStart(parseInt(DECIMALS.toString()), "0").slice(0, 2)}`;
+  return `${integerPart}.${decimalPart.toString().padStart(parseInt(tokenDecimals.toString()), "0").slice(0, precision)}`;
 };
 
 export const stringify = (obj: any) =>

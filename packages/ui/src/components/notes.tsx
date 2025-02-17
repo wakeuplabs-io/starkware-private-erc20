@@ -1,12 +1,13 @@
 import { Plus, ArrowLeft } from "lucide-react";
 import { Button, buttonVariants } from "./ui/button";
-import { buildExplorerUrl, cn, shortenString } from "@/lib/utils";
+import { buildExplorerUrl, cn, formatTokenAmount, shortenString } from "@/lib/utils";
 import { useUserNotes } from "@/hooks/use-user-notes";
 import { useState, useMemo, useCallback } from "react";
 import { Input } from "./ui/input";
 import { toast } from "@/hooks/use-toast";
 import { ToastAction } from "@radix-ui/react-toast";
 import { useDeposit } from "@/hooks/use-deposit";
+import { PRIVATE_TO_PUBLIC_RATIO } from "@/shared/config/constants";
 
 interface NotesProps {
   showBalance: boolean;
@@ -52,17 +53,20 @@ export const Notes: React.FC<NotesProps> = ({ showBalance }: NotesProps) => {
     }
   }, [amount]);
 
+  const ethAmount = useMemo(() => {
+    return BigInt(amount) * PRIVATE_TO_PUBLIC_RATIO
+  }, [amount]);
+
   return (
     <div className="flex flex-col gap-4">
       {showBuy ? (
-        // Vista de Compra
         <div className="flex flex-col px-6 py-6 bg-white rounded-3xl border border-primary">
           <div className="flex justify-between items-center pb-4">
             <h1 className="text-lg font-semibold">Buy Enigma</h1>
           </div>
           <div className="flex flex-col gap-2 pb-20">
             <label className="text-sm text-gray-500">Amount</label>
-            <div className="flex items-center border border-gray-300 rounded-lg px-3 py-2">
+            <div className="flex items-center border border-gray-300 rounded-lg">
               <Input
                 type="text"
                 placeholder="0.00"
@@ -70,7 +74,7 @@ export const Notes: React.FC<NotesProps> = ({ showBalance }: NotesProps) => {
                 onChange={(e) => setAmount(e.target.value)}
                 className="border-none"
               />
-              <span className="text-gray-500 text-sm">~ 0.00 ETH</span>
+              <span className="text-gray-500 text-sm">~ {formatTokenAmount(ethAmount, 18n, 8)} ETH</span>
             </div>
           </div>
 
@@ -93,7 +97,6 @@ export const Notes: React.FC<NotesProps> = ({ showBalance }: NotesProps) => {
           </div>
         </div>
       ) : (
-        // Vista Normal (Lista de Notes)
         <div className="flex flex-col px-6 py-2 bg-white rounded-3xl border border-primary">
           <div className="flex justify-between items-center py-2">
             <h1 className="font-semibold">Notes</h1>
