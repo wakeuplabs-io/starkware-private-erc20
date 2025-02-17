@@ -3,7 +3,7 @@ import { Notes } from "@/components/notes";
 import { Receive } from "@/components/receive";
 import { Transfer } from "@/components/transfer";
 import { useBalance } from "@/hooks/use-balance";
-import { cn, formatTokenAmount } from "@/lib/utils";
+import { cn } from "@/lib/utils";
 import { createFileRoute } from "@tanstack/react-router";
 import { ArrowDown, ArrowUpRight, List, Check, Eye, EyeOff } from "lucide-react";
 import { useState } from "react";

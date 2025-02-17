@@ -1,23 +1,22 @@
-import { Eye, EyeClosed } from "lucide-react";
-import { Button } from "./ui/button";
-import { cn, shortenString } from "@/lib/utils";
+import { Plus, ArrowLeft } from "lucide-react";
+import { Button, buttonVariants } from "./ui/button";
+import { buildExplorerUrl, cn, shortenString } from "@/lib/utils";
 import { useUserNotes } from "@/hooks/use-user-notes";
-import { useDeposit } from "@/hooks/use-deposit";
-import { useCallback, useMemo, useState } from "react";
+import { useState, useMemo, useCallback } from "react";
 import { Input } from "./ui/input";
 import { toast } from "@/hooks/use-toast";
 import { ToastAction } from "@radix-ui/react-toast";
+import { useDeposit } from "@/hooks/use-deposit";
 
 interface NotesProps {
   showBalance: boolean;
 }
 
-export const Notes: React.FC<NotesProps> = ({ showBalance }) => {
+export const Notes: React.FC<NotesProps> = ({ showBalance }: NotesProps) => {
   const { notes } = useUserNotes();
+  const [showBuy, setShowBuy] = useState(false);
+  const [amount, setAmount] = useState("");
   const { sendDeposit, loading: depositLoading } = useDeposit();
-
-  const [show, setShow] = useState(false);
-  const [amountToDeposit, setAmountToDeposit] = useState("");
 
   const sortedNotes = useMemo(
     () => notes.sort((a, b) => parseInt((b.index - a.index).toString())),
@@ -26,20 +25,18 @@ export const Notes: React.FC<NotesProps> = ({ showBalance }) => {
 
   const onDeposit = useCallback(async () => {
     try {
-      const amountBn = BigInt((parseFloat(amountToDeposit) * 10 ** 6).toFixed(0));
+      const amountBn = BigInt((parseFloat(amount) * 10 ** 6).toFixed(0));
 
       const txHash = await sendDeposit({
         amount: amountBn,
       });
 
       toast({
-        title: "Transfer successful",
-        description: `Transaction hash: ${txHash}`,
+        title: "Transaction sent successfully",
         action: (
           <ToastAction
-            onClick={() =>
-              window.open(`https://sepolia.voyager.online/tx/${txHash}`, "_blank")
-            }
+            className={buttonVariants({ variant: "link", size: "sm" })}
+            onClick={() => window.open(buildExplorerUrl(txHash), "_blank")}
             altText="View transaction"
           >
             View transaction
@@ -48,75 +45,88 @@ export const Notes: React.FC<NotesProps> = ({ showBalance }) => {
       });
     } catch (e) {
       toast({
-        title: "Transfer failed",
+        title: "Something went wrong",
         description: (e as Error).message,
         variant: "destructive",
       });
     }
-  }, [sendDeposit, amountToDeposit]);
+  }, [amount]);
 
   return (
     <div className="flex flex-col gap-4">
-      <div className="flex flex-col px-6 py-2 bg-white rounded-3xl border border-primary">
-        <div className="flex justify-between items-center py-2 gap-2">
-          <Input
-            type="text"
-            placeholder="Amount"
-            value={amountToDeposit}
-            onChange={(e) => setAmountToDeposit(e.target.value)}
-            className="flex-1 px-3 py-2 border border-gray-300 rounded-lg"
-          />
-          <Button
-            className="px-6 py-2 bg-primary text-white font-semibold rounded-lg min-w-[120px]"
-            onClick={() => onDeposit()}
-          >
-            {depositLoading ? "Depositing..." : "Deposit"}
-          </Button>
+      {showBuy ? (
+        // Vista de Compra
+        <div className="flex flex-col px-6 py-6 bg-white rounded-3xl border border-primary">
+          <div className="flex justify-between items-center pb-4">
+            <h1 className="text-lg font-semibold">Buy Enigma</h1>
+          </div>
+          <div className="flex flex-col gap-2 pb-20">
+            <label className="text-sm text-gray-500">Amount</label>
+            <div className="flex items-center border border-gray-300 rounded-lg px-3 py-2">
+              <Input
+                type="text"
+                placeholder="0.00"
+                value={amount}
+                onChange={(e) => setAmount(e.target.value)}
+                className="border-none"
+              />
+              <span className="text-gray-500 text-sm">~ 0.00 ETH</span>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-3">
+            <button
+              onClick={() => setShowBuy(false)}
+              className="p-3 border border-gray-300 rounded-lg hover:bg-gray-200"
+            >
+              <ArrowLeft size={20} />
+            </button>
+
+            <Button
+              className="flex-1 bg-[#0B0B51] text-white font-semibold text-lg py-3 rounded-lg"
+              onClick={onDeposit}
+            >
+              {depositLoading
+                ? "Buying..."
+                : "Buy"}
+            </Button>
+          </div>
         </div>
-      </div>
+      ) : (
+        // Vista Normal (Lista de Notes)
+        <div className="flex flex-col px-6 py-2 bg-white rounded-3xl border border-primary">
+          <div className="flex justify-between items-center py-2">
+            <h1 className="font-semibold">Notes</h1>
+            <Button
+              onClick={() => setShowBuy(true)}
+              className={cn(
+                "h-9 px-4 text-sm border border-input hover:bg-accent bg-transparent rounded-lg border-primary flex items-center gap-1 text-black"
+              )}
+            >
+              <Plus className="h-4 text-black" /> Buy
+            </Button>
+          </div>
 
-      <div className="flex flex-col px-6 py-2 bg-white rounded-3xl border border-primary">
-        <div className="flex justify-between items-center py-2">
-          <h1 className="font-semibold">Notes</h1>
-          <Button
-            size="icon"
-            variant="ghost"
-            className="bg-white"
-            onClick={() => setShow(!show)}
-          >
-            {show ? <Eye /> : <EyeClosed />}
-          </Button>
+          {sortedNotes.length > 0 ? (
+            <ul className="divide-y border-t">
+              {sortedNotes.map((note) => (
+                <li key={note.commitment} className="flex justify-between py-6 pr-2">
+                  <span className={cn({ "line-through": note.spent })}>
+                    {shortenString(note.commitment.toString(16))} ({note.index.toString()})
+                  </span>
+                  <span className={cn({ "line-through": note.spent })}>
+                    {showBalance ? note.value?.toString() : "****"}
+                  </span>
+                </li>
+              ))}
+            </ul>
+          ) : (
+            <li className="flex justify-between py-6 pr-2">
+              <span className="text-muted-foreground">No notes</span>
+            </li>
+          )}
         </div>
-
-        {sortedNotes && show && (
-          <ul className="divide-y border-t">
-            {sortedNotes.length === 0 && (
-              <li className="flex justify-between py-6 pr-2">
-                <span className="text-muted-foreground">No notes</span>
-              </li>
-            )}
-
-            {sortedNotes.map((note) => (
-              <li key={note.commitment} className="flex justify-between py-6 pr-2">
-                <span
-                  className={cn({
-                    "line-through": note.spent,
-                  })}
-                >
-                  {shortenString(note.commitment.toString(16))} ({note.index.toString()})
-                </span>
-                <span
-                  className={cn({
-                    "line-through": note.spent,
-                  })}
-                >
-                  {showBalance ? note.value?.toString() : "****"}
-                </span>
-              </li>
-            ))}
-          </ul>
-        )}
-      </div>
+      )}
     </div>
   );
 };

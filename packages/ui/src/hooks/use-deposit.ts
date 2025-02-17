@@ -3,10 +3,12 @@ import {
   useContract,
   useSendTransaction,
 } from "@starknet-react/core";
-import { BarretenbergService } from "@/services/bb.service";
 import {
   PRIVATE_ERC20_ABI,
   PRIVATE_ERC20_CONTRACT_ADDRESS,
+  PRIVATE_TO_PUBLIC_RATIO,
+  PUBLIC_ERC20_ABI,
+  PUBLIC_ERC20_CONTRACT_ADDRESS,
 } from "@/shared/config/constants";
 import { MerkleTree } from "@/lib/merkle-tree";
 import { AccountService } from "@/services/account.service";
@@ -14,13 +16,19 @@ import { MERKLE_TREE_DEPTH } from "@/shared/config/constants";
 import { useState } from "react";
 import { formatHex } from "@/lib/utils";
 import { notesService } from "@/services/notes.service";
+import { DefinitionsService } from "@/services/definitions.service";
 
 export const useDeposit = () => {
   const [loading, setLoading] = useState(false);
 
-  const { contract } = useContract({
+  const { contract: enigmaContract } = useContract({
     abi: PRIVATE_ERC20_ABI,
     address: PRIVATE_ERC20_CONTRACT_ADDRESS,
+  });
+
+  const { contract: erc20Contract } = useContract({
+    abi: PUBLIC_ERC20_ABI,
+    address: PUBLIC_ERC20_CONTRACT_ADDRESS,
   });
 
   const { sendAsync } = useSendTransaction({
@@ -31,26 +39,25 @@ export const useDeposit = () => {
     amount: bigint;
   }): Promise<string> => {
     setLoading(true);
-
     try {
-      if (!contract) {
+      if (!enigmaContract || !erc20Contract) {
         throw new Error("Contract not initialized");
       }
 
       const callerAccount = await AccountService.getAccount();
       const { notesArray: notes } = await notesService.getNotes();
 
-      const outReceiverNote = await BarretenbergService.generateNote(
-        callerAccount.address,
-        callerAccount.publicKey,
+      const outReceiverNote = await DefinitionsService.note(
+        callerAccount.owner.address,
+        callerAccount.viewer.publicKey,
         props.amount
       );
 
       const tree = new MerkleTree();
+
       const orderedNotes = notes.sort((a, b) =>
         parseInt((a.index! - b.index!).toString())
       );
-      console.log({orderedNotes});
       for (const note of orderedNotes) {
         await tree.addCommitment(note.commitment);
       }
@@ -61,10 +68,10 @@ export const useDeposit = () => {
       await tree.addCommitment(0n);
       const outRoot = tree.getRoot();
       const outPathProof = tree.getProof(outReceiverNote.commitment);
-      console.log(formatHex(inRoot));
+
       console.log({
         // accounts details
-        receiver_account: formatHex(callerAccount.address),
+        receiver_account: formatHex(callerAccount.owner.address),
         // utxo inputs
         in_commitment_root: formatHex(inRoot),
         // utxo outputs
@@ -82,7 +89,7 @@ export const useDeposit = () => {
 
       const generatedProof = await ProofService.generateDepositProof({
         // accounts details
-        receiver_account: formatHex(callerAccount.address),
+        receiver_account: formatHex(callerAccount.owner.address),
         // utxo inputs
         in_commitment_root: formatHex(inRoot),
         // utxo outputs
@@ -98,9 +105,18 @@ export const useDeposit = () => {
           outPathProof.directionSelector.slice(1, MERKLE_TREE_DEPTH),
       });
 
+
+      const approvePopulate = erc20Contract.populate("approve", [
+        PRIVATE_ERC20_CONTRACT_ADDRESS,
+        props.amount * 10n ** PRIVATE_TO_PUBLIC_RATIO
+      ]);
+
+      await sendAsync([approvePopulate]);
+      
       const { transaction_hash } = await sendAsync([
-        contract.populate("deposit", [
+        enigmaContract.populate("deposit", [
           generatedProof,
+          outReceiverNote.encOutput
         ]),
       ]);
 
