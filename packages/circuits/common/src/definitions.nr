@@ -10,8 +10,8 @@ pub fn commitment(owner: Field, value: Field, bliding: Field) -> Field {
     hash([owner, value, bliding], 3)
 }
 
-// commitment_tracker = hash(commitment, bliding) // same bliding as for commitment
-pub fn commitment_tracker(commitment: Field, bliding: Field) -> Field {
+// nullifier = hash(commitment, bliding) // same bliding as for commitment
+pub fn nullifier(commitment: Field, bliding: Field) -> Field {
     hash([commitment, bliding], 2)
 }
 

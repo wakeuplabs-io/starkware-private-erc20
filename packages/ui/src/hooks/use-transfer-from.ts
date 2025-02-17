@@ -119,7 +119,7 @@ export const useTransferFrom = () => {
       }
 
       // fetch all notes
-      const { notesArray, notesMap, spendingTrackersMap } =
+      const { notesArray, notesMap, nullifiersMap } =
         await notesService.getNotes();
 
       let spendableNotes = [];
@@ -139,11 +139,11 @@ export const useTransferFrom = () => {
               )
             );
 
-            const tracker = await DefinitionsService.commitmentTracker(
+            const nullifier = await DefinitionsService.nullifier(
               n.commitment,
               decrypted.bliding
             );
-            if (spendingTrackersMap.get(tracker.toString())) {
+            if (nullifiersMap.get(nullifier.toString())) {
               throw new Error("Note already spent");
             }
 
@@ -153,7 +153,7 @@ export const useTransferFrom = () => {
               index: n.index,
               value: decrypted.value,
               bliding: decrypted.bliding,
-              trackerHash: tracker,
+              nullifier,
             };
           })
         );
@@ -175,7 +175,7 @@ export const useTransferFrom = () => {
         throw new Error("Insufficient funds in notes");
       }
 
-      const inputCommitmentTracker = await DefinitionsService.commitmentTracker(
+      const inputCommitmentTracker = await DefinitionsService.nullifier(
         inputNote.commitment,
         inputNote.bliding!
       );
@@ -247,7 +247,7 @@ export const useTransferFrom = () => {
           inputCommitmentProof.directionSelector,
         in_commitment_bliding: formatHex(inputNote.bliding! % Fr.MODULUS),
         in_commitment_value: formatHex(inputNote.value!),
-        in_commitment_spending_tracker: formatHex(inputCommitmentTracker),
+        in_commitment_nullifier: formatHex(inputCommitmentTracker),
 
         in_allowance_value: formatHex(allowance.allowance),
         in_allowance_hash: formatHex(inAllowanceHash),

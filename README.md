@@ -1,4 +1,4 @@
-# Private ERC20
+# Enigma
 
 ## Overview
 
@@ -12,11 +12,17 @@ A "note" represents ownership information over a certain amount of tokens. The h
 
 ### Nullifier
 
-The nullifier is a unique value derived from a note to prevent double-spending. It is significant because it can only be created by the owner and is unequivocally linked to a single note. This is achieved by using the hash of the note to prevent any attempt at double-spending.
+The nullifier is a unique value derived from a note to prevent double-spending. It is significant because it can only be created by the owner/viewer and is unequivocally linked to a single note. 
 
 ### Keypairs
 
-The user's wallet consists of an asymetric keypair build with sodium Curve25519. Certain relevant information required to use a note is encrypted with the owner's public key and published in the `NewCommitment` event. This ensures that only the user with the corresponding private key can access it. The public and private keys follow standard RSA conventions. For the address, we currently define it as `hash(private_key)` to quickly validate ownership in circuits, as there is no support for RSA key derivation in Noir. One alternative being explored is using [signatures](https://noir-lang.org/docs/reference/NoirJS/noir_js/functions/ecdsa_secp256k1_verify), though this feature is not yet implemented.
+The user's wallet consists of 2 asymmetric keypairs built with sodium Curve25519. There's a `Viewing Keypair` and a `Owner Keypair`. Certain relevant information required to use a note is encrypted with the `Viewing Keypair` public key and published in the `NewCommitment` event. This ensures that only those with the viewing key can see the commitment details like amount and address. For the `address`, we currently define it as `hash(Owner Keypair Private Key)` to quickly validate ownership in circuits, as there is no support for asymmetric key derivation in Noir. One alternative being explored is using [signatures](https://noir-lang.org/docs/reference/NoirJS/noir_js/functions/ecdsa_secp256k1_verify), though this feature is not yet implemented. 
+
+In summary, there're 2 Keypairs for each user, a Viewing Keypair, used to encrypt access data that will be published onchain. And an Owner Keypair that will be used to proof ownership of a zk address.
+
+And so user sharable wallet looks something like this
+- Public key: `PublicKey(ViewingKeypair)`
+- Address: `Hash(OwnerPrivateKey)`
 
 ### Relayer
 
@@ -33,10 +39,10 @@ Currently, the deployer is responsible for creating the first commitment by spec
 
 To rediscover a user's commitment, the process works as follows:
 1. Fetch all NewCommitment { commitment, enc_output, index } events
-2. Fetch all NewNullifier { nullifier_hash } events.
+2. Fetch all NewNullifier { nullifier } events.
 3. Iterate over the commitments:
-   - Attempt decryption. If successful, derive the nullifier_hash and check whether it has already been used.
-   - If the nullifier_hash hasn't been used, add the commitment to the pool of usable commitments and sum up the value.
+   - Attempt decryption. If successful, derive the nullifier and check whether it has already been used.
+   - If the nullifier hasn't been used, add the commitment to the pool of usable commitments and sum up the value.
 
 ### Transfer
 
@@ -86,9 +92,56 @@ Some clarifications:
 - At the moment we limited input notes to just one, we can easily grow this number by just iterating checks and nullifications.
 - Unlike `tornado-core` where the contract maintains and updates the merkle root with all the commitments, in this case we delegate that work to the circuits for cost efficiency and better compatibility of types and hashing functions.
 
+### Approve / TransferFrom
+
+`transfer_from` works pretty similar to `transfer`. 2 Notes will be created (one for the receiver and 1 for the change of the owner) and one nullified. The main difference with `transfer` is the limit on how much we can transfer and who actually does this transfer. 
+
+As per the limit of amount we store an `allowance_hash` onchain. This is the `hash(owner_address, spender_address, amount)` and we verify through circuits this hashes transition is correct. We store this associated to `hash(owner_address, spender_address)`.
+
+As per allowing a third party to do the transfers we'll do that by verifying spender owns `spender_address` specified in the `allowance_hash`. We also need to allow spender to know which commitments to use for payment to properly assemble the output commitments and nullifiers. For this last thing we have 2 options:
+- Sharing with spender specific commitment details. This is the most private option but also the most limited, if new commitments were coming in, spender won't be capable fo using them, or if user uses the shared commitments same. Also requires having enough balance at the moment of the approval.
+- Sharing the viewing key with the spender. This does reveals more data about the owner, as the spender will be capable of seeing all incoming commitments as well as all history commitment. And so requires a bigger level of trust on spender as well for keeping the key safe. On the positive side this can work as a conventional approve system where spender has a limit and can use balance however as long as he doesn't break that limit. Also to preserve privacy user can always rotate the viewing keys.
+
+A diagram of the flow described above:
+
+```mermaid
+sequenceDiagram
+    Owner->>+Blockchain: approve(proof(ah, ri), enc_outputs)
+    Blockchain->>Blockchain: store allowance_hash
+    Blockchain->>Blockchain: emit Approval { enc_outputs... }
+    Blockchain->>-Owner: tx_hash
+
+    
+    Spender->>+Blockchain: get last Approve event
+    Blockchain->>-Spender: Approval { enc_outputs... }
+
+    alt Shared vieiwing key
+    %% recover amount and commitments
+    Spender->>Spender: Recover amount, vieiwing key
+    Spender->>+Blockchain: get owner spendable commtiments
+    Blockchain->>-Spender: Commitments
+
+    else Shared commitments
+    %% recover amount and commitments
+    Spender->>Spender: Recover amount, commitments
+    end
+
+    Spender->>+Blockchain: transfer_from(proof(old_ah, new_ah, commitments, ...))
+    Blockchain->>Blockchain: Check old_ah and update to new_ah
+    Blockchain->>Blockchain: emit NewNullifier, NewCommitment x 2
+    Blockchain->>-Spender: tx_hash
+```
+
+Abbreviations:
+- `ah` = `allowance_hash`
+- `ri` = `relationship_id`
+
+Some clarifications:
+- An easy improvement for current system and probable a necessary one we're skipping in this POC is to use indexers like [thegraph.com](https://thegraph.com) to query events
+
 ### Application
 
-There're several packages in the overall app and they interact this way:
+There're several packages that form the application and they interact this way:
 
 ```mermaid
 sequenceDiagram
@@ -101,8 +154,8 @@ sequenceDiagram
     ui->>ui: Load or generate user zk wallet
 
     %% rebuild user balance
-    ui->>contracts: Fetch commitments/nullifiers
-    contracts->>ui: commitments/nullifiers
+    ui->>+contracts: Fetch commitments/nullifiers
+    contracts->>-ui: commitments/nullifiers
     ui->>ui: build user balance and display
 
     %% build proof 
@@ -116,39 +169,82 @@ sequenceDiagram
     contracts->>+circuits: verify(proof)
     circuits->>-contracts: ok
     contracts->>contracts: update root, emit events, spend note
-    contracts->>ui: tx_hash
+    contracts->>-ui: tx_hash
 ```
 
 Some clarifications:
+- This is overall the same flow for all methods
 - In this context, "circuits" refers to the deployed verifier generated using Garaga.
 - The API is ideally not necessary and serves merely as a workaround of current garaga version 0.15.3 not supporting honk vk/proof calldata encoding. This seems to have been introduced in this pr https://github.com/keep-starknet-strange/garaga/pull/288 recently. Not yet published but we can try incorporating it.
+- An easy improvement for current system and probable a necessary one we're skipping in this POC is to use indexers like [thegraph.com](https://thegraph.com) to query events
 
 
 ## Demo
 
-Current ux goes like this:
+### Transfer
+
+In this example we show sender in the left and receiver in the right, not necessary in the same machine but just for demo porpoises. Full video available at `/assets/demo/transfer/demo.mov`
 
 User connects argent wallet to pay for transaction gas. A new zk wallet is generated for the user per browser or one is recovered from local storage
 
-![user connects wallet](./assets/demo-1.png)
+![User connects wallet](./assets/demo/transfer/image.png)
 
 User can inspect the commitments that form their balance
 
-![commitments before transfer](./assets/demo-2.png)
+![Commitments before transfer](./assets/demo/transfer/image-1.png)
 
 Sender scans receiver qr code and so automatically filling address and public key
 
-![scan qr code](./assets/demo-3.png)
+![Scan qr code](./assets/demo/transfer/image-2.png)
 
-![filled form](./assets/demo-4.png)
+![Filled form](./assets/demo/transfer/image-3.png)
 
 Enter amount and click transfer. Then confirm transaction in wallet. (Example transaction https://sepolia.voyager.online/tx/0x6c6b73fd34c45c05dc9ebdf168c99a0fe1d44fd5e983d7c2bc8187baec87b78?mtm_campaign=argent-redirect&mtm_source=argent&mtm_medium=referral)
 
-![confirm transaction](./assets/demo-5.png)
+![Confirm transaction](./assets/demo/transfer/image-4.png)
 
 A little time after receiver has balance available. They can also inspect nullified commitment for sender and new commitment for receiver
 
-![result showcase](./assets/demo-6.png)
+![Result showcase](./assets/demo/transfer/image-5.png)
+
+### Approve and transfer_from
+
+For this demo we setup one wallet for the owner in the left and one for the spender in the right. In this case owner will approve spender and this last one will transfer tokens to himself. You can find the whole video at `/assets/demo/transfer/image-approve.mov`
+
+![Initial status](./assets/demo/approve/image.png)
+
+So first, approver will go to the approve tab and enter or scan spender account details 
+
+![Approve tab](./assets/demo/approve/image-1.png)
+
+![Scan spender address](./assets/demo/approve/image-2.png)
+
+Then amount and optionally check `Share viewing key`. As states before this will give the spender vieiwing access through the viewing key itself, so user should be aware of this privacy exposure and weight weather or not this kind of approve is desired. The alternative without sharing the viewing key works as well but it'll limit the approve to the notes the user has at the moment, if he spends them, spender won't have balance, if he receives any new one, spender won't see them.
+
+![Fill approve form](./assets/demo/approve/image-3.png)
+
+Then transaction is prompted to user to pay for gas, this wallet is not associated to the zk wallet, so it's just any wallet that can pay the gas. Here the transaction generated https://sepolia.voyager.online/tx/0x63180f22982c6d5b13bd1ab7873a1fac5c3a4f9e14b6225d500fdc5b0896df8
+
+![Send approve tx](./assets/demo/approve/image-4.png)
+
+Once the transaction is mined, the spender can start moving approved funds. He goes to the transfer tab and inputs in "From" the owner details, in "To" the receiver (In this case spender himself) and "amount". 
+
+![Fill "from" fields](./assets/demo/approve/image-5.png)
+
+![Fill amount](./assets/demo/approve/image-6.png)
+
+Pays the gas for transfer_from call. Example transaction generated https://sepolia.voyager.online/tx/0x06a514c40abd1fbc5c6654c1492a391a4a7209d6daa03d880c271ad998f00924
+
+![Send transfer_from tx](./assets/demo/approve/image-7.png)
+
+And once transaction is mined we can see balance change reflected
+
+![Balance after transfer_from](./assets/demo/approve/image-8.png)
+
+We can continue doing transfers until spending all the allowance but we can never surpass it like in this case:
+
+![Attempt higher than allowed transfer_from](./assets/demo/approve/image-9.png)
+
 
 # Deployments
 

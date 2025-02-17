@@ -91,7 +91,7 @@ export const useTransfer = () => {
         throw new Error("Couldn't generate output path proof");
       }
 
-      const spendingTracker = await DefinitionsService.commitmentTracker(
+      const nullifier = await DefinitionsService.nullifier(
         inputNote.commitment,
         inputNote.bliding!
       );
@@ -107,7 +107,7 @@ export const useTransfer = () => {
           inputCommitmentProof.directionSelector,
         in_commitment_value: formatHex(inputNote.value!),
         in_commitment_bliding: formatHex(inputNote.bliding!),
-        in_commitment_spending_tracker: formatHex(spendingTracker),
+        in_commitment_nullifier: formatHex(nullifier),
         // utxo outputs
         out_receiver_commitment_value: formatHex(props.amount),
         out_receiver_commitment_bliding: formatHex(outReceiverNote.bliding),
