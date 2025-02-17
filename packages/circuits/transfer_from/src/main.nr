@@ -1,11 +1,11 @@
 use common::definitions::{
-    account, allowance_hash, allowance_relationship, commitment, commitment_tracker,
+    account, allowance_hash, allowance_relationship, commitment, nullifier,
 };
 use common::merkle_tree::assert_merkle_inclusion;
 use std::hash::poseidon2::Poseidon2::hash;
 
 // TODO: update before deploying. So far haven't found way to override for testing
-global DEPTH: u32 = 12;
+global DEPTH: u32 = 2;
 
 pub fn main(
     // account details
@@ -18,7 +18,7 @@ pub fn main(
     in_commitment_direction_selector: [bool; DEPTH],
     in_commitment_bliding: Field,
     in_commitment_value: Field,
-    in_commitment_spending_tracker: pub Field,
+    in_commitment_nullifier: pub Field,
     // allowance utxo details
     in_allowance_value: Field,
     in_allowance_hash: pub Field,
@@ -47,11 +47,11 @@ pub fn main(
         "Cannot find input commitment",
     );
 
-    // check spending tracker to properly nullify commitment is correct
+    // check nullifier is correct
     assert_eq(
-        in_commitment_spending_tracker,
-        commitment_tracker(in_commitment, in_commitment_bliding),
-        "Invalid spending tracker",
+        in_commitment_nullifier,
+        nullifier(in_commitment, in_commitment_bliding),
+        "Invalid nullifier",
     );
 
     // check input allowance hash is correct and so we can trust allowance amount. And relationship so we can trust update after
@@ -111,239 +111,239 @@ pub fn main(
     );
 }
 
-// #[test]
-// fn test_allowed_transfer() {
-//     // generate input amounts
-//     let in_commitment_value = 10;
-//     let in_allowance_value = 10;
+#[test]
+fn test_allowed_transfer() {
+    // generate input amounts
+    let in_commitment_value = 10;
+    let in_allowance_value = 10;
 
-//     // output amounts
-//     let out_receiver_value = 2;
-//     let out_owner_value = in_commitment_value - out_receiver_value;
-//     let out_allowance_value = in_allowance_value - out_receiver_value;
+    // output amounts
+    let out_receiver_value = 2;
+    let out_owner_value = in_commitment_value - out_receiver_value;
+    let out_allowance_value = in_allowance_value - out_receiver_value;
 
-//     // accounts details
-//     let spender_private_key = 0;
-//     let spender_account = account(spender_private_key);
-//     let owner_account = account(1);
+    // accounts details
+    let spender_private_key = 0;
+    let spender_account = account(spender_private_key);
+    let owner_account = account(1);
 
-//     // generate commitment
-//     let in_commitment_bliding = 2;
-//     let in_commitment = commitment(owner_account, in_commitment_value, in_commitment_bliding);
-//     let in_commitment_spending_tracker = commitment_tracker(in_commitment, in_commitment_bliding);
+    // generate commitment
+    let in_commitment_bliding = 2;
+    let in_commitment = commitment(owner_account, in_commitment_value, in_commitment_bliding);
+    let in_commitment_nullifier = nullifier(in_commitment, in_commitment_bliding);
 
-//     // output commitment generation
-//     let receiver_account = account(100);
-//     let out_owner_bliding = 3;
-//     let out_receiver_bliding = 3;
-//     let out_receiver_commitment =
-//         commitment(receiver_account, out_receiver_value, out_receiver_bliding);
-//     let out_owner_commitment = commitment(owner_account, out_owner_value, out_owner_bliding);
+    // output commitment generation
+    let receiver_account = account(100);
+    let out_owner_bliding = 3;
+    let out_receiver_bliding = 3;
+    let out_receiver_commitment =
+        commitment(receiver_account, out_receiver_value, out_receiver_bliding);
+    let out_owner_commitment = commitment(owner_account, out_owner_value, out_owner_bliding);
 
-//     // old tree
-//     let old_first_level_l = hash([in_commitment, 1], 2);
-//     let old_first_level_r = hash([0, 0], 2);
-//     let in_commitment_root = hash([old_first_level_l, old_first_level_r], 2);
-//     let in_commitment_path = [1, old_first_level_r];
-//     let in_commitment_direction_selector = [false, false];
+    // old tree
+    let old_first_level_l = hash([in_commitment, 1], 2);
+    let old_first_level_r = hash([0, 0], 2);
+    let in_commitment_root = hash([old_first_level_l, old_first_level_r], 2);
+    let in_commitment_path = [1, old_first_level_r];
+    let in_commitment_direction_selector = [false, false];
 
-//     // new tree
-//     let new_first_level_l = hash([in_commitment, 1], 2);
-//     let new_first_level_r = hash([out_owner_commitment, out_receiver_commitment], 2);
-//     let out_root = hash([new_first_level_l, new_first_level_r], 2);
-//     let out_subtree_root_path = [new_first_level_l];
-//     let out_subtree_direction_selector = [true];
+    // new tree
+    let new_first_level_l = hash([in_commitment, 1], 2);
+    let new_first_level_r = hash([out_owner_commitment, out_receiver_commitment], 2);
+    let out_root = hash([new_first_level_l, new_first_level_r], 2);
+    let out_subtree_root_path = [new_first_level_l];
+    let out_subtree_direction_selector = [true];
 
-//     // in_allowance_hash
-//     let in_allowance_hash = allowance_hash(owner_account, spender_account, in_allowance_value);
-//     let out_allowance_hash = allowance_hash(owner_account, spender_account, out_allowance_value);
-//     let in_allowance_relationship = allowance_relationship(owner_account, spender_account);
+    // in_allowance_hash
+    let in_allowance_hash = allowance_hash(owner_account, spender_account, in_allowance_value);
+    let out_allowance_hash = allowance_hash(owner_account, spender_account, out_allowance_value);
+    let in_allowance_relationship = allowance_relationship(owner_account, spender_account);
 
-//     main(
-//         // input commitment details
-//         owner_account,
-//         receiver_account,
-//         spender_private_key,
-//         in_commitment_root,
-//         in_commitment_path,
-//         in_commitment_direction_selector,
-//         in_commitment_bliding,
-//         in_commitment_value,
-//         in_commitment_spending_tracker,
-//         // allowance utxo details
-//         in_allowance_value,
-//         in_allowance_hash,
-//         in_allowance_relationship,
-//         out_allowance_hash,
-//         // out receiver commitment details
-//         out_receiver_value,
-//         out_receiver_bliding,
-//         out_receiver_commitment,
-//         // out owner commitment details
-//         out_owner_value,
-//         out_owner_bliding,
-//         out_owner_commitment,
-//         // output commitment details
-//         out_root,
-//         out_subtree_root_path,
-//         out_subtree_direction_selector,
-//     );
-// }
+    main(
+        // input commitment details
+        owner_account,
+        receiver_account,
+        spender_private_key,
+        in_commitment_root,
+        in_commitment_path,
+        in_commitment_direction_selector,
+        in_commitment_bliding,
+        in_commitment_value,
+        in_commitment_nullifier,
+        // allowance utxo details
+        in_allowance_value,
+        in_allowance_hash,
+        in_allowance_relationship,
+        out_allowance_hash,
+        // out receiver commitment details
+        out_receiver_value,
+        out_receiver_bliding,
+        out_receiver_commitment,
+        // out owner commitment details
+        out_owner_value,
+        out_owner_bliding,
+        out_owner_commitment,
+        // output commitment details
+        out_root,
+        out_subtree_root_path,
+        out_subtree_direction_selector,
+    );
+}
 
-// #[test(should_fail_with = "Invalid UTXO amounts")]
-// fn test_invalid_utxo_amounts() {
-//     // generate input amounts
-//     let in_commitment_value = 10;
-//     let in_allowance_value = 10;
+#[test(should_fail_with = "Invalid UTXO amounts")]
+fn test_invalid_utxo_amounts() {
+    // generate input amounts
+    let in_commitment_value = 10;
+    let in_allowance_value = 10;
 
-//     // output amounts
-//     let out_receiver_value = 2;
-//     let out_owner_value = 100; // <------------ Should be: in_commitment_value - out_receiver_value;
-//     let out_allowance_value = in_allowance_value - out_receiver_value;
+    // output amounts
+    let out_receiver_value = 2;
+    let out_owner_value = 100; // <------------ Should be: in_commitment_value - out_receiver_value;
+    let out_allowance_value = in_allowance_value - out_receiver_value;
 
-//     // accounts details
-//     let spender_private_key = 0;
-//     let spender_account = account(spender_private_key);
-//     let owner_account = account(1);
+    // accounts details
+    let spender_private_key = 0;
+    let spender_account = account(spender_private_key);
+    let owner_account = account(1);
 
-//     // generate commitment
-//     let in_commitment_bliding = 2;
-//     let in_commitment = commitment(owner_account, in_commitment_value, in_commitment_bliding);
-//     let in_commitment_spending_tracker = commitment_tracker(in_commitment, in_commitment_bliding);
+    // generate commitment
+    let in_commitment_bliding = 2;
+    let in_commitment = commitment(owner_account, in_commitment_value, in_commitment_bliding);
+    let in_commitment_nullifier = nullifier(in_commitment, in_commitment_bliding);
 
-//     // output commitment generation
-//     let receiver_account = account(100);
-//     let out_owner_bliding = 3;
-//     let out_receiver_bliding = 3;
-//     let out_receiver_commitment =
-//         commitment(receiver_account, out_receiver_value, out_receiver_bliding);
-//     let out_owner_commitment = commitment(owner_account, out_owner_value, out_owner_bliding);
+    // output commitment generation
+    let receiver_account = account(100);
+    let out_owner_bliding = 3;
+    let out_receiver_bliding = 3;
+    let out_receiver_commitment =
+        commitment(receiver_account, out_receiver_value, out_receiver_bliding);
+    let out_owner_commitment = commitment(owner_account, out_owner_value, out_owner_bliding);
 
-//     // old tree
-//     let old_first_level_l = hash([in_commitment, 1], 2);
-//     let old_first_level_r = hash([0, 0], 2);
-//     let in_commitment_root = hash([old_first_level_l, old_first_level_r], 2);
-//     let in_commitment_path = [1, old_first_level_r];
-//     let in_commitment_direction_selector = [false, false];
+    // old tree
+    let old_first_level_l = hash([in_commitment, 1], 2);
+    let old_first_level_r = hash([0, 0], 2);
+    let in_commitment_root = hash([old_first_level_l, old_first_level_r], 2);
+    let in_commitment_path = [1, old_first_level_r];
+    let in_commitment_direction_selector = [false, false];
 
-//     // new tree
-//     let new_first_level_l = hash([in_commitment, 1], 2);
-//     let new_first_level_r = hash([out_owner_commitment, out_receiver_commitment], 2);
-//     let out_root = hash([new_first_level_l, new_first_level_r], 2);
-//     let out_subtree_root_path = [new_first_level_l];
-//     let out_subtree_direction_selector = [true];
+    // new tree
+    let new_first_level_l = hash([in_commitment, 1], 2);
+    let new_first_level_r = hash([out_owner_commitment, out_receiver_commitment], 2);
+    let out_root = hash([new_first_level_l, new_first_level_r], 2);
+    let out_subtree_root_path = [new_first_level_l];
+    let out_subtree_direction_selector = [true];
 
-//     // in_allowance_hash
-//     let in_allowance_hash = allowance_hash(owner_account, spender_account, in_allowance_value);
-//     let out_allowance_hash = allowance_hash(owner_account, spender_account, out_allowance_value);
-//     let in_allowance_relationship = allowance_relationship(owner_account, spender_account);
+    // in_allowance_hash
+    let in_allowance_hash = allowance_hash(owner_account, spender_account, in_allowance_value);
+    let out_allowance_hash = allowance_hash(owner_account, spender_account, out_allowance_value);
+    let in_allowance_relationship = allowance_relationship(owner_account, spender_account);
 
-//     main(
-//         // input commitment details
-//         owner_account,
-//         receiver_account,
-//         spender_private_key,
-//         in_commitment_root,
-//         in_commitment_path,
-//         in_commitment_direction_selector,
-//         in_commitment_bliding,
-//         in_commitment_value,
-//         in_commitment_spending_tracker,
-//         // allowance utxo details
-//         in_allowance_value,
-//         in_allowance_hash,
-//         in_allowance_relationship,
-//         out_allowance_hash,
-//         // out receiver commitment details
-//         out_receiver_value,
-//         out_receiver_bliding,
-//         out_receiver_commitment,
-//         // out owner commitment details
-//         out_owner_value,
-//         out_owner_bliding,
-//         out_owner_commitment,
-//         // output commitment details
-//         out_root,
-//         out_subtree_root_path,
-//         out_subtree_direction_selector,
-//     );
-// }
+    main(
+        // input commitment details
+        owner_account,
+        receiver_account,
+        spender_private_key,
+        in_commitment_root,
+        in_commitment_path,
+        in_commitment_direction_selector,
+        in_commitment_bliding,
+        in_commitment_value,
+        in_commitment_nullifier,
+        // allowance utxo details
+        in_allowance_value,
+        in_allowance_hash,
+        in_allowance_relationship,
+        out_allowance_hash,
+        // out receiver commitment details
+        out_receiver_value,
+        out_receiver_bliding,
+        out_receiver_commitment,
+        // out owner commitment details
+        out_owner_value,
+        out_owner_bliding,
+        out_owner_commitment,
+        // output commitment details
+        out_root,
+        out_subtree_root_path,
+        out_subtree_direction_selector,
+    );
+}
 
-// #[test(should_fail_with = "Missing commitments from old tree in new tree")]
-// fn test_remove_existing_commitments() {
-//     // generate input amounts
-//     let in_commitment_value = 10;
-//     let in_allowance_value = 10;
+#[test(should_fail_with = "Missing commitments from old tree in new tree")]
+fn test_remove_existing_commitments() {
+    // generate input amounts
+    let in_commitment_value = 10;
+    let in_allowance_value = 10;
 
-//     // output amounts
-//     let out_receiver_value = 2;
-//     let out_owner_value = in_commitment_value - out_receiver_value;
-//     let out_allowance_value = in_allowance_value - out_receiver_value;
+    // output amounts
+    let out_receiver_value = 2;
+    let out_owner_value = in_commitment_value - out_receiver_value;
+    let out_allowance_value = in_allowance_value - out_receiver_value;
 
-//     // accounts details
-//     let spender_private_key = 0;
-//     let spender_account = account(spender_private_key);
-//     let owner_account = account(1);
+    // accounts details
+    let spender_private_key = 0;
+    let spender_account = account(spender_private_key);
+    let owner_account = account(1);
 
-//     // generate commitment
-//     let in_commitment_bliding = 2;
-//     let in_commitment = commitment(owner_account, in_commitment_value, in_commitment_bliding);
-//     let in_commitment_spending_tracker = commitment_tracker(in_commitment, in_commitment_bliding);
+    // generate commitment
+    let in_commitment_bliding = 2;
+    let in_commitment = commitment(owner_account, in_commitment_value, in_commitment_bliding);
+    let in_commitment_nullifier = nullifier(in_commitment, in_commitment_bliding);
 
-//     // output commitment generation
-//     let receiver_account = account(100);
-//     let out_owner_bliding = 3;
-//     let out_receiver_bliding = 3;
-//     let out_receiver_commitment =
-//         commitment(receiver_account, out_receiver_value, out_receiver_bliding);
-//     let out_owner_commitment = commitment(owner_account, out_owner_value, out_owner_bliding);
+    // output commitment generation
+    let receiver_account = account(100);
+    let out_owner_bliding = 3;
+    let out_receiver_bliding = 3;
+    let out_receiver_commitment =
+        commitment(receiver_account, out_receiver_value, out_receiver_bliding);
+    let out_owner_commitment = commitment(owner_account, out_owner_value, out_owner_bliding);
 
-//     // old tree
-//     let old_first_level_l = hash([in_commitment, 1], 2);
-//     let old_first_level_r = hash([0, 0], 2);
-//     let in_commitment_root = hash([old_first_level_l, old_first_level_r], 2);
-//     let in_commitment_path = [1, old_first_level_r];
-//     let in_commitment_direction_selector = [false, false];
+    // old tree
+    let old_first_level_l = hash([in_commitment, 1], 2);
+    let old_first_level_r = hash([0, 0], 2);
+    let in_commitment_root = hash([old_first_level_l, old_first_level_r], 2);
+    let in_commitment_path = [1, old_first_level_r];
+    let in_commitment_direction_selector = [false, false];
 
-//     // new tree
-//     let new_first_level_l = hash([0, 1], 2); // <------------------------ removed input_commitment
-//     let new_first_level_r = hash([out_owner_commitment, out_receiver_commitment], 2);
-//     let out_root = hash([new_first_level_l, new_first_level_r], 2);
-//     let out_subtree_root_path = [new_first_level_l];
-//     let out_subtree_direction_selector = [true];
+    // new tree
+    let new_first_level_l = hash([0, 1], 2); // <------------------------ removed input_commitment
+    let new_first_level_r = hash([out_owner_commitment, out_receiver_commitment], 2);
+    let out_root = hash([new_first_level_l, new_first_level_r], 2);
+    let out_subtree_root_path = [new_first_level_l];
+    let out_subtree_direction_selector = [true];
 
-//     // in_allowance_hash
-//     let in_allowance_hash = allowance_hash(owner_account, spender_account, in_allowance_value);
-//     let out_allowance_hash = allowance_hash(owner_account, spender_account, out_allowance_value);
-//     let in_allowance_relationship = allowance_relationship(owner_account, spender_account);
+    // in_allowance_hash
+    let in_allowance_hash = allowance_hash(owner_account, spender_account, in_allowance_value);
+    let out_allowance_hash = allowance_hash(owner_account, spender_account, out_allowance_value);
+    let in_allowance_relationship = allowance_relationship(owner_account, spender_account);
 
-//     main(
-//         // input commitment details
-//         owner_account,
-//         receiver_account,
-//         spender_private_key,
-//         in_commitment_root,
-//         in_commitment_path,
-//         in_commitment_direction_selector,
-//         in_commitment_bliding,
-//         in_commitment_value,
-//         in_commitment_spending_tracker,
-//         // allowance utxo details
-//         in_allowance_value,
-//         in_allowance_hash,
-//         in_allowance_relationship,
-//         out_allowance_hash,
-//         // out receiver commitment details
-//         out_receiver_value,
-//         out_receiver_bliding,
-//         out_receiver_commitment,
-//         // out owner commitment details
-//         out_owner_value,
-//         out_owner_bliding,
-//         out_owner_commitment,
-//         // output commitment details
-//         out_root,
-//         out_subtree_root_path,
-//         out_subtree_direction_selector,
-//     );
-// }
+    main(
+        // input commitment details
+        owner_account,
+        receiver_account,
+        spender_private_key,
+        in_commitment_root,
+        in_commitment_path,
+        in_commitment_direction_selector,
+        in_commitment_bliding,
+        in_commitment_value,
+        in_commitment_nullifier,
+        // allowance utxo details
+        in_allowance_value,
+        in_allowance_hash,
+        in_allowance_relationship,
+        out_allowance_hash,
+        // out receiver commitment details
+        out_receiver_value,
+        out_receiver_bliding,
+        out_receiver_commitment,
+        // out owner commitment details
+        out_owner_value,
+        out_owner_bliding,
+        out_owner_commitment,
+        // output commitment details
+        out_root,
+        out_subtree_root_path,
+        out_subtree_direction_selector,
+    );
+}

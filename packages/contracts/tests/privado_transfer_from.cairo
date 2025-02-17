@@ -14,7 +14,7 @@ fn test_transfer_from() {
     let (mut contract, contract_address) = get_contract_state_for_testing();
 
     let in_commitment_root = 0;
-    let in_commitment_spending_tracker = 1;
+    let in_commitment_nullifier = 1;
     let in_allowance_hash = 2;
     let in_allowance_relationship = 3;
     let out_allowance_hash = 4;
@@ -23,7 +23,7 @@ fn test_transfer_from() {
     let out_root = 7;
     let proof = generate_mock_proof(
         in_commitment_root,
-        in_commitment_spending_tracker,
+        in_commitment_nullifier,
         in_allowance_hash,
         in_allowance_relationship,
         out_allowance_hash,
@@ -48,9 +48,9 @@ fn test_transfer_from() {
             array!["enc_approval_output_owner", "enc_approval_output_spender"].span(),
         );
 
-    // should nullify the in_commitment_spending_tracker
+    // should nullify the in_commitment_nullifier
     assert(
-        contract.spending_trackers.entry(in_commitment_spending_tracker.into()).read() == true,
+        contract.nullifiers.entry(in_commitment_nullifier.into()).read() == true,
         'Sender commitment not nullified',
     );
 
@@ -90,9 +90,9 @@ fn test_transfer_from() {
                 ),
                 (
                     contract_address,
-                    Privado::Event::NewSpendingTracker(
-                        Privado::NewSpendingTracker {
-                            spending_tracker: in_commitment_spending_tracker.into(),
+                    Privado::Event::NewNullifier(
+                        Privado::NewNullifier {
+                            nullifier: in_commitment_nullifier.into(),
                         },
                     ),
                 ),
@@ -120,7 +120,7 @@ fn test_transfer_from_unknown_root() {
     let (mut contract, _) = get_contract_state_for_testing();
 
     let in_commitment_root = 0;
-    let in_commitment_spending_tracker = 1;
+    let in_commitment_nullifier = 1;
     let in_allowance_hash = 2;
     let in_allowance_relationship = 3;
     let out_allowance_hash = 4;
@@ -129,7 +129,7 @@ fn test_transfer_from_unknown_root() {
     let out_root = 7;
     let proof = generate_mock_proof(
         in_commitment_root,
-        in_commitment_spending_tracker,
+        in_commitment_nullifier,
         in_allowance_hash,
         in_allowance_relationship,
         out_allowance_hash,
@@ -159,7 +159,7 @@ fn test_transfer_double_spent() {
     let (mut contract, _) = get_contract_state_for_testing();
 
     let in_commitment_root = 0;
-    let in_commitment_spending_tracker = 1;
+    let in_commitment_nullifier = 1;
     let in_allowance_hash = 2;
     let in_allowance_relationship = 3;
     let out_allowance_hash = 4;
@@ -168,7 +168,7 @@ fn test_transfer_double_spent() {
     let out_root = 7;
     let proof = generate_mock_proof(
         in_commitment_root,
-        in_commitment_spending_tracker,
+        in_commitment_nullifier,
         in_allowance_hash,
         in_allowance_relationship,
         out_allowance_hash,
@@ -181,7 +181,7 @@ fn test_transfer_double_spent() {
     contract.allowances.entry(in_allowance_relationship.into()).write(in_allowance_hash.into());
 
     // mark the commitment as already spent
-    contract.spending_trackers.entry(in_commitment_spending_tracker.into()).write(true);
+    contract.nullifiers.entry(in_commitment_nullifier.into()).write(true);
 
     // call transfer
     contract
@@ -198,7 +198,7 @@ fn test_unknown_allowance_hash() {
     let (mut contract, _) = get_contract_state_for_testing();
 
     let in_commitment_root = 0;
-    let in_commitment_spending_tracker = 1;
+    let in_commitment_nullifier = 1;
     let in_allowance_hash = 2;
     let in_allowance_relationship = 3;
     let out_allowance_hash = 4;
@@ -207,7 +207,7 @@ fn test_unknown_allowance_hash() {
     let out_root = 7;
     let proof = generate_mock_proof(
         in_commitment_root,
-        in_commitment_spending_tracker,
+        in_commitment_nullifier,
         in_allowance_hash,
         in_allowance_relationship,
         out_allowance_hash,
@@ -238,7 +238,7 @@ fn test_unknown_allowance_hash() {
 
 fn generate_mock_proof(
     in_commitment_root: felt252,
-    in_commitment_spending_tracker: felt252,
+    in_commitment_nullifier: felt252,
     in_allowance_hash: felt252,
     in_allowance_relationship: felt252,
     out_allowance_hash: felt252,
@@ -248,7 +248,7 @@ fn generate_mock_proof(
 ) -> Span<felt252> {
     array![
         in_commitment_root,
-        in_commitment_spending_tracker,
+        in_commitment_nullifier,
         in_allowance_hash,
         in_allowance_relationship,
         out_allowance_hash,

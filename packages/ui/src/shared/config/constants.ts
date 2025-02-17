@@ -276,12 +276,12 @@ export const PRIVATE_ERC20_ABI: Abi = [
   },
   {
     "kind": "struct",
-    "name": "contracts::privado::privado::Privado::NewSpendingTracker",
+    "name": "contracts::privado::privado::Privado::NewNullifier",
     "type": "event",
     "members": [
       {
         "kind": "data",
-        "name": "spending_tracker",
+        "name": "nullifier",
         "type": "core::integer::u256"
       }
     ]
@@ -330,8 +330,8 @@ export const PRIVATE_ERC20_ABI: Abi = [
       },
       {
         "kind": "nested",
-        "name": "NewSpendingTracker",
-        "type": "contracts::privado::privado::Privado::NewSpendingTracker"
+        "name": "NewNullifier",
+        "type": "contracts::privado::privado::Privado::NewNullifier"
       },
       {
         "kind": "nested",

@@ -8,7 +8,7 @@ export interface TransferProofDto {
   in_commitment_direction_selector: boolean[];
   in_commitment_value: string;
   in_commitment_bliding: string;
-  in_commitment_spending_tracker: string;
+  in_commitment_nullifier: string;
   // utxo outputs
   out_receiver_commitment_value: string;
   out_receiver_commitment_bliding: string;
@@ -41,7 +41,7 @@ export interface TransferFromProofDto {
   in_commitment_direction_selector: boolean[];
   in_commitment_bliding: string;
   in_commitment_value: string;
-  in_commitment_spending_tracker: string;
+  in_commitment_nullifier: string;
   // allowance utxo details
   in_allowance_value: string;
   in_allowance_hash: string;

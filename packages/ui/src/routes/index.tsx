@@ -5,7 +5,7 @@ import { TabButton } from "@/components/tab-button";
 import { Transfer } from "@/components/transfer";
 import { Button } from "@/components/ui/button";
 import { useBalance } from "@/hooks/use-balance";
-import { cn, formatTokenAmount } from "@/lib/utils";
+import { formatTokenAmount } from "@/lib/utils";
 import { createFileRoute } from "@tanstack/react-router";
 import {
   ArrowDown,
