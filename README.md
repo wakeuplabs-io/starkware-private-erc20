@@ -126,29 +126,70 @@ Some clarifications:
 
 ## Demo
 
-Current ux goes like this:
+### Transfer
+
+Current ux goes like this (In this example we show sender in the left and receiver in the right, not necessary in the same machine but just for demo porpoises):
 
 User connects argent wallet to pay for transaction gas. A new zk wallet is generated for the user per browser or one is recovered from local storage
 
-![user connects wallet](./assets/demo-1.png)
+![user connects wallet](./assets/demo/transfer/image/transfer/image.png)
 
 User can inspect the commitments that form their balance
 
-![commitments before transfer](./assets/demo-2.png)
+![commitments before transfer](./transfer/image/transfer/image-1.png)
 
 Sender scans receiver qr code and so automatically filling address and public key
 
-![scan qr code](./assets/demo-3.png)
+![scan qr code](./assets/demo/transfer/image-2.png)
 
-![filled form](./assets/demo-4.png)
+![filled form](./assets/demo/transfer/image-3.png)
 
 Enter amount and click transfer. Then confirm transaction in wallet. (Example transaction https://sepolia.voyager.online/tx/0x6c6b73fd34c45c05dc9ebdf168c99a0fe1d44fd5e983d7c2bc8187baec87b78?mtm_campaign=argent-redirect&mtm_source=argent&mtm_medium=referral)
 
-![confirm transaction](./assets/demo-5.png)
+![confirm transaction](./assets/demo/transfer/image-4.png)
 
 A little time after receiver has balance available. They can also inspect nullified commitment for sender and new commitment for receiver
 
-![result showcase](./assets/demo-6.png)
+![result showcase](./assets/demo/transfer/image-5.png)
+
+### Approve and transfer_from
+
+For this demo we setup one wallet for the owner in the left and one for the spender in the right. In this case owner will approve spender and this last one will transfer tokens to himself. You can find the whole video at `/assets/demo/transfer/image-approve.mov`
+
+![alt text](image.png)
+
+So first, approver will go to the approve tab and enter or scan spender account details 
+
+![alt text](./assets/demo/approve/image-1.png)
+
+![alt text](./assets/demo/approve/image-2.png)
+
+Then amount and optionally check `Share viewing key`. As states before this will give the spender vieiwing access through the viewing key itself, so user should be aware of this privacy exposure and weight weather or not this kind of approve is desired. The alternative without sharing the viewing key works as well but it'll limit the approve to the notes the user has at the moment, if he spends them, spender won't have balance, if he receives any new one, spender won't see them.
+
+![alt text](./assets/demo/approve/image-3.png)
+
+Then transaction is prompted to user to pay for gas, this wallet is not associated to the zk wallet, so it's just any wallet that can pay the gas. Here the transaction generated https://sepolia.voyager.online/tx/0x63180f22982c6d5b13bd1ab7873a1fac5c3a4f9e14b6225d500fdc5b0896df8
+
+![alt text](./assets/demo/approve/image-4.png)
+
+Once the transaction is mined, the spender can start moving approved funds. He goes to the transfer tab and inputs in "From" the owner details, in "To" the receiver (In this case spender himself) and "amount". 
+
+![alt text](./assets/demo/approve/image-5.png)
+
+![alt text](./assets/demo/approve/image-6.png)
+
+Pays the gas for transfer_from call. Example transaction generated https://sepolia.voyager.online/tx/0x06a514c40abd1fbc5c6654c1492a391a4a7209d6daa03d880c271ad998f00924
+
+![alt text](./assets/demo/approve/image-7.png)
+
+And once transaction is mined we can see balance change reflected
+
+![alt text](./assets/demo/approve/image-8.png)
+
+We can continue doing transfers until spending all the allowance but we can never surpass it like in this case:
+
+![alt text](./assets/demo/approve/image-9.png)
+
 
 # Deployments
 
