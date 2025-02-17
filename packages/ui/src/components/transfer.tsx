@@ -16,7 +16,7 @@ export const Transfer: React.FC = () => {
   const { account } = useAccount();
   const { sendTransfer, loading: transferLoading } = useTransfer();
   const { sendTransferFrom, loading: transferFromLoading } = useTransferFrom();
-  
+
   const [amount, setAmount] = useState("0");
   const [scan, setScan] = useState(false);
   const [transferFrom, setTransferFrom] = useState(false);
