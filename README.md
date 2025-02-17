@@ -1,4 +1,4 @@
-# Private ERC20
+# Enigma
 
 ## Overview
 
