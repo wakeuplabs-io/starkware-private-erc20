@@ -5,11 +5,13 @@ import {
   useSendTransaction,
 } from "@starknet-react/core";
 import {
+  ENG_TO_ETH_RATE,
   ENIGMA_ABI,
   ENIGMA_CONTRACT_ADDRESS,
-  ENG_TO_ETH_RATIO,
   ETH_ABI,
   ETH_CONTRACT_ADDRESS,
+  ETH_TO_ENG_RATE,
+  WEI_TO_ENG,
 } from "@/shared/config/constants";
 import { MerkleTree } from "@/lib/merkle-tree";
 import { AccountService } from "@/services/account.service";
@@ -45,7 +47,7 @@ export const useDeposit = () => {
         throw new Error("Contract not initialized");
       }
 
-      const ethAmount = props.amount / ENG_TO_ETH_RATIO;
+      const ethAmount = (props.amount * ENG_TO_ETH_RATE) / ETH_TO_ENG_RATE;
 
       // approve ETH
       const allowance = await ethContract.call("allowance", [
@@ -63,8 +65,9 @@ export const useDeposit = () => {
       const outReceiverNote = await DefinitionsService.note(
         callerAccount.owner.address,
         callerAccount.viewer.publicKey,
-        props.amount
+        props.amount / WEI_TO_ENG
       );
+
 
       // generate deposit proof
       const { notesArray: notes } = await notesService.getNotes();

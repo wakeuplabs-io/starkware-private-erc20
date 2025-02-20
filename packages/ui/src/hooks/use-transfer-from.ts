@@ -170,7 +170,7 @@ export const useTransferFrom = () => {
       // select note to use for transfer
       const inputNote = spendableNotes
         .sort((a, b) => parseInt((b.value! - a.value!).toString()))
-        .find((n) => n.value! > props.amount);
+        .find((n) => n.value! >= props.amount);
       if (!inputNote) {
         throw new Error("Insufficient funds in notes");
       }

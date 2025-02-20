@@ -3,13 +3,16 @@ import { Abi } from "starknet";
 // Enigma contract
 export const ENIGMA_DEPLOY_BLOCK = 524850;
 export const ENIGMA_APPROVAL_EVENT_KEY = "contracts::privado::privado::Privado::Approval";
-export const ENIGMA_CONTRACT_ADDRESS = "0x00ff4641b2fac61707fbc04766ec0986606d68e5dca02d688c1ce839d7a41396";
+export const ENIGMA_CONTRACT_ADDRESS = "0x035ba4ea1ef4afc87f79c3e15277f8d8238787a1298fb161942b8802446ad0bb";
 export const ENIGMA_DECIMALS = 6n;
 export const MERKLE_TREE_DEPTH = 12;
 
 // deposit
 export const ETH_CONTRACT_ADDRESS = "0x049d36570d4e46f48e99674bd3fcc84644ddd6b96f7c741b1562b82f9e004dc7";
-export const ENG_TO_ETH_RATIO = 1000000n;
+export const ENG_TO_ETH_RATE = 1_000_000_000_000n;  // 10000000000000 ETH
+export const ETH_TO_ENG_RATE = 1_000_000_000_000_000_000n; // 1000000000000000000 ENG
+export const WEI_TO_ENG = 1_000_000_000_000n;
+
 
 export const ENIGMA_ABI: Abi =[
   {

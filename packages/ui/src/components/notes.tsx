@@ -12,8 +12,8 @@ import { Input } from "./ui/input";
 import { toast } from "@/hooks/use-toast";
 import { ToastAction } from "@radix-ui/react-toast";
 import { useDeposit } from "@/hooks/use-deposit";
-import { ENG_TO_ETH_RATIO } from "@/shared/config/constants";
 import { Label } from "./ui/label";
+import { ENG_TO_ETH_RATE, ETH_TO_ENG_RATE } from "@/shared/config/constants";
 
 export const Notes: React.FC<{ show: boolean }> = ({ show }) => {
   const { notes } = useUserNotes();
@@ -28,7 +28,7 @@ export const Notes: React.FC<{ show: boolean }> = ({ show }) => {
 
   const onDeposit = useCallback(async () => {
     try {
-      const amountBn = BigInt((parseFloat(amount) * 10 ** 6).toFixed(0));
+      const amountBn = BigInt((parseFloat(amount) * 10 ** 18).toFixed(0));
 
       const txHash = await sendDeposit({
         amount: amountBn,
@@ -61,9 +61,8 @@ export const Notes: React.FC<{ show: boolean }> = ({ show }) => {
         return 0n;
       }
 
-      const amountBn = BigInt((parseFloat(amount) * 10 ** 6).toFixed(0));
-
-      return BigInt(amountBn) * ENG_TO_ETH_RATIO;
+      const inputENG = BigInt((parseFloat(amount) * 10 ** 18).toFixed(0));
+      return (inputENG * ENG_TO_ETH_RATE) / ETH_TO_ENG_RATE;
     } catch (e) {
       return 0n;
     }

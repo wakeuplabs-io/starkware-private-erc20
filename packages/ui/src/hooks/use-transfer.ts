@@ -47,7 +47,8 @@ export const useTransfer = () => {
       );
       const inputNote = senderNotes
         .sort((a, b) => parseInt((b.value! - a.value!).toString()))
-        .find((n) => n.value! > props.amount);
+        .find((n) => n.value! >= props.amount);
+
       if (!inputNote) {
         throw new Error("Insufficient funds in notes");
       }
