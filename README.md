@@ -2,7 +2,15 @@
 
 ## Overview
 
-Design is inspired in privacy pools like [tornado nova](https://github.com/tornadocash/tornado-nova/tree/b085ab398eaeefff98771f5dad893cb804d98e70) and [zcash](https://github.com/zcash/orchard)
+This is a PoC for a **private token based on the ERC-20 standard**, with **ZK circuits**, contracts, and a frontend interface implementing methods such as transfer, approve, and transfer_from, among others. Using a notes system and asymmetric encryption, a design was proposed and implemented to execute these methods privately, without revealing transaction amounts or the users involved.
+
+For this, **Noir** was used for the circuits, **Garaga** for verifier code generation, **Cairo** for the contract, and **TypeScript with React** for the frontend application. The frontend and API were deployed using **AWS**, and the contracts were deployed on the **Starknet chain**.
+
+### Disclaimer
+
+This is a project for demo purposes, developed within the framework of NoirCon 1 at ETH Denver.
+
+At this stage, it is in PoC format and does not include all compliance, security, and edge case checks required. It will require many additional QA rounds, extra development & design iterations for it to be mainnet-ready.
 
 ## Definitions
 
@@ -181,6 +189,7 @@ Some clarifications:
 
 ### Compliance proposition
 
+If this project ever goes to production, it should first add compliance checks to ensure that every functionality complies with the laws in force worldwide.
 The simplest and most direct approach to addressing compliance is by implementing a backdoor that allows the contract owner to disclose user information to authorities when required. This can be achieved by mandating all users to share viewing keys with the entity managing the contract.
 
 A practical method for this is asymmetric encryption, where users encrypt their viewing private key using the entity’s public key before submitting them. To ensure correctness, we could validate the encryption through zk circuits and restrict contract functionality to only those accounts that have shared their keys—both for senders and receivers.
@@ -227,6 +236,7 @@ Some clarifications:
 - In this context, "circuits" refers to the deployed verifier generated using Garaga.
 - The API is ideally not necessary and serves merely as a workaround of current garaga version 0.15.3 not supporting honk vk/proof calldata encoding. This seems to have been introduced in this pr https://github.com/keep-starknet-strange/garaga/pull/288 recently. Not yet published but we can try incorporating it.
 - An easy improvement for current system and probable a necessary one we're skipping in this POC is to use indexers like [thegraph.com](https://thegraph.com) to query events
+- Design is inspired in privacy pools like [tornado nova](https://github.com/tornadocash/tornado-nova/tree/b085ab398eaeefff98771f5dad893cb804d98e70) and [zcash](https://github.com/zcash/orchard)
 
 
 ## Demo
@@ -608,3 +618,5 @@ circuits/
 Deploy to aws with:
 
 `npx sst deploy --stage staging`
+
+
