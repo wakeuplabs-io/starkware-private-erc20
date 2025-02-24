@@ -190,6 +190,7 @@ Some clarifications:
 ### Compliance proposition
 
 If this project ever goes to production, it should first add compliance checks to ensure that every functionality complies with the laws in force worldwide.
+
 The simplest and most direct approach to addressing compliance is by implementing a backdoor that allows the contract owner to disclose user information to authorities when required. This can be achieved by mandating all users to share viewing keys with the entity managing the contract.
 
 A practical method for this is asymmetric encryption, where users encrypt their viewing private key using the entity’s public key before submitting them. To ensure correctness, we could validate the encryption through zk circuits and restrict contract functionality to only those accounts that have shared their keys—both for senders and receivers.
