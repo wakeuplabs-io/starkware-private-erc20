@@ -589,12 +589,12 @@ just contracts-declare
 
 just contracts-deploy 0x01ff74bc2838b0744d431a14084ff4a398db9e0281ff31b6ff2f96346d41f742
 
-# contract_address: 0x035ba4ea1ef4afc87f79c3e15277f8d8238787a1298fb161942b8802446ad0bb
-# transaction_hash: 0x05ffd026639fb96c4a7e571d5a4b6550bfd9a000b1728124eab87eae8b1c6a26
+# contract_address: 0x0243720b953ca3ef84dfdb24408cc1ff2941afe4b3fadad19ccb04ec10ddab2b
+# transaction_hash: 0x05ba66b949bf262f0a5f12f4c19af2ececae18920394f597b5e589b64d647ab5
 
 # To see deployment details, visit:
-# contract: https://sepolia.starkscan.co/contract/0x035ba4ea1ef4afc87f79c3e15277f8d8238787a1298fb161942b8802446ad0bb
-# transaction: https://sepolia.starkscan.co/tx/0x05ffd026639fb96c4a7e571d5a4b6550bfd9a000b1728124eab87eae8b1c6a26
+# contract: https://sepolia.starkscan.co/contract/0x0243720b953ca3ef84dfdb24408cc1ff2941afe4b3fadad19ccb04ec10ddab2b
+# transaction: https://sepolia.starkscan.co/tx/0x05ba66b949bf262f0a5f12f4c19af2ececae18920394f597b5e589b64d647ab5
 ```
 
 

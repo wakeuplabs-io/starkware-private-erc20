@@ -3,7 +3,7 @@ import { Abi } from "starknet";
 // Enigma contract
 export const ENIGMA_DEPLOY_BLOCK = 524850;
 export const ENIGMA_APPROVAL_EVENT_KEY = "contracts::privado::privado::Privado::Approval";
-export const ENIGMA_CONTRACT_ADDRESS = "0x035ba4ea1ef4afc87f79c3e15277f8d8238787a1298fb161942b8802446ad0bb";
+export const ENIGMA_CONTRACT_ADDRESS = "0x0243720b953ca3ef84dfdb24408cc1ff2941afe4b3fadad19ccb04ec10ddab2b";
 export const ENIGMA_DECIMALS = 6n;
 export const MERKLE_TREE_DEPTH = 12;
 

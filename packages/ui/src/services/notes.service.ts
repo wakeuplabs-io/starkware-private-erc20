@@ -23,6 +23,11 @@ export class NotesService {
     notesMap: Map<bigint, Note>;
     nullifiersMap: Map<string, string>;
   }> {
+    // invalidate cache on new deployment
+    if (this.isNewDeployment()) {
+      this.invalidateCache();
+    }
+
     const toBlock = await this.provider.getBlock("latest");
     const fromBlock = await this.getCacheLatestBlock();
 
@@ -70,6 +75,18 @@ export class NotesService {
     return { notesArray, notesMap, nullifiersMap };
   }
 
+  private isNewDeployment(): boolean {
+    return localStorage.getItem("DEPLOYMENT_ID") !== import.meta.env.VITE_DEPLOYMENT_ID;
+  }
+
+  private invalidateCache() {
+    localStorage.removeItem("notes");
+    localStorage.removeItem("nullifiers");
+    localStorage.removeItem("lastScannedBlock");
+
+    localStorage.setItem("DEPLOYMENT_ID", import.meta.env.VITE_DEPLOYMENT_ID);
+  }
+
   private getCacheLatestBlock(): number {
     return parseInt(localStorage.getItem("lastScannedBlock") || "500000", 10);
   }
@@ -90,6 +107,8 @@ export class NotesService {
     notes: Note[];
     nullifiers: string[];
   }> {
+
+
     const notes = parse(localStorage.getItem("notes") || "[]");
     const nullifiers = parse(
       localStorage.getItem("nullifiers") || "[]"
