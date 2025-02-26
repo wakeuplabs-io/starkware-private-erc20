@@ -35,7 +35,9 @@ function RootLayout() {
         <header className=" shadow-md">
           <div className="flex items-center justify-between px-4 py-8 md:px-0 max-w-3xl mx-auto w-full">
             <WakeUpLogo className="h-[36px] hidden md:block" />
+            
             <img src="/starknet-logo.png" alt="" className="h-[28px]" />
+
             <Button
               onClick={() => disconnect()}
               className="h-[30px] rounded-full text-xs font-medium"
