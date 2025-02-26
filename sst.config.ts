@@ -47,6 +47,9 @@ export default $config({
       },
       environment: {
         VITE_API_BASE_URL: api.url,
+        VITE_RPC_URL: process.env.VITE_RPC_URL,
+        VITE_DEPLOYMENT_ID: "starknet-goerli:1.0.0",
+        VITE_EXPLORER_BASE_URL: "https://sepolia.voyager.online",
       },
       indexPage: "index.html",
       errorPage: "index.html",
